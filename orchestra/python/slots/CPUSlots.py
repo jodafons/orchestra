@@ -2,7 +2,7 @@
 __all__ = ["CPUSlots"]
 
 
-from orchestra import Slots
+from orchestra.slots import Slots
 
 class CPUSlots( Slots ):
   def __init__( self,name,  maxLength ):

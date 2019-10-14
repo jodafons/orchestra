@@ -2,7 +2,7 @@
 
 __all__ = ["LCGRule"]
 
-from orchestra import Rule
+from orchestra.rules import Rule
 from orchestra.enumerations import *
 from Gaugi.messenger.macros import *
 

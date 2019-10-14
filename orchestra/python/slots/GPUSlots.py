@@ -3,7 +3,7 @@ __all__=  ["GPUSlots"]
 from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
-from orchestra import Slots
+from orchestra.slots import Slots
 from collections import deque
 
 

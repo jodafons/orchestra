@@ -5,7 +5,7 @@ from Gaugi import Logger, NotSet
 from kubernetes import *
 from pprint import pprint
 from orchestra import Status
-from orchestra.contants import MAX_FAIL
+from orchestra.constants import MAX_FAIL
 import time
 
 
