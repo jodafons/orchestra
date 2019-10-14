@@ -86,12 +86,12 @@ class Orchestrator(Logger):
     if node:
       template['spec']['template']['spec']['nodeName']=node
     if gpu:
-      template['spec']['template']['spec']['containers'][0]['runtime']='nvidia'
-      #template['spec']['template']['spec']['containers'][0]['resources']=\
-      #{
-      #    'limits':{'nvidia.com/gpu':1},
-      #    #'requests':{'nvidia.com/gpu': 1}
-      #}
+      #template['spec']['template']['spec']['containers'][0]['runtime']='nvidia'
+      template['spec']['template']['spec']['containers'][0]['resources']=\
+      {
+          'limits':{'nvidia.com/gpu':1},
+          'requests':{'nvidia.com/gpu': 1}
+      }
 
 
     # Send the job configuration to cluster kube server
