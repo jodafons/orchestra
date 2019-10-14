@@ -12,7 +12,7 @@ import time
 
 class Orchestrator(Logger):
 
-  def __init__(self, job_templete, credentials):
+  def __init__(self, job_template, credentials):
 
     import os
     # this is the current config LPS cluster yaml file
