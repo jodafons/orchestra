@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  template:
+    metadata:
+      name: pi
+    spec:
+      containers:
+      - name: pi
+        image: myImage
+        command: ["/bin/sh","-c"]
+        args: []
+        volumeMounts:
+        - mountPath: /volume
+          name: vol1
+      volumes:
+      - name: vol1
+        persistentVolumeClaim:
+          claimName: lps-volume
+      hostNetwork: true
+      restartPolicy: Never
+
+
