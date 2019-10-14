@@ -2,9 +2,10 @@
 
 __all__ = ["LCGRule"]
 
-from lpsgrid.engine.rules import Rule
+from orchestra import Rule
+from orchestra.enumerations import *
 from Gaugi.messenger.macros import *
-from lpsgrid.engine.enumerations import *
+
 
 class LCGRule(Rule):
 

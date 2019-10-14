@@ -7,8 +7,8 @@ from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
 from Gaugi import StatusCode
 from collections import deque
-from lpsgrid.engine.Consumer import Consumer
-from lpsgrid.engine.enumerations import Status
+from orchestra import Consumer, Status
+
 
 class Slots( Logger ):
 
@@ -58,7 +58,6 @@ class Slots( Logger ):
 
   def update(self):
 
-    to_be_removed = []
 
     for idx, consumer in enumerate(self.__slots):
 

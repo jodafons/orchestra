@@ -2,7 +2,7 @@
 __all__ = ["CPUSlots"]
 
 
-from lpsgrid.engine.slots import Slots
+from orchestra import Slots
 
 class CPUSlots( Slots ):
   def __init__( self,name,  maxLength ):

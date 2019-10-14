@@ -3,7 +3,7 @@ __all__=  ["GPUSlots"]
 from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
-from lpsgrid.engine.slots import Slots
+from orchestra import Slots
 from collections import deque
 
 
@@ -11,58 +11,82 @@ from collections import deque
 class GPUSlots( Slots ):
 
   def __init__( self, name,nodes ):
-
     Slots.__init__( self, name,len(nodes) )
     self.__available_nodes = [(node,False) for node in nodes]
 
 
   def initialize(self):
-
     if(Slots.initialize(self).isFailure()):
       return StatusCode.FAILURE
     MSG_INFO( self, "This slots will be dedicated for GPUs" )
     return StatusCode.SUCCESS
 
+
+
+
+  def unlock(self,node):
+    for n in self.__available_nodes:
+      if node==n[0]:
+        n[1]=False; break
+
+
+  def lock(self,node):
+    for n in self.__available_nodes:
+      if node==n[0]:
+        n[1]=True; break
+
+
+  def unlockAll(self):
+    for n in self.__available_nodes:
+      n[1]=False
+
+
+  def getAvailableNode(self):
+    for n in self.__available_nodes:
+      if not n[1]:  return n[0]
+    return None
+
+
+
   def update(self):
+    for idx, consumer in enumerate(self.__slots):
 
-    to_be_removed = []
-
-    for idx, job in enumerate(self._slots):
-
-      if job.status() is StatusJob.ACTIVATED:
+      # consumer.status is not DB like, this is internal of kubernetes
+      # In DB, the job was activated but here, we put as pending to wait the
+      # kubernetes. If everything its ok, the internal status will be change
+      # to (running,failed or done).
+      if consumer.status() is Status.PENDING:
         # TODO: Change the internal state to RUNNING
         # If, we have an error during the message,
         # we will change to BROKEN status
-        if job.execute().isFailure():
-          # tell to db that we have a broken
-          job.job().setStatus( StatusJob.BROKEN )
-          to_be_removed.append(idx)
+        if consumer.execute().isFailure():
+          # Tell to DB that this job is in broken status
+          consumer.job().setStatus( Status.BROKEN )
+          consumer.finalize()
+          self.__slots.remove(consumer)
+          self.unlock( consume.node() )
         else: # change to running status
-          job.job().setStatus( StatusJob.RUNNING )
+          # Tell to DB that this job is running
+          consumer.job().setStatus( Status.RUNNING )
 
-      elif job.status() is StatusJob.FAILED:
-
+      elif consumer.status() is Status.FAILED:
         # Tell to db that this job was failed
-        job.job().setStatus( StatusJob.FAILED )
+        consumer.job().setStatus( Status.FAILED )
+        consumer.finalize()
         # Remove this job into the stack
-        to_be_removed.append(idx)
-
-      elif job.status() is StatusJob.RUNNING:
+        self.__slots.remove(consumer)
+        self.unlock( consume.node() )
+      # Kubernetes job is running. Go to the next slot...
+      elif consumer.status() is Status.RUNNING:
         continue
 
-      elif job.status() is StatusJon.DONE:
-        job.job().setStatus( StatusJob.DONE )
-        to_be_removed.append(idx)
+      elif consumer.status() is Status.DONE:
+        consumer.job().setStatus( Status.DONE )
+        consumer.finalize()
+        self.__slots.remove(consumer)
+        self.unlock( consume.node() )
 
-
-    # remove all failed/broken/done jobs of the stack
-    for r in to_be_removed:
-      node = self.__slots[r].node()
-      del self.__slots[r]
-      self.unlockNode(node)
-      MSG_DEBUG(self, "Removing this %d in the stack. We have $d/%d slots availabel", r, len(self._stack),selt.size())
-
-
+    self.db().commit()
 
   #
   # Add an job into the stack
@@ -77,11 +101,9 @@ class GPUSlots( Slots ):
       obj.setOrchestrator( self.orchestrator() )
       # TODO: the job must set the internal status to ACTIVATED mode
       obj.initialize()
-      # Tell to db that this job was activated by the slot
-      obj.job().setStatus( StatusJob.ACTIVATED )
-      self._slots.append( obj )
-      # lock this node since we can only run one process per node
-      self.lockNode(node)
+      obj.job().setStatus( Status.ACTIVATED )
+      self.__slots.append( obj )
+      self.lock(obj.node())
     else:
       MSG_WARNING( self, "You asked to add one job into the stack but there is no available slots yet." )
 
@@ -89,26 +111,15 @@ class GPUSlots( Slots ):
 
 
 
-  def unlockNode(self,node):
-    for n in self.__available_nodes:
-      if node==n[0]:
-        n[1]=False; break
 
 
-  def lockNode(self,node):
-    for n in self.__available_nodes:
-      if node==n[0]:
-        n[1]=True; break
 
 
-  def unlockAllNodes(self):
-    for n in self.__available_nodes:
-      n[1]=False
 
 
-  def getAvailableNode(self):
-    for n in self.__available_nodes:
-      if not n[1]:  return n[0]
-    return None
+
+
+
+
 
 

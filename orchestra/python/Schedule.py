@@ -7,14 +7,14 @@ from Gaugi.messenger.macros import *
 from Gaugi import StatusCode
 import time
 from sqlalchemy import and_, or_
-from lpsgrid.engine.enumerations import *
-from lpsgrid.engine.constants import *
+from orchestra.enumerations import *
+from orchestra.constants import *
+
 from ringerdb.models import *
 
-MAX_TEST_JOBS=1
-MAX_FAILED_JOBS=1
-MIN_SUCCESS_JOBS=1
-CLUSTER_NAME='LPS'
+from orchestra.constants import MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
+
+
 
 class Schedule(Logger):
 

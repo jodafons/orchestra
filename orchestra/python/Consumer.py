@@ -5,7 +5,7 @@ __all__ = ["Consumer"]
 from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
-from lpsgrid.engine.enumerations import Status
+from orchestra import Status
 import hashlib
 
 class Consumer( Logger ):
@@ -32,6 +32,9 @@ class Consumer( Logger ):
   def job(self):
     return self.__job
 
+  def node(self):
+    return self.__node
+  
   def setOrchestrator(self, orchestrator):
     self.__orchestrator=orchestrator
 

@@ -5,10 +5,9 @@ __all__ = ["Pilot"]
 from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 
-
-from lpsgrid.engine.slots import *
-from lpsgrid.engine.constants import *
-from lpsgrid.engine.enumerations import *
+from orchestra.slots import *
+from orchestra.constants import *
+from orchestra.enumerations import *
 
 class Pilot(Logger):
 

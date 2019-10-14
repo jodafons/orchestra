@@ -2,7 +2,7 @@
 
 __all__ = ["Rule"]
 
-from Gaugi import Logger
+from Gaugi import Logger, NotSet
 from Gaugi.messenger.macros import *
 
 
@@ -11,13 +11,15 @@ class Rule(Logger):
   def __init__(self):
 
     Logger.__init__(self)
+    self.__db = NotSet
 
 
   def setDatabase(self,db):
-    self._db = db
+    self.__db = db
+
 
   def db(self):
-    return self.db
+    return self.__db
 
 
   def initialize(self):
@@ -32,8 +34,5 @@ class Rule(Logger):
     return StatusCode.SUCCESS
 
 
-  # rules( user, task, status = [StatusJob.REGISTED] )
-  def __call__(self, user, task, status=None ):
-    pass
 
 
