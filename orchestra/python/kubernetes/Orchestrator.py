@@ -72,7 +72,7 @@ class Orchestrator(Logger):
   #
   # Create the job using a template
   #
-  def create( self, name, containerImage, execArgs, node=None ):
+  def create( self, name, containerImage, execArgs, node=None, gpu=False ):
 
     # Check if the job exist.
     if self.exist( name ):
@@ -82,8 +82,18 @@ class Orchestrator(Logger):
     template['metadata']['name'] = name
     template['spec']['template']['spec']['containers'][0]['args']=[execArgs]
     template['spec']['template']['spec']['containers'][0]['image']=containerImage
+
     if node:
       template['spec']['template']['spec']['nodeName']=node
+    if gpu:
+      template['spec']['template']['spec']['containers'][0]['runtime']='nvidia'
+      #template['spec']['template']['spec']['containers'][0]['resources']=\
+      #{
+      #    'limits':{'nvidia.com/gpu':1},
+      #    #'requests':{'nvidia.com/gpu': 1}
+      #}
+
+
     # Send the job configuration to cluster kube server
     resp = self.api().create_namespaced_job(body=template, namespace='default')
     name = resp.metadata.name

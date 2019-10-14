@@ -7,7 +7,8 @@ from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
 from Gaugi import StatusCode
 from collections import deque
-from orchestra import Consumer, Status
+from orchestra import Status
+from orchestra.Consumer import Consumer
 
 
 class Slots( Logger ):

@@ -7,7 +7,7 @@ import glob
 import numpy as np
 import argparse
 import sys,os
-
+import hashlib
 
 mainLogger = Logger.getModuleLogger("job")
 parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -82,7 +82,7 @@ mainLogger.info("We will launch %d jobs into the cluster.",len(configFiles) )
 outputFile = basepath+'/'+args.outputFile
 
 # This should be assigned as LPS name to works
-cluster = 'LPS' #/CERN
+cluster = "LPS" #/CERN
 
 
 # Check the exec command
@@ -127,7 +127,14 @@ for idx, configFile in enumerate(configFiles):
   command = execCommand
   command = command.replace( '%DATA' , dataFile  )
   command = command.replace( '%IN'   , basepath+'/'+configFile)
-  command = command.replace( '%OUT'  , outputFile)
+  
+  
+  hash_object = hashlib.sha1(str.encode(configFile))
+  output = hash_object.hexdigest()
+  output = outputFile+'/user.'+args.username+'.'+ output+'/'
+  command = ('mkdir %s && %s') % (output,command)
+
+  command = command.replace( '%OUT'  , output)
   # Fill all secondary datas
   for key in secondaryData:
     command = command.replace( key  , secondaryData[key])
