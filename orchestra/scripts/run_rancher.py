@@ -16,8 +16,18 @@ orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster
 
 
 pilot = Pilot( db, schedule, orchestrator )
-cpu = CPUSlots( "CPU" , 10 ) 
-gpu = GPUSlots( "CPU" , ['node4'] ) 
+
+
+cpu_nodes = 30
+
+cpu = CPUSlots( "CPU" , cpu_nodes ) 
+
+
+
+gpu_nodes = [
+              GPUNode( 'node04', 0 ),
+            ]
+gpu = GPUSlots( "CPU" , gpu_nodes ) 
 
 
 pilot.setSlots(cpu)

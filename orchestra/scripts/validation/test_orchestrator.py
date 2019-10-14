@@ -14,9 +14,10 @@ execArgs = "python3 -c 'import tensorflow' && . /setup_envs.sh && python3 /code/
 #execArgs = "python3 --version ./setup_envs.sh"
 node=6
 
+from orchestra.slots import *
+node = GPUNode( "node04", 0 )
 
-
-name = kube.create('test', containerImage,execArgs,node='node04',gpu=True)
+name = kube.create('test', containerImage,execArgs, gpu_node=node)
 import time
 
 
