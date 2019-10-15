@@ -52,7 +52,7 @@ class Orchestrator(Logger):
   def getTemplate( self ):
     #from benedict import benedict as b
     import benedict
-    return dict(benedict.from_yaml(self._template_job_path))
+    return dict(benedict.load_yaml_file(self._template_job_path))
 
 
 
@@ -94,7 +94,6 @@ class Orchestrator(Logger):
       cuda_envs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID' && export CUDA_VISIBLE_DEVICES=%d"%( gpu_node.device() ) 
     else: # Force the job to not see and GPU device in case of the node has GPU installed
       cuda_envs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID' && export CUDA_VISIBLE_DEVICES="
-      template['spec']['template']['spec']['nodeName']= 'node04'
     execArgs =  cuda_envs+' && '+execArgs
     pprint(execArgs)
     template['spec']['template']['spec']['containers'][0]['args']=[execArgs]
