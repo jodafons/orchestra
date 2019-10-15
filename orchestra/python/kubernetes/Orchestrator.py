@@ -50,8 +50,9 @@ class Orchestrator(Logger):
   # The template job
   #
   def getTemplate( self ):
-    from benedict import benedict as b
-    return dict(b.from_yaml(self._template_job_path))
+    #from benedict import benedict as b
+    import benedict
+    return dict(benedict.from_yaml(self._template_job_path))
 
 
 

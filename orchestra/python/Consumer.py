@@ -51,7 +51,7 @@ class Consumer( Logger ):
 
   def execute(self):
     try:
-      self.orchestrator().create( self.__hash, self.__job.containerImage, self.__job.execArgs, gpu_node=self.__node )
+      self.orchestrator().create( self.__hash, self.__job.containerImage, self.__job.execArgs, gpu_node=self.node() )
       self.__pending=False
     except Exception as e:
       MSG_ERROR(self, e)

@@ -109,12 +109,12 @@ class Pilot(Logger):
 
 
       ## Prepare jobs for GPU slots only
-      jobs = self.schedule().getQueue(gpu=True)
+      #jobs = self.schedule().getQueue(gpu=True)
 
-      i=0
-      while (self.gpuSlots().isAvailable()) and i<len(jobs):
-        self.gpuSlots().push_back( jobs[i] )
-        i+=1
+      #i=0
+      #while (self.gpuSlots().isAvailable()) and i<len(jobs):
+      #  self.gpuSlots().push_back( jobs[i] )
+      #  i+=1
 
 
       #while self.gpu_slots().isAvailable():
@@ -123,7 +123,7 @@ class Pilot(Logger):
       ## Run the pilot for cpu queue
       self.cpuSlots().execute()
       ## Run the pilot for gpu queue
-      self.gpuSlots().execute()
+      #self.gpuSlots().execute()
 
 
     return StatusCode.SUCCESS
