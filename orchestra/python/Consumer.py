@@ -19,7 +19,7 @@ class Consumer( Logger ):
     Logger.__init__(self)
     self.__job = job
     self.__orchestrator = NotSet
-    self.__gpu_node = node
+    self.__gpu_node = gpu_node
     self.__pending=True
     self.__broken=False
     hash_object = hashlib.md5(str.encode(job.execArgs))
