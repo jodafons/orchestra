@@ -148,7 +148,6 @@ class Pilot(Logger):
         job.setStatus( Status.ASSIGNED )
       i=0
       while (self.cpuSlots().isAvailable()) and i<len(jobs):
-        print(jobs[i])
         self.cpuSlots().push_back( jobs[i] )
         i+=1
       self.cpuSlots().execute()

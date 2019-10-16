@@ -6,6 +6,7 @@ from Gaugi import EnumStringification
 
 class Status ( EnumStringification ):
 
+  HOLDED = "holded"
   BROKEN = "broken"
   FAILED = "failed"
   KILLED = "killed"

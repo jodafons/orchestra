@@ -1,11 +1,13 @@
 
 __all__ = ["Orchestrator"]
 
-from Gaugi import Logger, NotSet
+from Gaugi import Logger, NotSet, Color
+from Gaugi.messenger.macros import *
 from kubernetes import *
 from pprint import pprint
 from orchestra import Status
 from orchestra.constants import MAX_FAIL
+#from orchestra.rules import Policy
 import time
 
 
@@ -13,7 +15,7 @@ import time
 class Orchestrator(Logger):
 
   def __init__(self, job_template, credentials):
-
+    Logger.__init__(self)
     import os
     # this is the current config LPS cluster yaml file
     config.load_kube_config(config_file=credentials)
@@ -21,6 +23,8 @@ class Orchestrator(Logger):
     self._api = client.BatchV1Api()
     self._template_job_path = job_template
     self.__db = NotSet
+    #self.__policy = Policy()
+
 
   def initialize(self):
     return StatusCode.SUCCESS
@@ -51,10 +55,14 @@ class Orchestrator(Logger):
   #
   def getTemplate( self ):
     #from benedict import benedict as b
-    import benedict
-    return dict(benedict.load_yaml_file(self._template_job_path))
 
-
+    try:
+      import benedict
+      d = dict(benedict.load_yaml_file(self._template_job_path))
+    except:
+      from benedict import benedict
+      d = dict(benedict.from_yaml(self._template_job_path))
+    return d
 
   #
   # Get the current status of the job.
@@ -82,7 +90,12 @@ class Orchestrator(Logger):
     template = self.getTemplate()
     template['metadata']['name'] = name
     template['spec']['template']['spec']['containers'][0]['image']=containerImage
-    pprint(execArgs)
+    
+    #execArgs = self.__policy.check( execArgs )
+    preExecArgs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID'"
+    #posExecArgs = "if ! (($?)); then exit 1; fi"
+    posExecArgs = "exit $?"
+
     if gpu_node:
       template['spec']['template']['spec']['nodeName']= gpu_node.name()
       template['spec']['template']['spec']['containers'][0]['resources']=\
@@ -90,15 +103,19 @@ class Orchestrator(Logger):
           'limits':{'nvidia.com/gpu':1},
           'requests':{'nvidia.com/gpu': 1}
       }
-      # Append the device arg in execArgs
-      cuda_envs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID' && export CUDA_VISIBLE_DEVICES=%d"%( gpu_node.device() ) 
-    else: # Force the job to not see and GPU device in case of the node has GPU installed
-      cuda_envs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID' && export CUDA_VISIBLE_DEVICES="
-    execArgs =  cuda_envs+' && '+execArgs
-    pprint(execArgs)
-    template['spec']['template']['spec']['containers'][0]['args']=[execArgs]
+      # Append the device arg in execArgs to use a specifically GPU device
+      preExecArgs += " && export CUDA_VISIBLE_DEVICES=%d"%( gpu_node.device() )
+    else:
+      # Force the job to not see and GPU device in case of the node has GPU installed or
+      # the job is in GPU node but the device is not requested
+      preExecArgs += " && export CUDA_VISIBLE_DEVICES="
+
+    command = preExecArgs + " && ("+execArgs+") && " + posExecArgs
+
+    template['spec']['template']['spec']['containers'][0]['args']=[command]
 
     # Send the job configuration to cluster kube server
+    MSG_INFO( self, Color.CVIOLET2+"Launching job using kubernetes..."+Color.CEND)
     resp = self.api().create_namespaced_job(body=template, namespace='default')
     name = resp.metadata.name
     return name
