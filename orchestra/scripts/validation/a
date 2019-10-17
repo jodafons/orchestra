@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "test_monitoring.py", line 11, in <module>
-    print(api.patch_node())
-TypeError: patch_node() missing 2 required positional arguments: 'name' and 'body'
