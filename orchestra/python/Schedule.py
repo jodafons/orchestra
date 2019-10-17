@@ -8,11 +8,9 @@ from Gaugi import StatusCode
 import time
 from sqlalchemy import and_, or_
 from orchestra.enumerations import *
-from orchestra.constants import *
-
 from ringerdb.models import *
-
-from orchestra.constants import MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
+from orchestra.utilities import Clock
+from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
 
 
 
@@ -22,24 +20,10 @@ class Schedule(Logger):
 
     Logger.__init__(self, name=name)
     self.__rules = rules
-    self.__then = NotSet
-    self.__maxUpdateTime = MAX_UPDATE_TIME
+    self.__clock = Clock(MAX_UPDATE_TIME)
 
   def initialize(self):
     return StatusCode.SUCCESS
-
-
-  def tictac( self ):
-    if self.__then is NotSet:
-      self.__then = time.time()
-      return False
-    else:
-      now = time.time()
-      if (now-self.__then) > self.__maxUpdateTime:
-        # reset the time
-        self.__then = NotSet
-        return True
-    return False
 
 
   def setDatabase(self, db):
@@ -48,10 +32,6 @@ class Schedule(Logger):
 
   def db(self):
     return self._db
-
-
-
-
 
 
   def calculate(self):
@@ -111,7 +91,7 @@ class Schedule(Logger):
 
   def execute(self):
     # Calculate the priority for every N minute
-    if self.tictac():
+    if self.__clock():
       self.calculate()
 
 
@@ -163,7 +143,7 @@ class Schedule(Logger):
     elif task.getStatus() == Status.RUNNING:
       # The task is running. Here, we will check if its completed.
       if len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) == 0:
-        MSG_INFO(self,"The task was completed with status: " + Color.CBLUEB2 + "[DONE]" + Color.CEND)
+        MSG_INFO(self,"The task was completed with status: " + Color.CBLUE2 + "[DONE]" + Color.CEND)
         task.setStatus( Status.DONE )
 
 
@@ -213,6 +193,7 @@ class Schedule(Logger):
     except Exception as e:
       MSG_ERROR(self,e)
       return []
+
 
   def getAllRunningJobs(self):
     try:

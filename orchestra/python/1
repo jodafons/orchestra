@@ -7,7 +7,7 @@ from Gaugi.messenger.macros import *
 
 from orchestra.slots import *
 from orchestra.constants import *
-from orchestra.utilities import *
+from orchestra.utilites import *
 from orchestra.enumerations import *
 
 class Pilot(Logger):
@@ -147,14 +147,14 @@ class Pilot(Logger):
     if self.__resouces_clock():
       usedmem = self.orchestrator().getMemoryConsume()
       usedcpu = self.orchestrator().getCPUConsume()
-      MSG_INFO( self, Color.CBLUE2 + "CPU usage   : %1.4f " + Color.CEND, usedcpu, usedmem )
-      MSG_INFO( self, Color.CBLUE2 + "Memory usage: %1.4f " + Color.CEND, usedcpu, usedmem )
-      if (usedmem < 90.) and (usedcpu < 90.):
+      MSG_INFO( self, Color.CBLUE2 + "+--------------------------------------------+" + Color.CEND )
+      MSG_INFO( self, Color.CBLUE2 + "| CPU usage: %1.4f   Memory usage: %1.4f |" + Color.CEND, usedcpu, usedmem )
+      MSG_INFO( self, Color.CBLUE2 + "+--------------------------------------------+" + Color.CEND )
+      if (usedmem < 0.9) and (usedcpu < 0.9):
         self.cpuSlots().increment()
-        MSG_INFO( self ,"Increment the CPU slots. The size is %d",  self.cpuSlots().size() )
+        MSG_INFO( self ,"----->" + self.cpuSlots().size() )
 
       else:
+        MSG_INFO( self ,"<-----" + self.cpuSlots().size() )
         self.cpuSlots().decrement()
-        MSG_INFO( self ,"Decrement the CPU slots. The size is %d",  self.cpuSlots().size() )
-
 

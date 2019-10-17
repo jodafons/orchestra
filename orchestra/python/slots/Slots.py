@@ -123,3 +123,15 @@ class Slots( Logger ):
     return True if len(self.__slots) < self.size() else False
 
 
+  def increment( self ):
+    self.__total+=1
+
+
+  def decrement( self ):
+    self.__total-=1
+
+
+  def setSize( self, total ):
+    self.__total=total
+
+
