@@ -1,6 +1,4 @@
-# orchestra  <img src="External/icons/kubernetes-horizontal-all-blue-color.png" width="100" height="50">
-
-
+# Orchestra  
 
 This package is used to manager tasks and jobs inside the cluster. This tools uses the kubernetes as backend
 to create and remove jobs (or pods) inside of the cluster. The schedule is responsible to check the task
