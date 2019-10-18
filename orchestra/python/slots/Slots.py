@@ -7,7 +7,8 @@ from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
 from Gaugi import StatusCode
 from collections import deque
-from orchestra import Consumer, Status
+from orchestra import Status
+from orchestra.Consumer import Consumer
 
 
 class Slots( Logger ):
@@ -120,5 +121,17 @@ class Slots( Logger ):
 
   def isAvailable(self):
     return True if len(self.__slots) < self.size() else False
+
+
+  def increment( self ):
+    self.__total+=1
+
+
+  def decrement( self ):
+    self.__total-=1
+
+
+  def setSize( self, total ):
+    self.__total=total
 
 

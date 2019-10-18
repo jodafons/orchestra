@@ -1,4 +1,4 @@
-__all__=  ["GPUSlots"]
+__all__=  ["GPUSlots", "GPUNode"]
 
 from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
@@ -7,12 +7,38 @@ from orchestra.slots import Slots
 from collections import deque
 
 
+class GPUNode( Logger ):
+  def __init__(self, name, device ):
+    self.__name = name
+    self.__device = device
+    self.__available = True
+
+  def name(self):
+    return self.__name
+
+  def device(self):
+    return self.__device
+
+  def isAvailable( self ):
+    return self.__available
+
+  def lock( self ):
+    self.__available = False
+
+  def unlock( self ):
+    self.__available = True
+
+
+
+
 
 class GPUSlots( Slots ):
 
-  def __init__( self, name,nodes ):
+  def __init__( self, name, nodes ):
     Slots.__init__( self, name,len(nodes) )
-    self.__available_nodes = [(node,False) for node in nodes]
+
+    # [ ({'nodeName':deviceIdx}, False), ... ]
+    self.__available_nodes = nodes
 
 
   def initialize(self):
@@ -24,26 +50,16 @@ class GPUSlots( Slots ):
 
 
 
-  def unlock(self,node):
-    for n in self.__available_nodes:
-      if node==n[0]:
-        n[1]=False; break
-
-
-  def lock(self,node):
-    for n in self.__available_nodes:
-      if node==n[0]:
-        n[1]=True; break
 
 
   def unlockAll(self):
-    for n in self.__available_nodes:
-      n[1]=False
-
+    for node in self.__available_nodes:
+      node.unlock()
 
   def getAvailableNode(self):
-    for n in self.__available_nodes:
-      if not n[1]:  return n[0]
+    for node in self.__available_nodes:
+      if node.isAvailable():
+        return node
     return None
 
 
@@ -63,8 +79,8 @@ class GPUSlots( Slots ):
           # Tell to DB that this job is in broken status
           consumer.job().setStatus( Status.BROKEN )
           consumer.finalize()
+          consumer.node().unlock()
           self.__slots.remove(consumer)
-          self.unlock( consume.node() )
         else: # change to running status
           # Tell to DB that this job is running
           consumer.job().setStatus( Status.RUNNING )
@@ -74,8 +90,8 @@ class GPUSlots( Slots ):
         consumer.job().setStatus( Status.FAILED )
         consumer.finalize()
         # Remove this job into the stack
+        consumer.node().unlock()
         self.__slots.remove(consumer)
-        self.unlock( consume.node() )
       # Kubernetes job is running. Go to the next slot...
       elif consumer.status() is Status.RUNNING:
         continue
@@ -83,8 +99,8 @@ class GPUSlots( Slots ):
       elif consumer.status() is Status.DONE:
         consumer.job().setStatus( Status.DONE )
         consumer.finalize()
+        consume.node().unlock()
         self.__slots.remove(consumer)
-        self.unlock( consume.node() )
 
     self.db().commit()
 
@@ -103,7 +119,7 @@ class GPUSlots( Slots ):
       obj.initialize()
       obj.job().setStatus( Status.ACTIVATED )
       self.__slots.append( obj )
-      self.lock(obj.node())
+      node.lock()
     else:
       MSG_WARNING( self, "You asked to add one job into the stack but there is no available slots yet." )
 

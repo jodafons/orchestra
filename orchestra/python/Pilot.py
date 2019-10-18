@@ -2,11 +2,12 @@
 __all__ = ["Pilot"]
 
 
-from Gaugi import Logger, NotSet, StatusCode
+from Gaugi import Logger, NotSet, StatusCode, Color
 from Gaugi.messenger.macros import *
 
 from orchestra.slots import *
 from orchestra.constants import *
+from orchestra.utilities import *
 from orchestra.enumerations import *
 
 class Pilot(Logger):
@@ -18,7 +19,7 @@ class Pilot(Logger):
     self.__db = db
     self.__schedule = schedule
     self.__orchestrator = orchestrator
-
+    self.__resouces_clock = Clock( 0.5* MINUTE )
 
 
 
@@ -102,22 +103,15 @@ class Pilot(Logger):
       jobs = self.schedule().getCPUQueue()
 
 
-      i=0
-      while (self.cpuSlots().isAvailable()) and i<len(jobs):
-        self.cpuSlots().push_back( jobs[i] )
-        i+=1
+      while (self.cpuSlots().isAvailable()) and len(jobs)>0:
+        self.cpuSlots().push_back( jobs.pop() )
 
-
-
-      ## Prepare jobs for GPU slots only
-      #jobs = self.schedule().getQueue(gpu=True)
-      #while self.gpu_slots().isAvailable():
-      #  self.gpu_slots().push_back( jobs.pop() )
 
       ## Run the pilot for cpu queue
       self.cpuSlots().execute()
-      ## Run the pilot for gpu queue
-      #self.gpu_slots().execute()
+
+
+      self.checkAvailableResources()
 
 
     return StatusCode.SUCCESS
@@ -142,12 +136,25 @@ class Pilot(Logger):
         job.setStatus( Status.ASSIGNED )
       i=0
       while (self.cpuSlots().isAvailable()) and i<len(jobs):
-        print(jobs[i])
         self.cpuSlots().push_back( jobs[i] )
         i+=1
       self.cpuSlots().execute()
 
 
 
+  def checkAvailableResources(self):
+
+    if self.__resouces_clock():
+      usedmem = self.orchestrator().getMemoryConsume()
+      usedcpu = self.orchestrator().getCPUConsume()
+      MSG_INFO( self, Color.CBLUE2 + "CPU usage   : %1.4f " + Color.CEND, usedcpu, usedmem )
+      MSG_INFO( self, Color.CBLUE2 + "Memory usage: %1.4f " + Color.CEND, usedcpu, usedmem )
+      if (usedmem < 90.) and (usedcpu < 90.):
+        self.cpuSlots().increment()
+        MSG_INFO( self ,"Increment the CPU slots. The size is %d",  self.cpuSlots().size() )
+
+      else:
+        self.cpuSlots().decrement()
+        MSG_INFO( self ,"Decrement the CPU slots. The size is %d",  self.cpuSlots().size() )
 
 

@@ -1,8 +1,8 @@
 
 
 from ringerdb import RingerDB
-url = 'postgres://ringer:6sJ09066sV1990;6@postgres-ringer-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/ringer'
-
+#url = 'postgres://ringer:6sJ09066sV1990;6@postgres-ringer-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/ringer'
+url = 'postgres://lps:DuQDYsBP@postgres-lps-cluster-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/postgres'
 
 
 from orchestra import *
@@ -16,8 +16,18 @@ orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster
 
 
 pilot = Pilot( db, schedule, orchestrator )
-cpu = CPUSlots( "CPU" , 10 ) 
-gpu = GPUSlots( "CPU" , [5] ) 
+
+
+cpu_nodes = 1
+
+cpu = CPUSlots( "CPU" , cpu_nodes )
+
+
+
+gpu_nodes = [
+              GPUNode( 'node04', 0 ),
+            ]
+gpu = GPUSlots( "CPU" , gpu_nodes )
 
 
 pilot.setSlots(cpu)

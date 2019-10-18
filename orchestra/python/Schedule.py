@@ -2,17 +2,15 @@
 __all__ = ["Schedule"]
 
 
-from Gaugi import Logger, NotSet
+from Gaugi import Logger, NotSet, Color
 from Gaugi.messenger.macros import *
 from Gaugi import StatusCode
 import time
 from sqlalchemy import and_, or_
 from orchestra.enumerations import *
-from orchestra.constants import *
-
 from ringerdb.models import *
-
-from orchestra.constants import MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
+from orchestra.utilities import Clock
+from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
 
 
 
@@ -22,24 +20,10 @@ class Schedule(Logger):
 
     Logger.__init__(self, name=name)
     self.__rules = rules
-    self.__then = NotSet
-    self.__maxUpdateTime = MAX_UPDATE_TIME
+    self.__clock = Clock(MAX_UPDATE_TIME)
 
   def initialize(self):
     return StatusCode.SUCCESS
-
-
-  def tictac( self ):
-    if self.__then is NotSet:
-      self.__then = time.time()
-      return False
-    else:
-      now = time.time()
-      if (now-self.__then) > self.__maxUpdateTime:
-        # reset the time
-        self.__then = NotSet
-        return True
-    return False
 
 
   def setDatabase(self, db):
@@ -50,28 +34,27 @@ class Schedule(Logger):
     return self._db
 
 
-
-
-
-
   def calculate(self):
 
 
     for user in self.db().getAllUsers():
 
-      MSG_INFO(self,"Caluclating for %s", user )
+      MSG_INFO(self, Color.CWHITE2 + "<<< Calculating the job priority for %s >>>" + Color.CEND, user.username )
+
       # Get the initial priority of the user
       maxPriority = user.getMaxPriority()
-      MSG_INFO( self, "%s with max priority: %d", user.getUserName, user.getMaxPriority())
       # Get the number of tasks
       tasks = user.getAllTasks(CLUSTER_NAME)
 
       for task in tasks:
 
-        MSG_INFO(self,"Task status is %s",task.getStatus())
+        MSG_INFO(self, "Looking for task name: %s", task.taskName )
+
+        MSG_INFO(self, "The current Task has status: " + Color.CGREEN2 + "[" + task.getStatus() + "]" + Color.CEND)
+
         # Get the task status (REGISTED, TESTING, RUNNING, BROKEN, DONE)
         if task.getStatus() == Status.REGISTERED:
-          MSG_INFO(self, "Task with status: registered")
+          MSG_INFO(self, "Setting some jobs to the 'testing' phase...")
           # We need to check if this is a good task to proceed.
           # To test, we will launch 10 first jobs and if 80%
           # of jobs is DONE, we will change the task status to
@@ -87,17 +70,15 @@ class Schedule(Logger):
           # Check if we can change the task status to RUNNING or BROKEN.
           # If not, this will still TESTING until we decide each signal
           # will be assigned to this task
-          MSG_INFO(self, "Task with status: testing")
+          MSG_INFO(self, "Waiting for the testing jobs...")
           self.checkTask( task )
 
         elif task.getStatus() == Status.RUNNING:
           # If this task was assigned as RUNNING, we must recalculate
           # the priority of all jobs inside of this task.
-          MSG_INFO(self, "Task with status: running")
           self.checkTask( task )
 
-        else: # DONE, BROKEN or FAILED Status
-          MSG_INFO(self, "continue...")
+        else: # HOLDED, DONE, BROKEN or FAILED Status
           continue
 
       self.calculatePriorities( user )
@@ -110,8 +91,7 @@ class Schedule(Logger):
 
   def execute(self):
     # Calculate the priority for every N minute
-    if self.tictac():
-      MSG_INFO(self, "Calculate...")
+    if self.__clock():
       self.calculate()
 
 
@@ -127,12 +107,11 @@ class Schedule(Logger):
     priority = user.getMaxPriority( )
     jobs = task.getAllJobs()
     njobs = len(jobs)
-    MSG_INFO(self, "setJobsToBeTested")
     max_test_jobs=njobs if njobs < MAX_TEST_JOBS else MAX_TEST_JOBS
     jobCount = 0
     while (jobCount < MAX_TEST_JOBS):
       try:
-        MSG_INFO(self, "add job to the test stack...")
+        MSG_INFO(self, "Including one job to the testing phase...")
         jobs[jobCount].setPriority(priority)
         jobs[jobCount].setStatus(Status.ASSIGNED)
         jobCount+=1
@@ -144,17 +123,16 @@ class Schedule(Logger):
 
   def checkTask( self, task ):
 
-    MSG_INFO(self, "Check Tasks assigned...")
 
     if task.getStatus() == Status.TESTING:
       # Maybe we need to checge these rules
       if len(self.db().session().query(Job).filter( and_( or_( Job.status==Status.FAILED,  Job.status==Status.BROKEN), Job.taskId==task.id )).all()) == MAX_FAILED_JOBS:
         task.setStatus( Status.BROKEN )
-        MSG_INFO(self, "broken...")
+        MSG_INFO(self, "The current task will be signoff with status: " + Color.CRED2 + "[BROKEN]" + Color.CEND)
         # kill all jobs into the task assigned as broken status
         self.closeAllJobs( task )
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.DONE, Job.taskId==task.id )).all()) == MIN_SUCCESS_JOBS:
-        MSG_INFO(self,"assigned all jobs!")
+        MSG_INFO(self,"The test was completed with status: " + Color.CWHITE2 + "[RUNNING]" + Color.CEND)
         task.setStatus( Status.RUNNING )
         self.db().commit()
         self.assignedAllJobs(task)
@@ -165,6 +143,7 @@ class Schedule(Logger):
     elif task.getStatus() == Status.RUNNING:
       # The task is running. Here, we will check if its completed.
       if len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) == 0:
+        MSG_INFO(self,"The task was completed with status: " + Color.CBLUE2 + "[DONE]" + Color.CEND)
         task.setStatus( Status.DONE )
 
 
@@ -188,6 +167,7 @@ class Schedule(Logger):
 
 
   def assignedAllJobs( self, task ):
+    MSG_INFO(self, "Assigning all jobs into the current task...")
     for job in task.getAllJobs():
       if job.getStatus() == Status.REGISTERED:
         job.setStatus( Status.ASSIGNED )
@@ -209,15 +189,16 @@ class Schedule(Logger):
 
   def getGPUQueue( self ):
     try:
-      MSG_INFO(self, "Getting GPU queue...")
       return self.db().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==True, Job.cluster==CLUSTER_NAME) ).order_by(Job.priority).all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []
 
+
   def getAllRunningJobs(self):
     try:
-      MSG_INFO(self, "Getting all running jobs...")
+
+      MSG_INFO(self, "Getting all jobs with status: " + Color.CGREEN2+"[RUNNING]" + Color.CEND)
       return self.db().session().query(Job).filter( and_( Job.cluster==CLUSTER_NAME , Job.status==Status.RUNNING) ).all()
     except Exception as e:
       MSG_ERROR(self,e)

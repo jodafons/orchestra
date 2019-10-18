@@ -3,7 +3,7 @@ kind: Config
 clusters:
 - name: "lps-cluster"
   cluster:
-    server: "https://localhost:443/k8s/clusters/c-856c4"
+    server: "https://localhost:8889/k8s/clusters/c-856c4"
     certificate-authority-data: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM3akNDQ\
       WRhZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFvTVJJd0VBWURWUVFLRXdsMGFHVXQKY\
       21GdVkyZ3hFakFRQmdOVkJBTVRDV05oZEhSc1pTMWpZVEFlRncweE9UQTVNalV4TmpNek5EQmFGd\
