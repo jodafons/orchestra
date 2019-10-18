@@ -1,4 +1,4 @@
-# orchestra  <img src="External/icons/kubernetes-horizontal-all-blue-color.png" width="50" height="50">
+# orchestra  <img src="External/icons/kubernetes-horizontal-all-blue-color.png" width="100" height="50">
 
 
 
