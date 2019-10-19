@@ -73,10 +73,10 @@ class Orchestrator(Logger):
   # Get the current status of the job.
   # Should be: FAILED, RUNNING or DONE
   #
-  def status( self, name, namespace ):
+  def status( self, name, namespace, max_fail=MAX_FAIL ):
     if self.exist( name, namespace ):
       resp = self.batch().read_namespaced_job_status( name=name, namespace=namespace )
-      if resp.status.failed and resp.status.failed > MAX_FAIL:
+      if resp.status.failed and resp.status.failed > max_fail:
         return Status.FAILED
       elif resp.status.succeeded:
         return Status.DONE
@@ -104,8 +104,9 @@ class Orchestrator(Logger):
     #posExecArgs = "if ! (($?)); then exit 1; fi"
     posExecArgs = "exit $?"
 
-
-    if node.device():
+    print(node.device())
+    if node.device() is not None:
+      MSG_INFO( self, "Setting this (%s) with GPU device (%d)", name, node.device() )
       template['spec']['template']['spec']['containers'][0]['resources']=\
       {
           'limits':{'nvidia.com/gpu':1},

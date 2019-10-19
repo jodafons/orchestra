@@ -26,7 +26,7 @@ class Pilot(Logger):
   def setCPUSlots( self, slot ):
     self.__cpu_slot = slot
 
-  def setCPUSlots( self, slot ):
+  def setGPUSlots( self, slot ):
     self.__gpu_slot = slot
 
 

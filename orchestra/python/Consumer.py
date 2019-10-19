@@ -6,6 +6,7 @@ from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
 from orchestra import Status
+from orchestra.constants import MAX_FAIL
 import hashlib
 
 class Consumer( Logger ):
@@ -26,7 +27,10 @@ class Consumer( Logger ):
     self.__hash = hash_object.hexdigest()
     # the namespace is the username
     self.__namespace = job.getTask().getUser().getUserName()
-    self.__name = 'user.' + self.__namespace + '.' + self.__hash[:10]
+    if node.device() is not None:
+      self.__name = 'user.' + self.__namespace + '.gpu.' + self.__hash
+    else: # To make easier to identify gpu jobs into the workload dashboard
+      self.__name = 'user.' + self.__namespace + '.' + self.__hash
     MSG_INFO(self, "Create consumer with name: %s for namespace: %s", self.__name, self.__namespace)
 
 
@@ -94,6 +98,17 @@ class Consumer( Logger ):
     elif self.broken():
       return Status.BROKEN
     else: # Return the kubernetes status
-      return self.orchestrator().status(self.name(), self.namespace())
+      # If this consumer is running in GPU mode, we dont need
+      # to give the chance to kubernetes to retry in another node
+      # Maybe, this job can be assigned in a node without GPU in case
+      # of fail. Herem we will tell to orchestrator to check the status
+      # with max fail equal one. Otherwise will be three.
+      if self.node().device() is not None:
+        # GPU case with max fail equal one
+        return self.orchestrator().status(self.name(), self.namespace(), 1)
+      else:
+        # default case with max fail equal three
+        return self.orchestrator().status(self.name(), self.namespace(), MAX_FAIL)
+
 
 
