@@ -10,22 +10,23 @@ from orchestra import *
 
 # Create all services
 schedule      = Schedule( "Schedule", LCGRule())
-db            = RingerDB('jodafons', url)
-
+db            = RingerDB(url)
 orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
 
 
-pilot = Pilot( db, schedule, orchestrator )
+pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=True )
 
 
-cpu_nodes = 1
-
+cpu_nodes = 100
 cpu = CPUSlots( "CPU" , cpu_nodes )
 
 
 
 gpu_nodes = [
-              GPUNode( 'node04', 0 ),
+              # GPUNode( name, device )
+              GPUNode( 'node04'     , 0 ),
+              GPUNode( 'cessy'      , 0 ),
+              GPUNode( 'marselha'   , 0 ),
             ]
 gpu = GPUSlots( "CPU" , gpu_nodes )
 

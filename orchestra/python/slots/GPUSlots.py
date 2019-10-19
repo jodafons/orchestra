@@ -5,7 +5,8 @@ from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
 from orchestra.slots import Slots
 from collections import deque
-
+from orchestra.Consumer import Consumer
+from orchestra.enumerations import Status
 
 class GPUNode( Logger ):
   def __init__(self, name, device ):
@@ -65,7 +66,7 @@ class GPUSlots( Slots ):
 
 
   def update(self):
-    for idx, consumer in enumerate(self.__slots):
+    for idx, consumer in enumerate(self._slots):
 
       # consumer.status is not DB like, this is internal of kubernetes
       # In DB, the job was activated but here, we put as pending to wait the
@@ -80,7 +81,7 @@ class GPUSlots( Slots ):
           consumer.job().setStatus( Status.BROKEN )
           consumer.finalize()
           consumer.node().unlock()
-          self.__slots.remove(consumer)
+          self._slots.remove(consumer)
         else: # change to running status
           # Tell to DB that this job is running
           consumer.job().setStatus( Status.RUNNING )
@@ -91,7 +92,7 @@ class GPUSlots( Slots ):
         consumer.finalize()
         # Remove this job into the stack
         consumer.node().unlock()
-        self.__slots.remove(consumer)
+        self._slots.remove(consumer)
       # Kubernetes job is running. Go to the next slot...
       elif consumer.status() is Status.RUNNING:
         continue
@@ -100,7 +101,7 @@ class GPUSlots( Slots ):
         consumer.job().setStatus( Status.DONE )
         consumer.finalize()
         consume.node().unlock()
-        self.__slots.remove(consumer)
+        self._slots.remove(consumer)
 
     self.db().commit()
 
@@ -118,7 +119,7 @@ class GPUSlots( Slots ):
       # TODO: the job must set the internal status to ACTIVATED mode
       obj.initialize()
       obj.job().setStatus( Status.ACTIVATED )
-      self.__slots.append( obj )
+      self._slots.append( obj )
       node.lock()
     else:
       MSG_WARNING( self, "You asked to add one job into the stack but there is no available slots yet." )

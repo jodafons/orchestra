@@ -16,8 +16,7 @@ class Slots( Logger ):
   def __init__(self,name, maxlength ) :
     Logger.__init__(self,name=name)
     self.__total = maxlength
-    #self._slots = [None for _ in range(self._total)]
-    self.__slots = list()
+    self._slots = list()
 
   def setDatabase( self, db ):
     self.__db = db
@@ -60,7 +59,7 @@ class Slots( Logger ):
   def update(self):
 
 
-    for idx, consumer in enumerate(self.__slots):
+    for idx, consumer in enumerate(self._slots):
 
       # consumer.status is not DB like, this is internal of kubernetes
       # In DB, the job was activated but here, we put as pending to wait the
@@ -92,7 +91,7 @@ class Slots( Logger ):
       elif consumer.status() is Status.DONE:
         consumer.job().setStatus( Status.DONE )
         consumer.finalize()
-        self.__slots.remove(consumer)
+        self._slots.remove(consumer)
 
     self.db().commit()
 
@@ -109,7 +108,7 @@ class Slots( Logger ):
       # TODO: the job must set the internal status to ACTIVATED mode
       obj.initialize()
       obj.job().setStatus( Status.ACTIVATED )
-      self.__slots.append( obj )
+      self._slots.append( obj )
     else:
       MSG_WARNING( self, "You asked to add one job into the stack but there is no available slots yet." )
 
@@ -120,7 +119,7 @@ class Slots( Logger ):
 
 
   def isAvailable(self):
-    return True if len(self.__slots) < self.size() else False
+    return True if len(self._slots) < self.size() else False
 
 
   def increment( self ):

@@ -24,16 +24,27 @@ class Consumer( Logger ):
     self.__broken=False
     hash_object = hashlib.md5(str.encode(job.execArgs))
     self.__hash = hash_object.hexdigest()
-    MSG_INFO(self, "Create consumer with hash: %s", self.__hash)
+    # the namespace is the username
+    self.__namespace = job.getTask().getUser().getUserName()
+    self.__name = 'user.' + self.__namespace + '.' + self.__hash[:10]
+    MSG_INFO(self, "Create consumer with name: %s for namespace: %s", self.__name, self.__namespace)
 
-  def hash(self):
-    return self.__hash
+
+  def name(self):
+    return self.__name
+
+
+  def namespace(self):
+    return self.__namespace
+
 
   def job(self):
     return self.__job
 
+
   def node(self):
     return self.__gpu_node
+
 
   def setOrchestrator(self, orchestrator):
     self.__orchestrator=orchestrator
@@ -42,16 +53,16 @@ class Consumer( Logger ):
   def orchestrator(self):
     return self.__orchestrator
 
+
   def initialize(self):
     if self.orchestrator() is NotSet:
       MSG_FATAL(self, "you must pass the orchestrator to consumer.")
     return StatusCode.SUCCESS
 
 
-
   def execute(self):
     try:
-      self.orchestrator().create( self.__hash, self.__job.containerImage, self.__job.execArgs, gpu_node=self.node() )
+      self.orchestrator().create( self.name(), self.namespace(), self.__job.containerImage, self.__job.execArgs, gpu_node=self.node() )
       self.__pending=False
     except Exception as e:
       MSG_ERROR(self, e)
@@ -61,14 +72,12 @@ class Consumer( Logger ):
     return StatusCode.SUCCESS
 
 
-
   def finalize(self):
     if self.broken():
       MSG_DEBUG(self, "this consumer has no container into the rancher server. There is no thing to do...")
     else:
-      self.orchestrator().delete( self.__hash )
+      self.orchestrator().delete( self.name(), self.namespace() )
     return StatusCode.SUCCESS
-
 
 
   def broken(self):
@@ -85,6 +94,6 @@ class Consumer( Logger ):
     elif self.broken():
       return Status.BROKEN
     else: # Return the kubernetes status
-      return self.orchestrator().status(self.__hash)
+      return self.orchestrator().status(self.name(), self.namespace())
 
 

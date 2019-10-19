@@ -12,7 +12,7 @@ from orchestra.enumerations import *
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator):
+  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False):
     Logger.__init__(self)
     self.__cpu_slot = NotSet
     self.__gpu_slot = NotSet
@@ -20,7 +20,7 @@ class Pilot(Logger):
     self.__schedule = schedule
     self.__orchestrator = orchestrator
     self.__resouces_clock = Clock( 0.5* MINUTE )
-
+    self.__bypass_gpu_rule = bypass_gpu_rule
 
 
   def setSlots( self, slot ):
@@ -103,15 +103,29 @@ class Pilot(Logger):
       jobs = self.schedule().getCPUQueue()
 
 
+      if self.__bypass_gpu_rule:
+        # Taken from CPU queue. In this case, the job can be
+        # assigned to gpu or gpu.
+        while (self.gpuSlots().isAvailable()) and len(jobs)>0:
+          self.gpuSlots().push_back( jobs.pop() )
+      else:
+        jobs_gpu = self.schedule().getGPUQueue()
+        while (self.gpuSlots().isAvailable()) and len(jobs_gpu)>0:
+          self.gpuSlots().push_back( jobs_gpu.pop() )
+
+
       while (self.cpuSlots().isAvailable()) and len(jobs)>0:
         self.cpuSlots().push_back( jobs.pop() )
 
 
+
       ## Run the pilot for cpu queue
       self.cpuSlots().execute()
+      ## Run the pilot for gpu queue
+      self.gpuSlots().execute()
 
 
-      self.checkAvailableResources()
+      #self.checkAvailableResources()
 
 
     return StatusCode.SUCCESS

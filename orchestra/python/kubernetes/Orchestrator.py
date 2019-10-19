@@ -73,9 +73,9 @@ class Orchestrator(Logger):
   # Get the current status of the job.
   # Should be: FAILED, RUNNING or DONE
   #
-  def status( self, name ):
-    if self.exist( name ):
-      resp = self.batch().read_namespaced_job_status( name=name, namespace='default' )
+  def status( self, name, namespace ):
+    if self.exist( name,, namespace ):
+      resp = self.batch().read_namespaced_job_status( name=name, namespace=namespace )
       if resp.status.failed and resp.status.failed > MAX_FAIL:
         return Status.FAILED
       elif resp.status.succeeded:
@@ -88,11 +88,11 @@ class Orchestrator(Logger):
   #
   # Create the job using a template
   #
-  def create( self, name, containerImage, execArgs, gpu_node=None ):
+  def create( self, name, namespace, containerImage, execArgs, gpu_node=None ):
 
     # Check if the job exist.
-    if self.exist( name ):
-      self.delete( name )
+    if self.exist( name, namespace ):
+      self.delete( name, namespace )
     # Generate the template
     template = self.getTemplate()
     template['metadata']['name'] = name
@@ -123,7 +123,8 @@ class Orchestrator(Logger):
 
     # Send the job configuration to cluster kube server
     MSG_INFO( self, Color.CVIOLET2+"Launching job using kubernetes..."+Color.CEND)
-    resp = self.batch().create_namespaced_job(body=template, namespace='default')
+
+    resp = self.batch().create_namespaced_job(body=template, namespace=namespace)
     name = resp.metadata.name
     return name
 
@@ -131,10 +132,10 @@ class Orchestrator(Logger):
   #
   # Delete an single job by name
   #
-  def delete( self, name ):
+  def delete( self, name, namespace ):
     try:
       body = client.V1DeleteOptions(propagation_policy='Background')
-      resp = self.batch().delete_namespaced_job(name=name, namespace='default',body=body)
+      resp = self.batch().delete_namespaced_job(name=name, namespace=namespace,body=body)
       time.sleep(5)
       return True
     except Exception as e:
@@ -144,8 +145,8 @@ class Orchestrator(Logger):
   #
   # Delete all jobs
   #
-  def delete_all( self ):
-    resp = self.batch().list_namespaced_job(namespace='default')
+  def delete_all( self, namespace ):
+    resp = self.batch().list_namespaced_job(namespace=namespace)
     for item in resp.items:
       self.delete(item.metadata.name)
 
@@ -153,9 +154,9 @@ class Orchestrator(Logger):
   #
   # Check if a job exist into the kubernetes
   #
-  def exist( self, name ):
+  def exist( self, name , namespace):
     try:
-      resp = self.batch().list_namespaced_job(namespace='default')
+      resp = self.batch().list_namespaced_job(namespace=namespace)
       for item in resp.items:
         if name == item.metadata.name:
           return True
@@ -167,8 +168,8 @@ class Orchestrator(Logger):
   #
   # List all jobs
   #
-  def list( self ):
-    resp = self.batch().list_namespaced_job(namespace='default')
+  def list( self, namespace ):
+    resp = self.batch().list_namespaced_job(namespace=namespace)
     for item in resp.items:
       MSG_INFO(self,
             "%s\t%s\t%s" %

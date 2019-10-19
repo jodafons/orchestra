@@ -10,7 +10,7 @@ MIN_SUCCESS_JOBS =1
 MAX_FAILED_JOBS = 1
 
 # Time to update all priorities from the schedule
-MAX_UPDATE_TIME = 5*MINUTE
+MAX_UPDATE_TIME = 20 #5*MINUTE
 
 
 # Max trial from kubernetes
