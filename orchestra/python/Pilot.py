@@ -23,19 +23,16 @@ class Pilot(Logger):
     self.__bypass_gpu_rule = bypass_gpu_rule
 
 
-  def setSlots( self, slot ):
-    if type(slot) is CPUSlots:
-      self.__cpu_slot = slot
-    elif type(slot) is GPUSlots:
-      self.__gpu_slot = slot
-    else:
-      MSG_ERROR(self, "slot must be CPUSlots or GPUSlots.")
+  def setCPUSlots( self, slot ):
+    self.__cpu_slot = slot
 
+  def setCPUSlots( self, slot ):
+    self.__gpu_slot = slot
 
 
   def treat(self):
     if not (self.cpuSlots() and self.gpuSlots()):
-      MSG_FATAL( self, "cpu and gpu slots not set. You must set one or bouth" )
+      MSG_FATAL( self, "cpu and gpu slots not set. You must set bouth" )
 
 
   def db(self):
@@ -125,7 +122,6 @@ class Pilot(Logger):
       self.gpuSlots().execute()
 
 
-      #self.checkAvailableResources()
 
 
     return StatusCode.SUCCESS
@@ -154,21 +150,5 @@ class Pilot(Logger):
         i+=1
       self.cpuSlots().execute()
 
-
-
-  def checkAvailableResources(self):
-
-    if self.__resouces_clock():
-      usedmem = self.orchestrator().getMemoryConsume()
-      usedcpu = self.orchestrator().getCPUConsume()
-      MSG_INFO( self, Color.CBLUE2 + "CPU usage   : %1.4f " + Color.CEND, usedcpu, usedmem )
-      MSG_INFO( self, Color.CBLUE2 + "Memory usage: %1.4f " + Color.CEND, usedcpu, usedmem )
-      if (usedmem < 90.) and (usedcpu < 90.):
-        self.cpuSlots().increment()
-        MSG_INFO( self ,"Increment the CPU slots. The size is %d",  self.cpuSlots().size() )
-
-      else:
-        self.cpuSlots().decrement()
-        MSG_INFO( self ,"Decrement the CPU slots. The size is %d",  self.cpuSlots().size() )
 
 

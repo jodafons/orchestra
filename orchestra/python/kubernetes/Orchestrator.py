@@ -74,7 +74,7 @@ class Orchestrator(Logger):
   # Should be: FAILED, RUNNING or DONE
   #
   def status( self, name, namespace ):
-    if self.exist( name,, namespace ):
+    if self.exist( name, namespace ):
       resp = self.batch().read_namespaced_job_status( name=name, namespace=namespace )
       if resp.status.failed and resp.status.failed > MAX_FAIL:
         return Status.FAILED
@@ -88,7 +88,7 @@ class Orchestrator(Logger):
   #
   # Create the job using a template
   #
-  def create( self, name, namespace, containerImage, execArgs, gpu_node=None ):
+  def create( self, name, namespace, containerImage, execArgs, node ):
 
     # Check if the job exist.
     if self.exist( name, namespace ):
@@ -97,21 +97,22 @@ class Orchestrator(Logger):
     template = self.getTemplate()
     template['metadata']['name'] = name
     template['spec']['template']['spec']['containers'][0]['image']=containerImage
+    template['spec']['template']['spec']['nodeName']= node.name()
 
     #execArgs = self.__policy.check( execArgs )
     preExecArgs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID'"
     #posExecArgs = "if ! (($?)); then exit 1; fi"
     posExecArgs = "exit $?"
 
-    if gpu_node:
-      template['spec']['template']['spec']['nodeName']= gpu_node.name()
+
+    if node.device():
       template['spec']['template']['spec']['containers'][0]['resources']=\
       {
           'limits':{'nvidia.com/gpu':1},
           'requests':{'nvidia.com/gpu': 1}
       }
       # Append the device arg in execArgs to use a specifically GPU device
-      preExecArgs += " && export CUDA_VISIBLE_DEVICES=%d"%( gpu_node.device() )
+      preExecArgs += " && export CUDA_VISIBLE_DEVICES=%d"%( node.device() )
     else:
       # Force the job to not see and GPU device in case of the node has GPU installed or
       # the job is in GPU node but the device is not requested

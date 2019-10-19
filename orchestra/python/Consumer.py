@@ -15,11 +15,11 @@ class Consumer( Logger ):
   # the database job object), node (use this to choose a specific node for
   # gpu staff
   #
-  def __init__(self, job,  gpu_node=None ):
+  def __init__(self, job,  node ):
     Logger.__init__(self)
     self.__job = job
     self.__orchestrator = NotSet
-    self.__gpu_node = gpu_node
+    self.__node = node
     self.__pending=True
     self.__broken=False
     hash_object = hashlib.md5(str.encode(job.execArgs))
@@ -43,7 +43,7 @@ class Consumer( Logger ):
 
 
   def node(self):
-    return self.__gpu_node
+    return self.__node
 
 
   def setOrchestrator(self, orchestrator):
@@ -62,7 +62,7 @@ class Consumer( Logger ):
 
   def execute(self):
     try:
-      self.orchestrator().create( self.name(), self.namespace(), self.__job.containerImage, self.__job.execArgs, gpu_node=self.node() )
+      self.orchestrator().create( self.name(), self.namespace(), self.__job.containerImage, self.__job.execArgs, self.node() )
       self.__pending=False
     except Exception as e:
       MSG_ERROR(self, e)

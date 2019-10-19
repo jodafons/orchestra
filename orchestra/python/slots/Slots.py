@@ -1,5 +1,5 @@
 
-__all__ = ["Slots"]
+__all__ = ["GPUNode","CPUNode", "Slots"]
 
 
 from Gaugi import Logger, NotSet
@@ -11,12 +11,64 @@ from orchestra import Status
 from orchestra.Consumer import Consumer
 
 
+
+class GPUNode( object ):
+  def __init__(self, name, device ):
+    self.__name = name
+    self.__device = device
+    self.__available = True
+
+  def name(self):
+    return self.__name
+
+  def device(self):
+    return self.__device
+
+  def isAvailable( self ):
+    return self.__available
+
+  def lock( self ):
+    self.__available = False
+
+  def unlock( self ):
+    self.__available = True
+
+
+
+class CPUNode( object ):
+  def __init__(self, name):
+    self.__name = name
+    self.__available = True
+
+  def name(self):
+    return self.__name
+
+  def isAvailable( self ):
+    return self.__available
+
+  def lock( self ):
+    self.__available = False
+
+  def unlock( self ):
+    self.__available = True
+
+  def device(self):
+    return None
+
+
+
+
+
+
+
 class Slots( Logger ):
 
-  def __init__(self,name, maxlength ) :
+  def __init__(self,name, nodes ) :
     Logger.__init__(self,name=name)
-    self.__total = maxlength
-    self._slots = list()
+    self.__total = len(nodes)
+    self.__slots = list()
+    self.__available_nodes = nodes
+
 
   def setDatabase( self, db ):
     self.__db = db
@@ -56,10 +108,41 @@ class Slots( Logger ):
     return StatusCode.SUCCESS
 
 
+  def size(self):
+    return self.__total
+
+
+
+  def isAvailable(self):
+    return True if len(self.__slots) < self.size() else False
+
+
+  #def increment( self ):
+  #  self.__total+=1
+
+
+  #def decrement( self ):
+  #  self.__total-=1
+
+
+  #def setSize( self, total ):
+  #  self.__total=total
+
+
+  def unlockAll(self):
+    for node in self.__available_nodes:
+      node.unlock()
+
+
+  def getAvailableNode(self):
+    for node in self.__available_nodes:
+      if node.isAvailable():
+        return node
+    return None
+
+
   def update(self):
-
-
-    for idx, consumer in enumerate(self._slots):
+    for idx, consumer in enumerate(self.__slots):
 
       # consumer.status is not DB like, this is internal of kubernetes
       # In DB, the job was activated but here, we put as pending to wait the
@@ -73,6 +156,7 @@ class Slots( Logger ):
           # Tell to DB that this job is in broken status
           consumer.job().setStatus( Status.BROKEN )
           consumer.finalize()
+          consumer.node().unlock()
           self.__slots.remove(consumer)
         else: # change to running status
           # Tell to DB that this job is running
@@ -83,6 +167,7 @@ class Slots( Logger ):
         consumer.job().setStatus( Status.FAILED )
         consumer.finalize()
         # Remove this job into the stack
+        consumer.node().unlock()
         self.__slots.remove(consumer)
       # Kubernetes job is running. Go to the next slot...
       elif consumer.status() is Status.RUNNING:
@@ -91,9 +176,11 @@ class Slots( Logger ):
       elif consumer.status() is Status.DONE:
         consumer.job().setStatus( Status.DONE )
         consumer.finalize()
-        self._slots.remove(consumer)
+        consumer.node().unlock()
+        self.__slots.remove(consumer)
 
     self.db().commit()
+
 
   #
   # Add an job into the stack
@@ -101,36 +188,24 @@ class Slots( Logger ):
   #
   def push_back( self, job ):
     if self.isAvailable():
+      node = self.getAvailableNode()
       # Create the job object
-      obj = Consumer( job )
+      obj = Consumer( job, node )
       # Tell to database that this job will be activated
       obj.setOrchestrator( self.orchestrator() )
       # TODO: the job must set the internal status to ACTIVATED mode
       obj.initialize()
       obj.job().setStatus( Status.ACTIVATED )
-      self._slots.append( obj )
+      self.__slots.append( obj )
+      node.lock()
     else:
       MSG_WARNING( self, "You asked to add one job into the stack but there is no available slots yet." )
 
 
-  def size(self):
-    return self.__total
 
 
 
-  def isAvailable(self):
-    return True if len(self._slots) < self.size() else False
 
 
-  def increment( self ):
-    self.__total+=1
-
-
-  def decrement( self ):
-    self.__total-=1
-
-
-  def setSize( self, total ):
-    self.__total=total
 
 
