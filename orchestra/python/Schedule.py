@@ -8,7 +8,7 @@ from Gaugi import StatusCode
 import time
 from sqlalchemy import and_, or_
 from orchestra.enumerations import *
-from ringerdb.models import *
+from orchestradb.models import *
 from orchestra.utilities import Clock
 from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
 
@@ -54,6 +54,7 @@ class Schedule(Logger):
 
         # Get the task status (REGISTED, TESTING, RUNNING, BROKEN, DONE)
         if task.getStatus() == Status.REGISTERED:
+
           MSG_INFO(self, "Setting some jobs to the 'testing' phase...")
           # We need to check if this is a good task to proceed.
           # To test, we will launch 10 first jobs and if 80%
@@ -65,8 +66,10 @@ class Schedule(Logger):
           # change the task status to: REGISTED to TESTING.
           task.setStatus( Status.TESTING )
           self.db().commit()
+
         # Check if this is a test
         elif task.getStatus() == Status.TESTING:
+
           # Check if we can change the task status to RUNNING or BROKEN.
           # If not, this will still TESTING until we decide each signal
           # will be assigned to this task
@@ -74,6 +77,7 @@ class Schedule(Logger):
           self.checkTask( task )
 
         elif task.getStatus() == Status.RUNNING:
+
           # If this task was assigned as RUNNING, we must recalculate
           # the priority of all jobs inside of this task.
           self.checkTask( task )
@@ -141,8 +145,23 @@ class Schedule(Logger):
         #task.setStatus( Status.TESTING )
 
     elif task.getStatus() == Status.RUNNING:
+
       # The task is running. Here, we will check if its completed.
-      if len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) == 0:
+      if len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) > 0:
+        MSG_INFO(self, "The task still with assigned jobs inside of the task list. Still with running status...")
+
+      # Here, we have zero assigned jobs. But we can have running jobs inside of the jobs list
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING, Job.taskId==task.id )).all()) > 0:
+        MSG_INFO(self, "We don't have any assigned jobs any more. But the task still with running jobs inside of the task list. Still with running status...")
+
+      # Here, we have zero assigned/running jobs. Now, we will decide if the task is done (100% done jobs) or finalized (failed jobs > zero)
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED, Job.taskId==task.id )).all()) > 0:
+        MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
+        MSG_INFO( self, "The task will receive the finalized status since we have more than zero jobs with status as failed.")
+        task.setStatus( Status.FINALIZED )
+
+      else: # All jobs were completed with done status
+        MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
         MSG_INFO(self,"The task was completed with status: " + Color.CBLUE2 + "[DONE]" + Color.CEND)
         task.setStatus( Status.DONE )
 

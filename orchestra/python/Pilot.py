@@ -5,6 +5,8 @@ __all__ = ["Pilot"]
 from Gaugi import Logger, NotSet, StatusCode, Color
 from Gaugi.messenger.macros import *
 
+from sqlalchemy import and_, or_
+from orchestradb.models import *
 from orchestra.slots import *
 from orchestra.constants import *
 from orchestra.utilities import *
@@ -121,7 +123,7 @@ class Pilot(Logger):
       ## Run the pilot for gpu queue
       self.gpuSlots().execute()
 
-
+      self.updateAllBoards()
 
 
     return StatusCode.SUCCESS
@@ -149,6 +151,45 @@ class Pilot(Logger):
         self.cpuSlots().push_back( jobs[i] )
         i+=1
       self.cpuSlots().execute()
+
+
+
+  #
+  # This is for monitoring purpose. Should be used to dashboard view
+  #
+  def updateAllBoards( self ):
+
+    for user in self.db().getAllUsers():
+      # Get the number of tasks
+      tasks = user.getAllTasks(CLUSTER_NAME)
+      #MSG_INFO(self, "Updating all task parameters for user(%s)",user.username)
+
+
+      for task in tasks:
+
+        #MSG_INFO(self, "Looking into %s", task.taskName)
+        try:
+          board = self.db().session().query(TaskBoard).filter( TaskBoard.taskId==task.id ).first()
+        except:
+          board = None
+          #MSG_INFO(self, "The task (%s) does not exist into the table monitoring. Including...",task.taskName)
+
+        # This board is not exist into the database. This should be created first
+        if not board:
+          board = TaskBoard( username=user.username, taskId=task.id, taskName=task.taskName )
+          self.db().session().add(board)
+
+        board.jobs = len(task.getAllJobs())
+        # Get he number of registered jobs for this task
+        board.registered    = len(self.db().session().query(Job).filter( and_( Job.status==Status.REGISTERED, Job.taskId==task.id )).all())
+        board.assigned      = len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED  , Job.taskId==task.id )).all())
+        board.testing       = len(self.db().session().query(Job).filter( and_( Job.status==Status.TESTING   , Job.taskId==task.id )).all())
+        board.running       = len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING   , Job.taskId==task.id )).all())
+        board.done          = len(self.db().session().query(Job).filter( and_( Job.status==Status.DONE      , Job.taskId==task.id )).all())
+        board.failed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all())
+        board.status        = task.status
+        self.db().commit()
+
 
 
 

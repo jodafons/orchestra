@@ -117,7 +117,7 @@ class Orchestrator(Logger):
     else:
       # Force the job to not see and GPU device in case of the node has GPU installed or
       # the job is in GPU node but the device is not requested
-      preExecArgs += " && export CUDA_VISIBLE_DEVICES="
+      preExecArgs += " && export CUDA_VISIBLE_DEVICES='-1'"
 
     command = preExecArgs + " && ("+execArgs+") && " + posExecArgs
 

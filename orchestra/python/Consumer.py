@@ -5,6 +5,7 @@ __all__ = ["Consumer"]
 from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
+from orchestradb.models import *
 from orchestra import Status
 from orchestra.constants import MAX_FAIL
 import hashlib
@@ -108,7 +109,7 @@ class Consumer( Logger ):
         return self.orchestrator().status(self.name(), self.namespace(), 1)
       else:
         # default case with max fail equal three
-        return self.orchestrator().status(self.name(), self.namespace(), MAX_FAIL)
+        return self.orchestrator().status(self.name(), self.namespace(), 1)
 
 
 
