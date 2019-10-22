@@ -1,6 +1,6 @@
 
 
-# How to install Postgres and pgadmin4 in your local server?
+# How to install Postgres and PgAdmin4 in your local server?
 
 
 ```bash
@@ -12,7 +12,7 @@ docker run --name pgadmin --network=postgres-network -p 15432:80 -e "PGADMIN_DEF
 and to connect in your local machine:
 
 ```bash
-sh -L 15432:146.164.147.170:15432 username@bastion.lps.ufrj.br
+ssh -L 15432:146.164.147.170:15432 username@bastion.lps.ufrj.br
 ```
 
 
