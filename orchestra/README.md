@@ -1,4 +1,22 @@
-# NVIDIA device plugin for Kubernetes
+
+
+# How to install Postgres and pgadmin4 in your local server?
+
+
+```bash
+# in your root dir
+docker run --name postgres --network=postgres-network -e "POSTGRES_PASSWORD=postgres" -p 5432:5432 -v $PWD/volume:/var/lib/postgresql/data -d postgres
+docker run --name pgadmin --network=postgres-network -p 15432:80 -e "PGADMIN_DEFAULT_EMAIL=username@lps.ufrj.br" -e "PGADMIN_DEFAULT_PASSWORD=password" -d dpage/pgadmin4
+```
+
+and to connect in your local machine:
+
+```bash
+sh -L 15432:146.164.147.170:15432 username@bastion.lps.ufrj.br
+```
+
+
+# How to Install NVIDIA device plugin for Kubernetes?
 
 ## Table of Contents
 
