@@ -21,7 +21,8 @@ If this job return success than the task will be swith to running state and all 
 - sqlalchemy;
 - kubernetes;
 - benedict;
-- numpy
+- numpy;
+- Akuanduba (https://github.com/gabriel-milan/Akuanduba.git);
 
 ### Setup:
 
