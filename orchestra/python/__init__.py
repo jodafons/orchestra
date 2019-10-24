@@ -8,6 +8,10 @@ from . import enumerations
 __all__.extend(enumerations.__all__)
 from .enumerations import *
 
+from . import db
+__all__.extend(db.__all__)
+from .db import *
+
 from . import slots
 __all__.extend(slots.__all__)
 from .slots import *
@@ -32,6 +36,9 @@ from . import Pilot
 __all__.extend(Pilot.__all__)
 from .Pilot import *
 
+from . import api
+__all__.extend(api.__all__)
+from .api import *
 
 
 

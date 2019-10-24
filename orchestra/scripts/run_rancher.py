@@ -1,6 +1,6 @@
 
 from orchestra import *
-from orchestradb import OrchestraDB
+from orchestra.db import OrchestraDB
 
 
 # 1 core per job with 5GB
@@ -18,16 +18,16 @@ MAX_PODS_VERDUN   = 3
 
 
 cpu_pods = []
-cpu_pods.extend(  [CPUNode('node02')    for _ in range(MAX_PODS_NODE_02)]    )
-cpu_pods.extend(  [CPUNode('node03')    for _ in range(MAX_PODS_NODE_03)]    )
-cpu_pods.extend(  [CPUNode('node04')    for _ in range(MAX_PODS_NODE_04)]    )
-cpu_pods.extend(  [CPUNode('node05')    for _ in range(MAX_PODS_NODE_05)]    )
-cpu_pods.extend(  [CPUNode('node06')    for _ in range(MAX_PODS_NODE_06)]    )
-cpu_pods.extend(  [CPUNode('node07')    for _ in range(MAX_PODS_NODE_07)]    )
+#cpu_pods.extend(  [CPUNode('node02')    for _ in range(MAX_PODS_NODE_02)]    )
+#cpu_pods.extend(  [CPUNode('node03')    for _ in range(MAX_PODS_NODE_03)]    )
+#cpu_pods.extend(  [CPUNode('node04')    for _ in range(MAX_PODS_NODE_04)]    )
+#cpu_pods.extend(  [CPUNode('node05')    for _ in range(MAX_PODS_NODE_05)]    )
+#cpu_pods.extend(  [CPUNode('node06')    for _ in range(MAX_PODS_NODE_06)]    )
+#cpu_pods.extend(  [CPUNode('node07')    for _ in range(MAX_PODS_NODE_07)]    )
 #cpu_pods.extend(  [CPUNode('node08')    for _ in range(MAX_PODS_NODE_08)]    )
-cpu_pods.extend(  [CPUNode('cessy')     for _ in range(MAX_PODS_CESSY)  ]    )
-cpu_pods.extend(  [CPUNode('marselha')  for _ in range(MAX_PODS_MARSELHA)]   )
-cpu_pods.extend(  [CPUNode('verdun')    for _ in range(MAX_PODS_VERDUN)]     )
+#cpu_pods.extend(  [CPUNode('cessy')     for _ in range(MAX_PODS_CESSY)  ]    )
+#cpu_pods.extend(  [CPUNode('marselha')  for _ in range(MAX_PODS_MARSELHA)]   )
+#cpu_pods.extend(  [CPUNode('verdun')    for _ in range(MAX_PODS_VERDUN)]     )
 
 
 
@@ -46,7 +46,8 @@ gpu_pods = [
 
 
 #url = 'postgres://ringer:6sJ09066sV1990;6@postgres-ringer-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/ringer'
-url = 'postgres://lps:DuQDYsBP@postgres-lps-cluster-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/postgres'
+#url = 'postgres://lps:DuQDYsBP@postgres-lps-cluster-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/postgres'
+url = 'postgres://postgres:postgres@localhost:5432/postgres'
 
 
 # Create all services

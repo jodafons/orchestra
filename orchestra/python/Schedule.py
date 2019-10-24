@@ -8,7 +8,7 @@ from Gaugi import StatusCode
 import time
 from sqlalchemy import and_, or_
 from orchestra.enumerations import *
-from orchestradb.models import *
+from orchestra.db.models import *
 from orchestra.utilities import Clock
 from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
 

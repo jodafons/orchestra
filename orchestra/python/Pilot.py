@@ -6,7 +6,7 @@ from Gaugi import Logger, NotSet, StatusCode, Color
 from Gaugi.messenger.macros import *
 
 from sqlalchemy import and_, or_
-from orchestradb.models import *
+from orchestra.db.models import *
 from orchestra.slots import *
 from orchestra.constants import *
 from orchestra.utilities import *

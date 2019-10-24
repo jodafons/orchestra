@@ -1,9 +1,3 @@
 [submodule "Gaugi"]
 	path = Gaugi
 	url = https://github.com/jodafons/Gaugi
-[submodule "External/ringerdb"]
-	path = External/ringerdb
-	url = https://github.com/jodafons/ringerdb
-[submodule "External/orchestradb"]
-	path = External/orchestradb
-	url = https://github.com/jodafons/orchestradb.git
