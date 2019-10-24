@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 
 import argparse
 from Gaugi.messenger import LoggingLevel, Logger
@@ -8,8 +8,10 @@ import numpy as np
 import argparse
 import sys,os
 import hashlib
+from orchestra.db import *
 
-mainLogger = Logger.getModuleLogger("job")
+
+mainLogger = Logger.getModuleLogger("orchestra_create")
 parser = argparse.ArgumentParser(description = '', add_help = False)
 parser = argparse.ArgumentParser()
 
@@ -70,6 +72,12 @@ parser.add_argument('--dry_run', action='store_true', dest='dry_run', required=F
                     help = "Use this as debugger.")
 
 
+parser.add_argument('--bypass', action='store_true', dest='bypass_test_job', required=False, default=False,
+                    help = "Bypass the job test.")
+
+parser.add_argument('--cluster', action='store', dest='cluster', required=False, default='LPS',
+                    help = "The name of your cluster (LPS/CERN/SDUMONT/LOBOC)")
+
 
 
 if len(sys.argv)==1:
@@ -80,15 +88,13 @@ args = parser.parse_args()
 
 
 
-from ringerdb import RingerDB
-from ringerdb import Task, Job
 
 if not args.dry_run:
-  db = RingerDB( args.url )
+  db = OrchestraDB( args.url )
 
 
 # Create the base path to point to the volume
-basepath = '/volume/'+args.username+'/'+args.task
+basepath = '/volume/'+args.task
 
 # Create the data input path
 #dataFile = glob.glob(args.dataFile+'/*')
@@ -104,9 +110,6 @@ print("We will launch %d jobs into the cluster."%len(configFiles))
 
 # Create the output file path
 outputFile = basepath+'/'+args.outputFile
-
-# This should be assigned as LPS name to works
-cluster = "LPS"
 
 # Check the exec command
 execCommand = args.execCommand
@@ -133,14 +136,14 @@ if not args.dry_run:
   try:
     user = db.getUser( args.username )
     task = db.createTask( user, args.task, args.configFile, args.dataFile, args.outputFile,
-                        args.containerImage, cluster,
-                        # Extra args
+                        args.containerImage, args.cluster,
                         secondaryDataPath=args.secondaryData,
                         templateExecArgs=args.execCommand,
                         etBinIdx=args.et,
                         etaBinIdx=args.eta,
                         isGPU=args.gpu,
                         )
+    task.setStatus('hold')
   except Exception as e:
     mainLogger.fatal(e)
 
@@ -158,8 +161,11 @@ for idx, configFile in enumerate(configFiles):
 
   if not args.dry_run:
     job = db.createJob( task, configFile, idx, execArgs=command, isGPU=args.gpu, priority=-1 )
+    job.setStatus('assigned' if args.bypass_test_job else 'registered')
+
 
 if not args.dry_run:
+  task.setStatus( 'running' if args.bypass_test_job else 'registered'  )
   db.commit()
   db.close()
 

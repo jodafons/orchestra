@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 
 import argparse
 from Gaugi.messenger import LoggingLevel, Logger
@@ -9,7 +9,7 @@ import argparse
 import sys,os
 import hashlib
 
-mainLogger = Logger.getModuleLogger("job")
+mainLogger = Logger.getModuleLogger("orchestra_delete")
 parser = argparse.ArgumentParser(description = '', add_help = False)
 parser = argparse.ArgumentParser()
 
@@ -37,9 +37,9 @@ args = parser.parse_args()
 
 
 # Connect to DB
-from ringerdb import RingerDB
-from ringerdb import Task, Job, Model
-db = RingerDB( args.url )
+from orchestra.db import OrchestraDB
+from orchestra.db import Task, Job
+db = OrchestraDB( args.url )
 
 try:
   user = db.getUser( args.username )
@@ -54,24 +54,12 @@ except:
 
 
 id = task.id
-
-
-try:
-  db.session().query(Model).filter(Model.taskId==id).delete()
-except Exception as e:
-  mainLogger.fatal("Impossible to remove Model lines from (%d) task", id)
-
-
-try:
-  db.session().query(Job).filter(Job.taskId==id).delete()
-except Exception as e:
-  mainLogger.fatal("Impossible to remove Job lines from (%d) task", id)
-
-
-try:
-  db.session().query(Task).filter(Task.id==id).delete()
-except Exception as e:
-  mainLogger.fatal("Impossible to remove Task lines from (%d) task", id)
+for job in task.getAllJobs():
+  try:
+    if job.getStatus() == Status.FAILED:
+      job.setStatus(Status.ASSIGNED)
+  except:
+    mainLogger.fatal("Impossible to assigned this job for (%d) task", id)
 
 db.commit()
 db.close()
