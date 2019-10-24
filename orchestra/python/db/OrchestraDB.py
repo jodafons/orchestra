@@ -9,18 +9,18 @@ from orchestra.db.models import*
 import time
 NUMBER_OF_TRIALS=3;
 MINUTE=60;
-
+DEFAULT_URL='postgres://postgres:postgres@localhost:5432/postgres'
 
 
 class OrchestraDB(Logger):
 
-  def __init__( self, url ):
+  def __init__( self, url=DEFAULT_URL ):
 
     Logger.__init__(self)
     self.url = url
 
     try: # Get the connection and create an session
-      MSG_INFO( self, "Connect to %s.", url )
+      MSG_DEBUG( self, "Connect to %s.", url )
       self.__engine = create_engine(url)
       Session= sessionmaker(bind=self.__engine)
       self.__session = Session()
