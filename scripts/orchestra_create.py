@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 from Gaugi.messenger import LoggingLevel, Logger
@@ -11,7 +11,7 @@ import hashlib
 from orchestra.db import *
 
 
-mainLogger = Logger.getModuleLogger("orchestra_create")
+logger = Logger.getModuleLogger("orchestra_create")
 parser = argparse.ArgumentParser(description = '', add_help = False)
 parser = argparse.ArgumentParser()
 
@@ -33,14 +33,6 @@ parser.add_argument('-d','--dataFile', action='store',
 
 parser.add_argument('--exec', action='store', dest='execCommand', required=True,
                     help = "The exec command")
-
-
-parser.add_argument('-u','--username', action='store', dest='username', required=True,
-                    help = "The username.")
-
-
-parser.add_argument('--url', action='store', dest='url', required=True,
-                    help = "The URL to the entry point database")
 
 
 parser.add_argument('--containerImage', action='store', dest='containerImage', required=True,
@@ -81,7 +73,7 @@ parser.add_argument('--cluster', action='store', dest='cluster', required=False,
 
 
 if len(sys.argv)==1:
-  mainLogger.info(parser.print_help())
+  logger.info(parser.print_help())
   sys.exit(1)
 
 args = parser.parse_args()
@@ -90,22 +82,26 @@ args = parser.parse_args()
 
 
 if not args.dry_run:
-  db = OrchestraDB( args.url )
+  db = OrchestraDB()
+
+# check task policy
+taskname = args.task
+taskname = taskname.split('.')
+if taskname[0] == 'user':
+  logger.fatal('The task name must starts with: user.%USER.taskname.')
+username = taskname[1]
+if username in db.getAllUsers():
+  logger.fatal('The username does not exist into the database. Please, report this to the db manager...')
+
 
 
 # Create the base path to point to the volume
 basepath = '/volume/'+args.task
-
-# Create the data input path
-#dataFile = glob.glob(args.dataFile+'/*')
-#if len(dataFile) > 1:
-#  mainLogger.fatal("The data container (file) must have only one file.")
-
 dataFile=basepath+'/'+args.dataFile
 
 # Create the output path
 configFiles = glob.glob(args.configFile+'/*')
-mainLogger.verbose("We will launch %d jobs into the cluster.",len(configFiles) )
+logger.verbose("We will launch %d jobs into the cluster.",len(configFiles) )
 print("We will launch %d jobs into the cluster."%len(configFiles))
 
 # Create the output file path
@@ -114,27 +110,32 @@ outputFile = basepath+'/'+args.outputFile
 # Check the exec command
 execCommand = args.execCommand
 
+
 if not '%DATA' in execCommand:
-  mainLogger.fatal( "The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
+  logger.fatal( "The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
 if not '%IN' in execCommand:
-  mainLogger.fatal( "The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
+  logger.fatal( "The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
 if not '%OUT' in execCommand:
-  mainLogger.fatal( "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
+  logger.fatal( "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
 
 
 # Check for secondary data file
 secondaryData = eval(args.secondaryData)
 for key in secondaryData:
   if not key in execCommand:
-    mainLogger.fatal("The exec command must include %s into the string. This will substitute to %s when start",key, secondaryData[key])
+    logger.fatal("The exec command must include %s into the string. This will substitute to %s when start",key, secondaryData[key])
   #secondaryData[key] = basepath+'/'+ glob.glob(secondaryData[key]+'/*')[0]
   secondaryData[key] = basepath+'/'+ secondaryData[key]
 
 
 
+
+
+
+
 if not args.dry_run:
   try:
-    user = db.getUser( args.username )
+    user = db.getUser( username )
     task = db.createTask( user, args.task, args.configFile, args.dataFile, args.outputFile,
                         args.containerImage, args.cluster,
                         secondaryDataPath=args.secondaryData,
@@ -145,7 +146,7 @@ if not args.dry_run:
                         )
     task.setStatus('hold')
   except Exception as e:
-    mainLogger.fatal(e)
+    logger.fatal(e)
 
 
 for idx, configFile in enumerate(configFiles):
