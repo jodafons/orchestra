@@ -37,7 +37,7 @@ class DashboardAPI (Service):
   def __init__(self, name, update_time = DEFAULT_UPDATE_TIME):
 
     # Mandatory
-    AkuandubaService.__init__(self, name)
+    Service.__init__(self, name)
 
     # My stuff
     self._name = name

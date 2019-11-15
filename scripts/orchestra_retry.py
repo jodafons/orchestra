@@ -31,13 +31,14 @@ args = parser.parse_args()
 # Connect to DB
 from orchestra.db import OrchestraDB
 from orchestra.db import Task, Job
-db = OrchestraDB( args.url )
+from orchestra import Status
+db = OrchestraDB( )
 
 
 # check task policy
-taskname = args.task
+taskname = args.taskname
 taskname = taskname.split('.')
-if taskname[0] == 'user':
+if taskname[0] != 'user':
   logger.fatal('The task name must starts with: user.%USER.taskname.')
 username = taskname[1]
 if username in db.getAllUsers():

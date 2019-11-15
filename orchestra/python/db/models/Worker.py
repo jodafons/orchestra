@@ -1,3 +1,4 @@
+
 __all__=['Worker']
 
 
@@ -61,5 +62,6 @@ class Worker (Base):
 
   def setMaxPriority(self, value):
     self.maxPriority = value
+
 
 

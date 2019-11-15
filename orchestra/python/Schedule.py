@@ -208,7 +208,7 @@ class Schedule(Logger):
 
   def getGPUQueue( self ):
     try:
-      return self.db().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==True, Job.cluster==CLUSTER_NAME) ).order_by(Job.priority).all()
+      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==True, Job.cluster==CLUSTER_NAME) ).order_by(Job.priority).all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []

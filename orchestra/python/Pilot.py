@@ -16,8 +16,8 @@ class Pilot(Logger):
 
   def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False):
     Logger.__init__(self)
-    self.__cpu_slot = NotSet
-    self.__gpu_slot = NotSet
+    self.__cpu_slots = Slots("CPU")
+    self.__gpu_slots = Slots("GPU", gpu=True)
     self.__db = db
     self.__schedule = schedule
     self.__orchestrator = orchestrator
@@ -25,16 +25,7 @@ class Pilot(Logger):
     self.__bypass_gpu_rule = bypass_gpu_rule
 
 
-  def setCPUSlots( self, slot ):
-    self.__cpu_slot = slot
 
-  def setGPUSlots( self, slot ):
-    self.__gpu_slot = slot
-
-
-  def treat(self):
-    if not (self.cpuSlots() and self.gpuSlots()):
-      MSG_FATAL( self, "cpu and gpu slots not set. You must set bouth" )
 
 
   def db(self):
@@ -50,16 +41,17 @@ class Pilot(Logger):
 
 
   def cpuSlots(self):
-    return self.__cpu_slot
+    return self.__cpu_slots
 
 
   def gpuSlots(self):
-    return self.__gpu_slot
+    return self.__gpu_slots
+
+
 
 
   def initialize(self):
 
-    self.treat()
     # connect to the sql database (service)
     # Setup the kubernetes orchestrator (service)
     # link db to schedule
@@ -169,13 +161,13 @@ class Pilot(Logger):
 
         #MSG_INFO(self, "Looking into %s", task.taskName)
         try:
-          board = self.db().session().query(TaskBoard).filter( TaskBoard.taskId==task.id ).first()
+          board = self.db().session().query(TaskBoard).filter( TaskBoard.taskName==task.taskName ).first()
         except:
           board = None
           #MSG_INFO(self, "The task (%s) does not exist into the table monitoring. Including...",task.taskName)
 
         # This board is not exist into the database. This should be created first
-        if not board:
+        if board is None:
           board = TaskBoard( username=user.username, taskId=task.id, taskName=task.taskName )
           self.db().session().add(board)
 

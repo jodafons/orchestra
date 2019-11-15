@@ -29,14 +29,14 @@ args = parser.parse_args()
 
 # Connect to DB
 from orchestra.db import OrchestraDB
-from orchestra.db import Task, Job
-db = OrchestraDB( args.url )
+from orchestra.db import Task, Job, TaskBoard
+db = OrchestraDB()
 
 
 # check task policy
-taskname = args.task
+taskname = args.taskname
 taskname = taskname.split('.')
-if taskname[0] == 'user':
+if taskname[0] != 'user':
   logger.fatal('The task name must starts with: user.%USER.taskname.')
 username = taskname[1]
 if username in db.getAllUsers():
@@ -51,6 +51,7 @@ except:
 
 try:
   task = db.getTask( args.taskname )
+  print(task)
 except:
   logger.fatal("The task name (%s) does not exist into the data base", args.taskname)
 
@@ -70,10 +71,11 @@ try:
 except Exception as e:
   logger.fatal("Impossible to remove Task lines from (%d) task", id)
 
+
 try:
   db.session().query(TaskBoard).filter(Task.id==id).delete()
 except Exception as e:
-  logger.fatal("Impossible to remove Task board lines from (%d) task", id)
+  logger.warning("Impossible to remove Task board lines from (%d) task", id)
 
 
 db.commit()

@@ -5,7 +5,7 @@ from orchestra.db.models import *
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-#engine = create_engine('postgres://ringer:6sJ09066sV1990;6@postgres-ringer-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/ringer')
+#engine = create_enginepostgres://ringer:6sJ09066sV1990;6@postgres-ringer-db.cahhufxxnnnr.us-east-2.rds.amazonaws.com/ringer')
 
 
 
@@ -23,6 +23,13 @@ for user in users:
   obj = Worker( username = user, maxPriority = 1000 )
   session.add(obj)
 
+
+
+machines = ['node02','node03','node04','node05','node06','node07','node08','cessy','marselha','verdun']
+
+for name in machines:
+  obj = Node(name=name, CPUJobs=1, maxCPUJobs=30, GPUJobs=0, maxGPUJobs=0)
+  session.add(obj)
 
 
 session.commit()

@@ -18,7 +18,7 @@ class Status ( EnumStringification ):
   PENDING = "pending"
   STARTING = "starting"
   RUNNING  = "running"
-
+  FINALIZED = "finalized"
 
 
 

@@ -20,6 +20,9 @@ def getStatus(status):
     return Color.CGREEN2+"DONE"
   elif status == 'failed':
     return Color.CRED2+"FAILED"
+  elif status == 'finalized':
+    return Color.CRED2+"FINALIZED"
+
 
 
 
@@ -46,7 +49,15 @@ print ( "|     "+Color.CGREEN2+"username"+Color.CEND+
 
 print(line)
 for task in tasks:
-  print ( ("| {0:<16} | {1:<80} | {2:<8} | {3:<8} | {4:<8} | {5:<8} | {6:<8} | {7:<15}"+Color.CEND+" |" ).format( task.username, task.taskName, task.assigned, task.testing,
+  if len(task.taskName)>80:
+    #taskname = task.taskName[0:75]
+    taskname = task.taskName[0:40]+' ... '+ task.taskName[-30:]
+  else:
+    taskname = task.taskName
+
+
+
+  print ( ("| {0:<16} | {1:<80} | {2:<8} | {3:<8} | {4:<8} | {5:<8} | {6:<8} | {7:<15}"+Color.CEND+" |" ).format( task.username, taskname, task.assigned, task.testing,
       task.running, task.failed, task.done, getStatus(task.status)))
 
 print(line)

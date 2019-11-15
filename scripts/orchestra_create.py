@@ -87,7 +87,7 @@ if not args.dry_run:
 # check task policy
 taskname = args.task
 taskname = taskname.split('.')
-if taskname[0] == 'user':
+if taskname[0] != 'user':
   logger.fatal('The task name must starts with: user.%USER.taskname.')
 username = taskname[1]
 if username in db.getAllUsers():

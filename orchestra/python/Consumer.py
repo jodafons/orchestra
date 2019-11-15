@@ -80,8 +80,10 @@ class Consumer( Logger ):
   def finalize(self):
     if self.broken():
       MSG_DEBUG(self, "this consumer has no container into the rancher server. There is no thing to do...")
+
     else:
       self.orchestrator().delete( self.name(), self.namespace() )
+
     return StatusCode.SUCCESS
 
 

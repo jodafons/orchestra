@@ -230,4 +230,27 @@ class OrchestraDB(Logger):
 
 
 
+  def getAllMachines(self):
+    if not self.isConnected():
+      return False
+
+    try:
+      return self.session().query(Node).all()
+    except Exception as e:
+      MSG_ERROR(self, "Impossible to retrieve nodes from database.")
+      return []
+
+
+
+  def getMachine( self, name ):
+    if not self.isConnected():
+      return None
+    try:
+      return self.session().query(Node).filter(Node.name==name).first()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return None
+
+
+
 

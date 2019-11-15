@@ -19,6 +19,10 @@ from . import TaskBoard
 __all__.extend( TaskBoard.__all__ )
 from .TaskBoard import *
 
+from . import Node
+__all__.extend( Node.__all__ )
+from .Node import *
+
 
 
 

@@ -25,7 +25,7 @@ db            = OrchestraDB(url)
 orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
 
 # create the pilot
-pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=True )
+pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=False )
 
 
 # start!
