@@ -21,8 +21,7 @@ If this job return success than the task will be swith to running state and all 
 - sqlalchemy;
 - kubernetes;
 - benedict;
-- numpy;
-- Akuanduba (https://github.com/gabriel-milan/Akuanduba.git);
+- numpy
 
 ### Setup:
 
@@ -34,6 +33,22 @@ source setup.sh
 ```
 
 ### Usage
+
+```bash
+orchestra_create.py  \
+        --et 0 --eta 0 \
+    -c user.jodafons.job_config.ringer.v10.RingerNet.10sorts.1inits \
+    -o output \
+        -d user.jodafons.data17_13TeV.AllPeriods.sgn.probes_lhmedium_EGAM1.bkg.VProbes_EGAM7.GRL_V97_et0_eta0.npz \
+        -t user.jodafons.my_task \
+        --containerImage jodafons/gpu-base \
+        --secondaryData="{'%REF':'user.jodafons.data17_13TeV.AllPeriods.sgn.probes_lhmedium_EGAM1.bkg.VProbes_EGAM7.GRL_v97_et0_eta0.ref.pic.gz'}" \
+        --exec ". /setup_envs.sh && python3 /code/saphyra/Analysis/RingerNote_2018/tunings/v10/job_tuning.py -d %DATA -c %IN -r %REF -o %OUT -t $TASK -u jodafons" \
+    --cluster LPS \
+    --bypass  \
+    --dry_run
+```
+
 
 
 ### References:

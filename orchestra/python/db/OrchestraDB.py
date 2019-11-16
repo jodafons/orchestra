@@ -6,6 +6,7 @@ from Gaugi.messenger.macros import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from orchestra.db.models import*
+from sqlalchemy import and_, or_
 import time
 NUMBER_OF_TRIALS=3;
 MINUTE=60;
@@ -93,6 +94,8 @@ class OrchestraDB(Logger):
     except Exception as e:
       MSG_ERROR(self, e)
       return None
+
+
 
 
   def getTask( self, taskName ):
@@ -250,6 +253,49 @@ class OrchestraDB(Logger):
     except Exception as e:
       MSG_ERROR(self, e)
       return None
+
+
+
+  def createDataset( self, dataset ):
+
+    if not self.isConnected():
+      return None
+
+    try:
+      self.session().add(dataset)
+      return True
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return False
+
+
+
+  def getAllDatasets( self, username):
+
+    if not self.isConnected():
+      return None
+
+    try:
+      return self.session().query(Dataset).filter(Dataset.username==username).all()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return None
+
+
+
+
+  def getDataset( self, username, dataset ):
+
+    if not self.isConnected():
+      return None
+
+    try:
+      return self.session().query(Dataset).filter(and_( Dataset.username==username, Dataset.dataset==dataset) ).first()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return None
+
+
 
 
 

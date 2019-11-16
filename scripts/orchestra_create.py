@@ -5,6 +5,7 @@ from Gaugi.messenger import LoggingLevel, Logger
 from Gaugi import load
 import glob
 import numpy as np
+import os
 import argparse
 import sys,os
 import hashlib
@@ -70,6 +71,9 @@ parser.add_argument('--bypass', action='store_true', dest='bypass_test_job', req
 parser.add_argument('--cluster', action='store', dest='cluster', required=False, default='LPS',
                     help = "The name of your cluster (LPS/CERN/SDUMONT/LOBOC)")
 
+parser.add_argument('--storagePath', action='store', dest='storagePath', required=False, default='/mnt/cluster-volume',
+                    help = "The path to the storage in the cluster.")
+
 
 
 if len(sys.argv)==1:
@@ -79,38 +83,101 @@ if len(sys.argv)==1:
 args = parser.parse_args()
 
 
+# create the database manager
+db = OrchestraDB()
 
 
-if not args.dry_run:
-  db = OrchestraDB()
-
-# check task policy
+# check task policy (user.username)
 taskname = args.task
 taskname = taskname.split('.')
 if taskname[0] != 'user':
   logger.fatal('The task name must starts with: user.%USER.taskname.')
+
+
+# check task policy (username must exist into the database)
 username = taskname[1]
 if username in db.getAllUsers():
   logger.fatal('The username does not exist into the database. Please, report this to the db manager...')
 
 
+# Check if the task exist into the databse
+print(db.getUser(username).getTask(args.task))
+if db.getUser(username).getTask(args.task) is not None:
+  logger.fatal("The task exist into the database. Abort.")
 
-# Create the base path to point to the volume
+
+# check data (file) is in database
+if db.getDataset(username, args.dataFile) is None:
+  logger.fatal("The file (%s) does not exist into the database. Should be registry first.", args.dataFile)
+
+
+# check configFile (file) is in database
+if db.getDataset(username, args.configFile) is None:
+  logger.fatal("The config file (%s) does not exist into the database. Should be registry first.", args.configFile)
+
+
+# Get the secondary data as dict
+secondaryData = eval(args.secondaryData)
+
+
+# check secondary data paths exist is in database
+for key in secondaryData.keys():
+  if db.getDataset(username, secondaryData[key]) is None:
+    logger.fatal("The secondary data file (%s) does not exist into the database. Should be registry first.", secondaryData[key])
+
+
+# check if task exist into the storage
+storagePath = args.storagePath+'/'+username+'/'+args.task
+if os.path.exists(storagePath):
+  logger.fatal("The task dir exsit into the storage. Contact the administrator.")
+else:
+  # create the task dir
+  logger.info("Create the task dir in %s", storagePath)
+  os.system( 'mkdir %s '%(storagePath) )
+
+
+# create the data (file) link in the storage path
+dataLink = db.getDataset(username, args.dataFile).getAllFiles()[0].getPath()
+logger.info("Create data link (%s)", dataLink)
+os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/', args.dataFile) )
+
+
+# create the secondary data (file) link in the storage path
+for key in secondaryData.keys():
+  dataLink = db.getDataset(username, secondaryData[key]).getAllFiles()[0].getPath()
+  os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/',secondaryData[key]) )
+  logger.info("Create secondary data link (%s)", dataLink)
+
+
+# create the output file
+logger.info("Create the output file")
+os.system('mkdir %s/%s'%(storagePath,args.outputFile))
+
+
+# create the config file link
+dataLink = db.getDataset(username, args.configFile).getAllFiles()[0].getPath()
+dataLink = str('/').join(dataLink.split('/')[0:-1]) # get only the dir
+os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/',args.configFile) )
+
+
+
+
+
+
+
+# Create the base path (docker volume)
 basepath = '/volume/'+args.task
+
+# Create the pseudo data path (docker volume)
 dataFile=basepath+'/'+args.dataFile
 
-# Create the output path
-configFiles = glob.glob(args.configFile+'/*')
-logger.verbose("We will launch %d jobs into the cluster.",len(configFiles) )
-print("We will launch %d jobs into the cluster."%len(configFiles))
-
-# Create the output file path
+# Create the pseudo output file path (docker volume)
 outputFile = basepath+'/'+args.outputFile
 
-# Check the exec command
+# Check the exec command (docker volume)
 execCommand = args.execCommand
 
-
+# check exec command policy
 if not '%DATA' in execCommand:
   logger.fatal( "The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
 if not '%IN' in execCommand:
@@ -118,21 +185,14 @@ if not '%IN' in execCommand:
 if not '%OUT' in execCommand:
   logger.fatal( "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
 
-
-# Check for secondary data file
-secondaryData = eval(args.secondaryData)
-for key in secondaryData:
+# parser the secondary data in the exec command
+for key in secondaryData.keys():
   if not key in execCommand:
     logger.fatal("The exec command must include %s into the string. This will substitute to %s when start",key, secondaryData[key])
-  #secondaryData[key] = basepath+'/'+ glob.glob(secondaryData[key]+'/*')[0]
   secondaryData[key] = basepath+'/'+ secondaryData[key]
 
 
-
-
-
-
-
+# create the task into the database
 if not args.dry_run:
   try:
     user = db.getUser( username )
@@ -148,12 +208,18 @@ if not args.dry_run:
   except Exception as e:
     logger.fatal(e)
 
+# create all jobs. Must be loop over all config files
+configFiles = db.getDataset(username, args.configFile).getAllFiles()
 
-for idx, configFile in enumerate(configFiles):
+
+for idx, file in enumerate(configFiles):
+
+  # create the pseudo path (docker volume)
+  configFile = basepath+'/'+args.configFile+'/'+file.getPath().split('/')[-1]
 
   command = execCommand
   command = command.replace( '%DATA' , dataFile  )
-  command = command.replace( '%IN'   , basepath+'/'+configFile)
+  command = command.replace( '%IN'   , configFile)
   command = command.replace( '%OUT'  , outputFile)
 
   for key in secondaryData:

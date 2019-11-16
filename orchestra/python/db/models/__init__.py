@@ -23,6 +23,10 @@ from . import Node
 __all__.extend( Node.__all__ )
 from .Node import *
 
+from . import Dataset
+__all__.extend( Dataset.__all__ )
+from .Dataset import *
+
 
 
 

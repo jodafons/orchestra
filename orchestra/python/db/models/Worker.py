@@ -44,7 +44,7 @@ class Worker (Base):
 
 
   def getTask (self, taskName):
-    for task in self.getTasks():
+    for task in self.getAllTasks():
       if taskName == task.getTaskName():
         return task
     return None
