@@ -6,12 +6,13 @@ __all__=['Worker']
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
+from flask_login import UserMixin
 
 
 #
 #   Users Table
 #
-class Worker (Base):
+class Worker (UserMixin, Base):
 
   __tablename__ = 'worker'
 
@@ -19,6 +20,7 @@ class Worker (Base):
   id = Column(Integer, primary_key = True)
   username = Column(String, unique = True)
   maxPriority = Column( Integer )
+  passwordHash = Column(String)
 
   # Foreign
   tasks = relationship("Task", order_by="Task.id", back_populates="user")
@@ -56,6 +58,8 @@ class Worker (Base):
   def setUserName(self, name ):
     self.username = name
 
+  def getPasswordHash (self):
+    return self.passwordHash
 
   def getMaxPriority(self):
     return self.maxPriority
