@@ -10,15 +10,23 @@ from sqlalchemy import and_, or_
 import time
 NUMBER_OF_TRIALS=3;
 MINUTE=60;
-DEFAULT_URL='postgres://postgres:postgres@localhost:5432/postgres'
+DEFAULT_URL_LPS='postgres://postgres:postgres@localhost:5432/postgres'
+DEFAULT_URL_SDUMONT='postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres'
+
 
 
 class OrchestraDB(Logger):
 
-  def __init__( self, url=DEFAULT_URL ):
+  def __init__( self, cluster=Cluster.LPS ):
 
     Logger.__init__(self)
-    self.url = url
+    
+    if cluster is Cluster.LPS:
+      url = DEFAULT_URL_LPS
+    elif cluster is Cluster.SDUMONT:
+      url = DEFAULT_URL_SDUMONT
+    else:
+      MSG_FATAL(self, "URL database not defined for this cluster")
 
     try: # Get the connection and create an session
       MSG_DEBUG( self, "Connect to %s.", url )
