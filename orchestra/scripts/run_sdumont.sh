@@ -3,13 +3,11 @@ from orchestra import Pilot, Schedule, LCGRule, Cluster
 from orchestra.db import OrchestraDB
 
 
-u
-l = 'postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres'
 
 
 # Create all services
 schedule      = Schedule( "Schedule", LCGRule(), calculate=False)
-db            = OrchestraDB(url)
+db            = OrchestraDB()
 
 from orchestra.slurm.Orchestrator import Orchestrator
 orchestrator  = Orchestrator()
