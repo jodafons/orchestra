@@ -60,7 +60,7 @@ if db.getDataset( username, args.dataset ):
 
 # Let's registry into the database
 try:
-  ds  = Dataset( username=username, dataset=args.dataset)
+  ds  = Dataset( username=username, dataset=args.dataset, cluster=args.cluster)
   # Loop over files
   from Gaugi import csvStr2List, expandFolders
   for path in expandFolders(args.path):
