@@ -17,10 +17,10 @@ class OrchestraDB(Logger):
   def __init__( self, cluster=Cluster.LPS ):
 
     Logger.__init__(self)
-    
-    if cluster is Cluster.LPS:
+
+    if cluster == Cluster.LPS:
       url = DEFAULT_URL_LPS
-    elif cluster is Cluster.SDUMONT:
+    elif cluster == Cluster.SDUMONT:
       url = DEFAULT_URL_SDUMONT
     else:
       MSG_FATAL(self, "URL database not defined for this cluster")
