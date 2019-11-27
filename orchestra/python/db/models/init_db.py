@@ -14,7 +14,7 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base.metadata.create_all(engine)
 
-users = ["jodafons", "mverissimo","wsfreund"]
+users = ["joao.pinto", "micael.araujo","werner.freund"]
 
 
 for user in users:
@@ -26,7 +26,7 @@ for user in users:
 machines = ['sdummont']
 
 for name in machines:
-  obj = Node(name=name, CPUJobs=4, maxCPUJobs=10, GPUJobs=0, maxGPUJobs=0)
+  obj = Node(name=name, CPUJobs=4, maxCPUJobs=10, GPUJobs=0, maxGPUJobs=2)
   session.add(obj)
 
 

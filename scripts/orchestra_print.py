@@ -1,5 +1,26 @@
 #!/usr/bin/env python3
 
+
+import argparse
+from Gaugi.messenger import LoggingLevel, Logger
+
+
+logger = Logger.getModuleLogger("orchestra_print")
+parser = argparse.ArgumentParser(description = '', add_help = False)
+parser = argparse.ArgumentParser()
+
+
+parser.add_argument('--cluster', action='store', dest='cluster', required=False, default='LPS',
+                    help = "The name of your cluster (LPS/CERN/SDUMONT/LOBOC)")
+
+if len(sys.argv)==1:
+  logger.info(parser.print_help())
+  sys.exit(1)
+
+args = parser.parse_args()
+
+
+
 from Gaugi import Color
 from orchestra.db import *
 db = OrchestraDB()

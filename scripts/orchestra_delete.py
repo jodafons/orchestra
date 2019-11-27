@@ -17,6 +17,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
                     help = "The task name to be append into the db.")
 
+parser.add_argument('--cluster', action='store', dest='cluster', required=False, default='LPS',
+                    help = "The name of your cluster (LPS/CERN/SDUMONT/LOBOC)")
+
 
 
 if len(sys.argv)==1:
@@ -26,11 +29,10 @@ if len(sys.argv)==1:
 args = parser.parse_args()
 
 
-
 # Connect to DB
 from orchestra.db import OrchestraDB
 from orchestra.db import Task, Job, TaskBoard
-db = OrchestraDB()
+db = OrchestraDB(cluster=args.cluster)
 
 
 # check task policy

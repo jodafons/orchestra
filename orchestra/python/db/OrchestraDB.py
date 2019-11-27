@@ -8,12 +8,9 @@ from sqlalchemy.orm import sessionmaker
 from orchestra.db.models import*
 from sqlalchemy import and_, or_
 import time
-NUMBER_OF_TRIALS=3;
-MINUTE=60;
-DEFAULT_URL_LPS='postgres://postgres:postgres@localhost:5432/postgres'
-DEFAULT_URL_SDUMONT='postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres'
 
-
+from orchestra.constants import *
+from orchestra import Cluster
 
 class OrchestraDB(Logger):
 
@@ -37,6 +34,14 @@ class OrchestraDB(Logger):
       MSG_FATAL( self, e )
 
 
+  def getStoragePath(self):
+
+    if self.__cluster is Cluster.LPS:
+      return BASEPATH_SG_LPS
+    elif self.__cluster is Cluster.SDUMONT:
+      return BASEPATH_SG_DUMONT
+    else:
+      MSG_WARNING( self, "Cluster path not defined.")
 
 
 

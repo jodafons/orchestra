@@ -21,6 +21,9 @@ parser.add_argument('-d','--dataset', action='store', dest='dataset', required=T
 parser.add_argument('-p','--path', action='store', dest='path', required=True,
                     help = "The absoluty path")
 
+parser.add_argument('--cluster', action='store', dest='cluster', required=False, default='LPS',
+                    help = "The name of your cluster (LPS/CERN/SDUMONT/LOBOC)")
+
 
 
 if len(sys.argv)==1:
@@ -35,7 +38,7 @@ args = parser.parse_args()
 from orchestra.db import OrchestraDB
 from orchestra.db import Dataset,File
 from orchestra import Status
-db = OrchestraDB( )
+db = OrchestraDB( cluster=args.cluster )
 
 
 

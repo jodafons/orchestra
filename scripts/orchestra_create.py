@@ -71,8 +71,6 @@ parser.add_argument('--bypass', action='store_true', dest='bypass_test_job', req
 parser.add_argument('--cluster', action='store', dest='cluster', required=False, default='LPS',
                     help = "The name of your cluster (LPS/CERN/SDUMONT/LOBOC)")
 
-parser.add_argument('--storagePath', action='store', dest='storagePath', required=False, default='/mnt/cluster-volume',
-                    help = "The path to the storage in the cluster.")
 
 
 
@@ -84,7 +82,9 @@ args = parser.parse_args()
 
 
 # create the database manager
-db = OrchestraDB()
+db = OrchestraDB(cluster = args.cluster)
+
+
 
 
 # check task policy (user.username)
@@ -127,7 +127,8 @@ for key in secondaryData.keys():
 
 
 # check if task exist into the storage
-storagePath = args.storagePath+'/'+username+'/'+args.task
+storagePath = db.getStoragePath()+'/'+username+'/'+args.task
+
 if os.path.exists(storagePath):
   logger.fatal("The task dir exsit into the storage. Contact the administrator.")
 else:

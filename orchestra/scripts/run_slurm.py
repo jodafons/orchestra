@@ -3,7 +3,8 @@ from orchestra import Pilot, Schedule, LCGRule, Cluster
 from orchestra.db import OrchestraDB
 
 
-url = 'postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres'
+u
+l = 'postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres'
 
 
 # Create all services
