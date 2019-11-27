@@ -27,7 +27,8 @@ BASEPATH_SG_LPS = '/mnt/cluster-volume'
 
 # Let's concetatre all user in the joao account. Here, we will like an storage for all sub-users.
 DEFAULT_URL_SDUMONT='postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres'
-BASEPATH_SG_SDUMONT = '/prj/atlas-ringerid/joao.pinto'
+#BASEPATH_SG_SDUMONT = '/prj/atlas-ringerid/joao.pinto'
+BASEPATH_SG_SDUMONT = '/volume'
 
 
 
