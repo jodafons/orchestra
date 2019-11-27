@@ -10,17 +10,24 @@ from sqlalchemy import and_, or_
 from orchestra.enumerations import *
 from orchestra.db.models import *
 from orchestra.utilities import Clock
-from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS, CLUSTER_NAME
+from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS
 
 
 
 class Schedule(Logger):
 
-  def __init__(self, name, rules):
+  def __init__(self, name, rules, cluster=Cluster.LPS, calculate=True):
 
     Logger.__init__(self, name=name)
     self.__rules = rules
     self.__clock = Clock(MAX_UPDATE_TIME)
+    self.__cluster = cluster
+    self.__calculate = calculate
+
+  
+  def setCluster( self, cluster ):
+    self.__cluster = cluster
+
 
   def initialize(self):
     return StatusCode.SUCCESS
@@ -95,12 +102,13 @@ class Schedule(Logger):
 
   def execute(self):
     # Calculate the priority for every N minute
-    if self.__clock():
+    if self.__clock() and self.__calculate:
       self.calculate()
+    return StatusCode.SUCCESS
 
 
   def finalize(self):
-    self.getContext().finalize()
+    return StatusCode.SUCCESS
 
 
   def setJobsToBeTested( self, user, task ):
@@ -196,7 +204,7 @@ class Schedule(Logger):
 
   def getCPUQueue( self ):
     try:
-      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==False, Job.cluster==CLUSTER_NAME) ).order_by(Job.priority).all()
+      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(Job.priority).all()
       jobs.reverse()
       return jobs
       #return []
@@ -208,7 +216,7 @@ class Schedule(Logger):
 
   def getGPUQueue( self ):
     try:
-      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==True, Job.cluster==CLUSTER_NAME) ).order_by(Job.priority).all()
+      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []
@@ -218,7 +226,7 @@ class Schedule(Logger):
     try:
 
       MSG_INFO(self, "Getting all jobs with status: " + Color.CGREEN2+"[RUNNING]" + Color.CEND)
-      return self.db().session().query(Job).filter( and_( Job.cluster==CLUSTER_NAME , Job.status==Status.RUNNING) ).all()
+      return self.db().session().query(Job).filter( and_( Job.cluster==self.__cluster , Job.status==Status.RUNNING) ).all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []

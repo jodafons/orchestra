@@ -1,5 +1,5 @@
 
-__all__ = [ "Status" ]
+__all__ = [ "Status" , "Cluster"]
 
 from Gaugi import EnumStringification
 
@@ -22,5 +22,11 @@ class Status ( EnumStringification ):
 
 
 
+
+class Cluster( EnumStringification ):
+  LPS = 'LPS'
+  SDUMONT = 'SDUMONT'
+  LOBOC = 'LOBOC'
+  LCG = 'LCG'
 
 

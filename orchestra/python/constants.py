@@ -17,7 +17,5 @@ MAX_UPDATE_TIME = 20 #5*MINUTE
 MAX_FAIL=1
 
 
-# The cluster name
-CLUSTER_NAME='LPS'
 
 

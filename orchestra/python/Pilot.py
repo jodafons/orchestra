@@ -14,7 +14,7 @@ from orchestra.enumerations import *
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False):
+  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False, cluster=Cluster.LPS):
     Logger.__init__(self)
     self.__cpu_slots = Slots("CPU")
     self.__gpu_slots = Slots("GPU", gpu=True)
@@ -23,6 +23,7 @@ class Pilot(Logger):
     self.__orchestrator = orchestrator
     self.__resouces_clock = Clock( 0.5* MINUTE )
     self.__bypass_gpu_rule = bypass_gpu_rule
+    self.__cluster = cluster
 
 
 
@@ -55,6 +56,7 @@ class Pilot(Logger):
     # connect to the sql database (service)
     # Setup the kubernetes orchestrator (service)
     # link db to schedule
+    self.schedule().setCluster( self.__cluster )
     self.schedule().setDatabase( self.db() )
     # Update the priority for each N minutes
     self.schedule().setUpdateTime( 5 )
@@ -153,7 +155,7 @@ class Pilot(Logger):
 
     for user in self.db().getAllUsers():
       # Get the number of tasks
-      tasks = user.getAllTasks(CLUSTER_NAME)
+      tasks = user.getAllTasks( self.__cluster)
       #MSG_INFO(self, "Updating all task parameters for user(%s)",user.username)
 
 
@@ -161,14 +163,14 @@ class Pilot(Logger):
 
         #MSG_INFO(self, "Looking into %s", task.taskName)
         try:
-          board = self.db().session().query(TaskBoard).filter( TaskBoard.taskName==task.taskName ).first()
+          board = self.db().session().query(Board).filter( Board.taskName==task.taskName ).first()
         except:
           board = None
           #MSG_INFO(self, "The task (%s) does not exist into the table monitoring. Including...",task.taskName)
 
         # This board is not exist into the database. This should be created first
         if board is None:
-          board = TaskBoard( username=user.username, taskId=task.id, taskName=task.taskName )
+          board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
           self.db().session().add(board)
 
         board.jobs = len(task.getAllJobs())

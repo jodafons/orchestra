@@ -1,4 +1,4 @@
-__all__=['TaskBoard']
+__all__=['Board']
 
 
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, JSON
@@ -9,8 +9,8 @@ from orchestra.db.models import Base
 #
 #   Tasks Table
 #
-class TaskBoard (Base):
-  __tablename__ = 'taskboard'
+class Board (Base):
+  __tablename__ = 'board'
 
   # Local
   id = Column(Integer, primary_key = True)
@@ -35,5 +35,5 @@ class TaskBoard (Base):
 
 
   def __repr__ (self):
-    return "<Orchestra (taskName='{}')>".format(self.taskName)
+    return "<Board (taskName='{}')>".format(self.taskName)
 

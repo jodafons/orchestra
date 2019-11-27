@@ -36,9 +36,9 @@ from . import Pilot
 __all__.extend(Pilot.__all__)
 from .Pilot import *
 
-from . import api
-__all__.extend(api.__all__)
-from .api import *
+#from . import api
+#__all__.extend(api.__all__)
+#from .api import *
 
 
-
+#
