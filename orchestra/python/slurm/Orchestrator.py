@@ -21,7 +21,7 @@ from subprocess import Popen, PIPE
 
 class Orchestrator(Logger):
 
-  def __init__(self, job_template, credentials):
+  def __init__(self):
     Logger.__init__(self)
     # Hold all process points  
     self.__process = {}

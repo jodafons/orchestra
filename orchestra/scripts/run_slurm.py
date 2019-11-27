@@ -1,5 +1,5 @@
 
-from orchestra import Pilot
+from orchestra import Pilot, Schedule, LCGRule, Cluster
 from orchestra.db import OrchestraDB
 
 
@@ -10,11 +10,11 @@ url = 'postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaw
 schedule      = Schedule( "Schedule", LCGRule(), calculate=False)
 db            = OrchestraDB(url)
 
-from orchestra.slurm import Orchestra
+from orchestra.slurm.Orchestrator import Orchestrator
 orchestrator  = Orchestrator()
 
 # create the pilot
-pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=False , cluster= SDUMONT)
+pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=False , cluster= Cluster.SDUMONT)
 
 
 # start!
