@@ -44,7 +44,7 @@ class Orchestrator(Logger):
   # Get the current status of the job.
   # Should be: FAILED, RUNNING or DONE
   #
-  def status( self, name, namespace ):
+  def status( self, name, namespace, trials ):
 
     if self.exist( name, namespace ):
       proc = self.__process[ self.getProcName( name, namespace ) ]
@@ -69,28 +69,32 @@ class Orchestrator(Logger):
       self.delete( name, namespace )
 
     #execArgs = self.__policy.check( execArgs )
-    preExecArgs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID'"
-    #posExecArgs = "if ! (($?)); then exit 1; fi"
-    posExecArgs = "exit $?"
+    #preExecArgs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID'"
+    ##posExecArgs = "if ! (($?)); then exit 1; fi"
+    #posExecArgs = "exit $?"
 
-    if node.device() is not None:
-      # Append the device arg in execArgs to use a specifically GPU device
-      preExecArgs += " && export CUDA_VISIBLE_DEVICES=%d"%( node.device() )
-    else:
-      # Force the job to not see and GPU device in case of the node has GPU installed or
-      # the job is in GPU node but the device is not requested
-      preExecArgs += " && export CUDA_VISIBLE_DEVICES='-1'"
+    ##if node.device() is not None:
+    ##  # Append the device arg in execArgs to use a specifically GPU device
+    ##  preExecArgs += " && export CUDA_VISIBLE_DEVICES=%d"%( node.device() )
+    ##else:
+    ##  # Force the job to not see and GPU device in case of the node has GPU installed or
+    ##  # the job is in GPU node but the device is not requested
+    ##  preExecArgs += " && export CUDA_VISIBLE_DEVICES='-1'"
 
-    command = preExecArgs + " && ("+execArgs+") && " + posExecArgs
-
+    ##command = preExecArgs + " && ("+execArgs+") && " + posExecArgs
+    command = execArgs
+ 
+    #command = [ execArgs ]
 
     # Send the job configuration to cluster kube server
     MSG_INFO( self, Color.CVIOLET2+"Launching job using subprocess..."+Color.CEND)
 
-    
-    command = command.split(' ')
-
-    proc = Popen( command ,stdout=PIPE, stderr=PIPE )
+    command=command.split(' ')
+    #command = command.split(' ')
+    from pprint import pprint
+    pprint(command)
+    #proc = Popen( command ,stdout=PIPE, stderr=PIPE, shell=True )
+    proc = Popen( command  )
     self.__process[ self.getProcName(name,namespace) ] = proc
     return name
 
