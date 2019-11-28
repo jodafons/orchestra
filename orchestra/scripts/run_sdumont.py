@@ -1,7 +1,7 @@
 
 from orchestra import Pilot, Schedule, LCGRule, Cluster
 from orchestra.db import OrchestraDB
-
+from orchestra import Cluster
 
 
 
@@ -9,8 +9,8 @@ from orchestra.db import OrchestraDB
 schedule      = Schedule( "Schedule", LCGRule(), calculate=False)
 db            = OrchestraDB()
 
-from orchestra.slurm.Orchestrator import Orchestrator
-orchestrator  = Orchestrator()
+from orchestra.subprocess.Orchestrator import Orchestrator
+orchestrator  = Orchestrator(cluster=Cluster=SDUMONT)
 
 # create the pilot
 pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=False , cluster= Cluster.SDUMONT)
