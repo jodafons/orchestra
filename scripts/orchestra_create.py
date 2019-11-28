@@ -127,7 +127,13 @@ for key in secondaryData.keys():
 
 
 # check if task exist into the storage
-storagePath = db.getStoragePath()+'/'+username+'/'+args.task
+if args.cluster == Cluster.LPS:
+  storagePath = '/mnt/cluster-volume/'+username+'/'+args.task
+elif args.cluster == Cluster.SDUMONT:
+  storagePath = '/volume/'+args.task
+else:
+  logger.fatal('Cluster not defined')
+
 
 if os.path.exists(storagePath):
   logger.fatal("The task dir exsit into the storage. Contact the administrator.")
