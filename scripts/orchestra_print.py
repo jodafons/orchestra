@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+import sys
 import argparse
 from Gaugi.messenger import LoggingLevel, Logger
 
@@ -24,7 +24,7 @@ args = parser.parse_args()
 from Gaugi import Color
 from orchestra.db import *
 db = OrchestraDB()
-tasks = db.session().query(TaskBoard).all()
+tasks = db.session().query(Board).all()
 
 
 
