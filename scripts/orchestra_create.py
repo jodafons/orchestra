@@ -139,6 +139,7 @@ else:
 
 # create the data (file) link in the storage path
 dataLink = db.getDataset(username, args.dataFile).getAllFiles()[0].getPath()
+dataLink=dataLink.replace('/mnt/cluster-volume/'+username,'..')
 logger.info("Create data link (%s)", dataLink)
 os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/', args.dataFile) )
 
@@ -146,6 +147,7 @@ os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/', args.dataFile) )
 # create the secondary data (file) link in the storage path
 for key in secondaryData.keys():
   dataLink = db.getDataset(username, secondaryData[key]).getAllFiles()[0].getPath()
+  dataLink=dataLink.replace('/mnt/cluster-volume/'+username,'..')
   os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/',secondaryData[key]) )
   logger.info("Create secondary data link (%s)", dataLink)
 
@@ -158,6 +160,7 @@ os.system('mkdir %s/%s'%(storagePath,args.outputFile))
 # create the config file link
 dataLink = db.getDataset(username, args.configFile).getAllFiles()[0].getPath()
 dataLink = str('/').join(dataLink.split('/')[0:-1]) # get only the dir
+dataLink=dataLink.replace('/mnt/cluster-volume/'+username,'..')
 os.system( 'ln -s %s %s/%s'%(dataLink, storagePath+'/',args.configFile) )
 
 
@@ -225,7 +228,7 @@ for idx, file in enumerate(configFiles):
 
   for key in secondaryData:
     command = command.replace( key  , secondaryData[key])
-  print("\n"+command+"\n")
+  #print("\n"+command+"\n")
 
   if not args.dry_run:
     job = db.createJob( task, configFile, idx, execArgs=command, isGPU=args.gpu, priority=-1 )
