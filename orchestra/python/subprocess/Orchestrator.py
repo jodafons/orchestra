@@ -49,7 +49,6 @@ class Orchestrator(Logger):
     if self.exist( name, namespace ):
       proc = self.__process[ self.getProcName( name, namespace ) ]
       if not  proc.poll() is None:
-        print(proc.returncode)
         if proc.returncode != 0:
           return Status.FAILED
         else:
@@ -94,7 +93,7 @@ class Orchestrator(Logger):
     #command = command.split(' ')
     from pprint import pprint
     pprint(command)
-    #proc = Popen( command ,stdout=PIPE, stderr=PIPE, shell=True )
+    #proc = Popen( command ,stdout=PIPE, stderr=PIPE )
     proc = Popen( command  )
     self.__process[ self.getProcName(name,namespace) ] = proc
     return name
