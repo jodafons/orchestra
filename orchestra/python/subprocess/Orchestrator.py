@@ -48,13 +48,14 @@ class Orchestrator(Logger):
 
     if self.exist( name, namespace ):
       proc = self.__process[ self.getProcName( name, namespace ) ]
-      if proc.poll():
-        return Status.RUNNING
-      else: # process is terminated by the posix
-        if proc.returncode > 0:
+      if not  proc.poll() is None:
+        print(proc.returncode)
+        if proc.returncode != 0:
           return Status.FAILED
         else:
           return Status.DONE
+      else:
+        return Status.RUNNING
     else:
       return Status.DONE
 
