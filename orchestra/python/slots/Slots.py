@@ -64,7 +64,7 @@ class CPUNode( Node ):
 
 class Slots( Logger ):
 
-  def __init__(self,name, gpu=False) :
+  def __init__(self,name, queue_name , cluster, gpu=False) :
     Logger.__init__(self,name=name)
 
     self.__slots = list()
@@ -73,6 +73,10 @@ class Slots( Logger ):
     self.__machines = {}
     self.__gpu = gpu
     self.__total = 0
+
+    # necessary infos to retrieve the node from the correct cluster/queue
+    self.__queue_name = queue_name
+    self.__cluster = cluster
 
 
   def setDatabase( self, db ):
@@ -101,7 +105,7 @@ class Slots( Logger ):
 
 
     # Create all nodes for each machine into the database
-    for machine in self.db().getAllMachines():
+    for machine in self.db().getAllMachines( self.__cluster , self.__queue_name):
       if self.__gpu:
         # The node start enable flag as False. You must enable this in the first interation
         self.__machines[machine.getName()] = [ GPUNode(machine.getName(),idx) for idx in range(machine.getMaxGPUJobs()) ]

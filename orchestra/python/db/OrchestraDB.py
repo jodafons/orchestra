@@ -246,23 +246,23 @@ class OrchestraDB(Logger):
 
 
 
-  def getAllMachines(self):
+  def getAllMachines(self, cluster , queue_name):
     if not self.isConnected():
       return False
 
     try:
-      return self.session().query(Node).all()
+      return self.session().query(Node).filter(and_( Node.queueName==queue_name, Node.cluster==cluster)).all()
     except Exception as e:
       MSG_ERROR(self, "Impossible to retrieve nodes from database.")
       return []
 
 
 
-  def getMachine( self, name ):
+  def getMachine( self, cluster, queue_name, name ):
     if not self.isConnected():
       return None
     try:
-      return self.session().query(Node).filter(Node.name==name).first()
+      return self.session().query(Node).filter(and_( Node.cluster==cluster, Node.name==name)).first()
     except Exception as e:
       MSG_ERROR(self, e)
       return None

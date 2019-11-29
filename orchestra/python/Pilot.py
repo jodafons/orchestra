@@ -14,10 +14,10 @@ from orchestra.enumerations import *
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False, cluster=Cluster.LPS, timeout=None):
+  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False, cluster=Cluster.LPS, timeout=None, queue_name = Queue.LPS):
     Logger.__init__(self)
-    self.__cpu_slots = Slots("CPU")
-    self.__gpu_slots = Slots("GPU", gpu=True)
+    self.__cpu_slots = Slots("CPU", cluster, queue_name)
+    self.__gpu_slots = Slots("GPU", cluster, queue_name, gpu=True)
     self.__db = db
     self.__schedule = schedule
     self.__orchestrator = orchestrator
@@ -27,6 +27,8 @@ class Pilot(Logger):
 
     self.__resouces_clock = Clock( 0.5* MINUTE )
     self.__timeout_clock = Clock( timeout )
+
+    self.__queue_name = queue_name
 
 
   def checkTimeout(self):

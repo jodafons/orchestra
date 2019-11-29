@@ -30,6 +30,10 @@ class Node (Base):
   GPUFailedJobs = Column( Integer, default=0 )
 
 
+  queueName = Column( String )
+
+  
+  cluster = Column( String )
 
   def getName(self):
     return self.name
@@ -46,6 +50,9 @@ class Node (Base):
   def getGPUJobs(self):
     return self.GPUJobs
 
+  def getQueueName(self):
+    return self.queueName
+
 
   def completed( self, gpu=False ):
     if gpu:
@@ -60,6 +67,10 @@ class Node (Base):
     else:
       self.CPUFailedJobs+=1
 
+
+
+  def getCluster( self ):
+    return self.cluster
 
 
 

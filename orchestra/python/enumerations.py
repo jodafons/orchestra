@@ -1,5 +1,5 @@
 
-__all__ = [ "Status" , "Cluster"]
+__all__ = [ "Status" , "Cluster", "Queue"]
 
 from Gaugi import EnumStringification
 
@@ -26,7 +26,17 @@ class Status ( EnumStringification ):
 class Cluster( EnumStringification ):
   LPS = 'LPS'
   SDUMONT = 'SDUMONT'
-  LOBOC = 'LOBOC'
-  LCG = 'LCG'
+
+
+
+class Queue( EnumStringification ):
+
+  # For LPS rancher cluster 
+  LPS = 'lps'
+  # For SDumont cluster
+  CPU = 'cpu'
+  CPU_SMALL = 'cpu_small'
+  NVIDIA  = 'nvidia'
+  BULL_SEQUANA = 'gdl'
 
 

@@ -1,4 +1,3 @@
-
 #from sqlalchemy.ext.declarative import declarative_base
 #Base = declarative_base()
 from orchestra.db.models import *
@@ -6,15 +5,15 @@ from orchestra.db.models import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from orchestra.enumerations import *
 
-#engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
-engine = create_engine('postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres')
+engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
 
 Session = sessionmaker(bind=engine)
 session = Session()
 Base.metadata.create_all(engine)
 
-users = ["joao.pinto", "micael.araujo","werner.freund"]
+users = ["jodafons", "mverissimo", "gabriel.milan","wsfreund","cadu.covas"]
 
 
 for user in users:
@@ -23,19 +22,13 @@ for user in users:
 
 
 
-machines = ['sdummont']
+machines = ['node02','node03','node04','node05','node06','node07','node08','cessy','marselha','verdun']
 
 for name in machines:
-  obj = Node(name=name, CPUJobs=4, maxCPUJobs=10, GPUJobs=0, maxGPUJobs=2)
+  obj = Node(name=name, CPUJobs=1, maxCPUJobs=30, GPUJobs=0, maxGPUJobs=0, queueName='lps', cluster=Cluster.LPS)
   session.add(obj)
 
 
 session.commit()
 session.close()
-
-
-
-
-
-
 
