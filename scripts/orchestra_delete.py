@@ -31,7 +31,7 @@ args = parser.parse_args()
 
 # Connect to DB
 from orchestra.db import OrchestraDB
-from orchestra.db import Task, Job, TaskBoard
+from orchestra.db import Task, Job, Board
 db = OrchestraDB(cluster=args.cluster)
 
 
@@ -75,7 +75,7 @@ except Exception as e:
 
 
 try:
-  db.session().query(TaskBoard).filter(Task.id==id).delete()
+  db.session().query(Board).filter(Task.id==id).delete()
 except Exception as e:
   logger.warning("Impossible to remove Task board lines from (%d) task", id)
 

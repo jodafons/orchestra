@@ -10,7 +10,7 @@ import argparse
 import sys,os
 import hashlib
 from orchestra.db import *
-
+from orchestra import Cluster
 
 logger = Logger.getModuleLogger("orchestra_create")
 parser = argparse.ArgumentParser(description = '', add_help = False)
