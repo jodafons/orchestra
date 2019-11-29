@@ -64,7 +64,7 @@ class CPUNode( Node ):
 
 class Slots( Logger ):
 
-  def __init__(self,name, queue_name , cluster, gpu=False) :
+  def __init__(self,name, cluster , queue_name ,  gpu=False) :
     Logger.__init__(self,name=name)
 
     self.__slots = list()
@@ -169,7 +169,7 @@ class Slots( Logger ):
         consumer.node().unlock()
 
         # increment the failed counter in node table just for monitoring
-        self.db().getMachine( consumer.node().name() ).failed( gpu= True if (consumer.node().device() is not None) else False )
+        self.db().getMachine( self.__cluster, consumer.node().name() ).failed( gpu= True if (consumer.node().device() is not None) else False )
         self.__slots.remove(consumer)
       # Kubernetes job is running. Go to the next slot...
       elif consumer.status() is Status.RUNNING:
@@ -181,7 +181,7 @@ class Slots( Logger ):
         consumer.node().unlock()
 
         # increment the completed counter in node table just for monitoring
-        self.db().getMachine( consumer.node().name() ).completed( gpu= True if (consumer.node().device() is not None) else False )
+        self.db().getMachine( self.__cluster, consumer.node().name() ).completed( gpu= True if (consumer.node().device() is not None) else False )
         self.__slots.remove(consumer)
 
     self.db().commit()
@@ -218,7 +218,7 @@ class Slots( Logger ):
   def update(self):
     before = self.size()
     total = 0
-    for machine in self.db().getAllMachines():
+    for machine in self.db().getAllMachines(self.__cluster, self.__queue_name):
       # enable each machine node
       for idx in range( len(self.__machines[machine.getName()]) ):
         if idx < (machine.getGPUJobs() if self.__gpu else machine.getCPUJobs()):
@@ -230,7 +230,7 @@ class Slots( Logger ):
     self.__total=total
 
     if self.size()!=before:
-      for machine in self.db().getAllMachines():
+      for machine in self.db().getAllMachines(self.__cluster, self.__queue_name):
         if self.__gpu:
           for node in self.__machines[machine.getName()]:
             MSG_INFO( self, "Updating a GPU Node(%s) with device %d. This node is enable? %s", node.name(), node.device(), node.isEnable() )

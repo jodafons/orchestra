@@ -67,7 +67,7 @@ try:
 
     # Fix the path, the "full path" must start after the username dir. Here, by definition,
     # the username dir is the root file inside of the docker volume
-    path = path.split("/"+username+'/')[1]
+    path = 'files/'+path.split('/files/')[1]
     print("Registry %s into %s"%(path,args.dataset))
     hash_object = hashlib.md5(str.encode(path))
     ds.addFile( File(path=path, hash=hash_object.hexdigest()) )

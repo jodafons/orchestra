@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 from Gaugi import Color
 from orchestra.db import *
-db = OrchestraDB()
+db = OrchestraDB(cluster=args.cluster)
 tasks = db.session().query(Board).all()
 
 
