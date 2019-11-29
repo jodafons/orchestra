@@ -14,19 +14,23 @@ from orchestra.enumerations import *
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False, cluster=Cluster.LPS):
+  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False, cluster=Cluster.LPS, timeout=None):
     Logger.__init__(self)
     self.__cpu_slots = Slots("CPU")
     self.__gpu_slots = Slots("GPU", gpu=True)
     self.__db = db
     self.__schedule = schedule
     self.__orchestrator = orchestrator
-    self.__resouces_clock = Clock( 0.5* MINUTE )
+
     self.__bypass_gpu_rule = bypass_gpu_rule
     self.__cluster = cluster
 
+    self.__resouces_clock = Clock( 0.5* MINUTE )
+    self.__timeout_clock = Clock( timeout )
 
 
+  def checkTimeout(self):
+    return self.__timeout_clock()
 
 
   def db(self):
@@ -86,38 +90,47 @@ class Pilot(Logger):
     self.treatRunningJobsBeforeStart()
 
 
+
     # Infinite loop
     while True:
 
-      # Calculate all priorities for all REGISTERED jobs for each 5 minutes
-      self.schedule().execute()
+      if not self.checkTimeout():
+      
+        # Calculate all priorities for all REGISTERED jobs for each 5 minutes
+        self.schedule().execute()
 
-      ## Prepare jobs for CPU slots only
-      jobs = self.schedule().getCPUQueue()
+        ## Prepare jobs for CPU slots only
+        jobs = self.schedule().getCPUQueue()
 
 
-      if self.__bypass_gpu_rule:
-        # Taken from CPU queue. In this case, the job can be
-        # assigned to gpu or gpu.
-        while (self.gpuSlots().isAvailable()) and len(jobs)>0:
-          self.gpuSlots().push_back( jobs.pop() )
+        if self.__bypass_gpu_rule:
+          # Taken from CPU queue. In this case, the job can be
+          # assigned to gpu or gpu.
+          while (self.gpuSlots().isAvailable()) and len(jobs)>0:
+            self.gpuSlots().push_back( jobs.pop() )
+        else:
+          jobs_gpu = self.schedule().getGPUQueue()
+          while (self.gpuSlots().isAvailable()) and len(jobs_gpu)>0:
+            self.gpuSlots().push_back( jobs_gpu.pop() )
+
+
+        while (self.cpuSlots().isAvailable()) and len(jobs)>0:
+          self.cpuSlots().push_back( jobs.pop() )
+
+
+
+        ## Run the pilot for cpu queue
+        self.cpuSlots().execute()
+        ## Run the pilot for gpu queue
+        self.gpuSlots().execute()
+
+        self.updateAllBoards()
+      
       else:
-        jobs_gpu = self.schedule().getGPUQueue()
-        while (self.gpuSlots().isAvailable()) and len(jobs_gpu)>0:
-          self.gpuSlots().push_back( jobs_gpu.pop() )
+        # Stop the main loop obly when all jobs are finished
+        if self.cpuSlots().empty() and self.gpuSlots().empty():
+          break
 
-
-      while (self.cpuSlots().isAvailable()) and len(jobs)>0:
-        self.cpuSlots().push_back( jobs.pop() )
-
-
-
-      ## Run the pilot for cpu queue
-      self.cpuSlots().execute()
-      ## Run the pilot for gpu queue
-      self.gpuSlots().execute()
-
-      self.updateAllBoards()
 
 
     return StatusCode.SUCCESS

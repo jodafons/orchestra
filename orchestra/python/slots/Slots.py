@@ -198,6 +198,10 @@ class Slots( Logger ):
   def isAvailable(self):
     return True if len(self.__slots) < self.size() else False
 
+  
+  def empty(self):
+    return False if len(self.__slots)>0 else True
+
 
   def getAvailableNode(self):
     for node in self.__available_nodes:

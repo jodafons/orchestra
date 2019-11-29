@@ -3,6 +3,7 @@
 
 # Others
 MINUTE = 60
+HOUR = 60*MINUTE
 
 
 MAX_TEST_JOBS=1
@@ -18,7 +19,6 @@ MAX_FAIL=1
 
 # For DB configuration
 NUMBER_OF_TRIALS=3;
-MINUTE=60;
 
 # LPS storage and database hosted in zeus machine
 DEFAULT_URL_LPS='postgres://postgres:postgres@localhost:5432/postgres'

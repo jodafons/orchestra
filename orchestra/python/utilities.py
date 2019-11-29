@@ -13,6 +13,12 @@ class Clock(object):
 
 
   def __call__( self ):
+
+    # Always return false since we considere that the current
+    # time never will go to the end (infinite)
+    if self.__maxseconds is None:
+      return False
+
     if not self.__then:
       self.__then = time.time()
       return False

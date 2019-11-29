@@ -93,8 +93,8 @@ class Orchestrator(Logger):
     #command = command.split(' ')
     from pprint import pprint
     pprint(command)
-    #proc = Popen( command ,stdout=PIPE, stderr=PIPE )
-    proc = Popen( command  )
+    proc = Popen( command ,stdout=PIPE, stderr=PIPE )
+    #proc = Popen( command  )
     self.__process[ self.getProcName(name,namespace) ] = proc
     return name
 
