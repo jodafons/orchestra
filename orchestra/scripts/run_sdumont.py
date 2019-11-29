@@ -2,7 +2,7 @@
 from orchestra import Pilot, Schedule, LCGRule, Cluster
 from orchestra.db import OrchestraDB
 from orchestra import Cluster
-
+from orchestra.constants import HOUR
 
 
 # Create all services
@@ -13,7 +13,7 @@ from orchestra.subprocess.Orchestrator import Orchestrator
 orchestrator  = Orchestrator()
 
 # create the pilot
-pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=False , cluster= Cluster.SDUMONT)
+pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=False , cluster= Cluster.SDUMONT , timeout = 62*HOUR )
 
 
 # start!
