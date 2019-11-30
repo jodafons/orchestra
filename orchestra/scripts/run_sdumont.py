@@ -2,6 +2,7 @@
 import sys, os
 import argparse
 from Gaugi.messenger import LoggingLevel, Logger
+from orchestra.constants import HOUR, MINUTE
 
 logger = Logger.getModuleLogger("orchestra_create")
 parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -25,7 +26,7 @@ if len(sys.argv)==1:
 
 args = parser.parse_args()
 
-from orchestra.constants import HOUR
+
 if args.queue == 'nvidia':
   timeout = 40*HOUR
 elif args.queue == 'cpu_small':
