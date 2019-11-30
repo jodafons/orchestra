@@ -39,6 +39,9 @@ else:
   logger.info( "The queue not defined." )
 
 
+print ("Queue name: %s"%args.queue)
+print ("Shedule time: %d"%args.schedule_time)
+
 from orchestra import Pilot, Schedule, LCGRule, Cluster
 from orchestra.db import OrchestraDB
 from orchestra import Cluster, Queue
