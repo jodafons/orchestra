@@ -16,15 +16,14 @@ from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS,
 
 class Schedule(Logger):
 
-  def __init__(self, name, rules, cluster=Cluster.LPS, calculate=True):
+  def __init__(self, name, rules, cluster=Cluster.LPS, max_update_time=MAX_UPDATE_TIME):
 
     Logger.__init__(self, name=name)
     self.__rules = rules
-    self.__clock = Clock(MAX_UPDATE_TIME)
+    self.__clock = Clock(max_update_time)
     self.__cluster = cluster
-    self.__calculate = calculate
 
-  
+
   def setCluster( self, cluster ):
     self.__cluster = cluster
 
@@ -51,7 +50,7 @@ class Schedule(Logger):
       # Get the initial priority of the user
       maxPriority = user.getMaxPriority()
       # Get the number of tasks
-      tasks = user.getAllTasks(CLUSTER_NAME)
+      tasks = user.getAllTasks( self.__cluster  )
 
       for task in tasks:
 
@@ -102,7 +101,7 @@ class Schedule(Logger):
 
   def execute(self):
     # Calculate the priority for every N minute
-    if self.__clock() and self.__calculate:
+    if self.__clock():
       self.calculate()
     return StatusCode.SUCCESS
 

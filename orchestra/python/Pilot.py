@@ -24,11 +24,11 @@ class Pilot(Logger):
 
     self.__bypass_gpu_rule = bypass_gpu_rule
     self.__cluster = cluster
+    self.__queue_name = queue_name
 
-    self.__resouces_clock = Clock( 0.5* MINUTE )
     self.__timeout_clock = Clock( timeout )
 
-    self.__queue_name = queue_name
+
 
 
   def checkTimeout(self):
@@ -64,8 +64,9 @@ class Pilot(Logger):
     # link db to schedule
     self.schedule().setCluster( self.__cluster )
     self.schedule().setDatabase( self.db() )
+
     # Update the priority for each N minutes
-    self.schedule().setUpdateTime( 5 )
+    #self.schedule().setUpdateTime( 5 )
 
     if self.schedule().initialize().isFailure():
       MSG_FATAL( self, "Not possible to initialize the Schedule tool. abort" )
@@ -97,7 +98,7 @@ class Pilot(Logger):
     while True:
 
       if not self.checkTimeout():
-      
+
         # Calculate all priorities for all REGISTERED jobs for each 5 minutes
         self.schedule().execute()
 
@@ -127,7 +128,7 @@ class Pilot(Logger):
         self.gpuSlots().execute()
 
         self.updateAllBoards()
-      
+
       else:
         # Stop the main loop obly when all jobs are finished
         if self.cpuSlots().empty() and self.gpuSlots().empty():
