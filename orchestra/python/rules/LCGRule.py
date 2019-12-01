@@ -35,8 +35,9 @@ class LCGRule(Rule):
         else: # REGISTERED, DONE, BROKEN, KILLED
           job.setPriority(-1)
 
-
+    MSG_INFO(self, "Commiting all priorities...")
     db.commit()
+    MSG_INFO(self, "done.")
 
 
 

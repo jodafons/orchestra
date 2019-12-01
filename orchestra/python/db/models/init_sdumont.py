@@ -8,8 +8,8 @@ from sqlalchemy.orm import sessionmaker
 
 
 from orchestra.enumerations import *
-#engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
-engine = create_engine('postgres://postgres:postgres@postgres.cahhufxxnnnr.us-east-2.rds.amazonaws.com:5432/postgres')
+from orchestra.constants import DEFAULT_URL_SDUMONT
+engine = create_engine(DEFAULT_URL_SDUMONT)
 
 Session = sessionmaker(bind=engine)
 session = Session()
