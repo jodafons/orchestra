@@ -9,5 +9,9 @@ from . import LCGRule
 __all__.extend(LCGRule.__all__)
 from .LCGRule import *
 
+from . import NoRule
+__all__.extend(NoRule.__all__)
+from .NoRule import *
+
 
 

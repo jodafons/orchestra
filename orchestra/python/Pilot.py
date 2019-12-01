@@ -121,12 +121,12 @@ class Pilot(Logger):
           self.cpuSlots().push_back( jobs.pop() )
 
 
-
+      
         ## Run the pilot for cpu queue
         self.cpuSlots().execute()
         ## Run the pilot for gpu queue
         self.gpuSlots().execute()
-
+        MSG_INFO(self, "Calculate all task boards...")
         self.updateAllBoards()
 
       else:

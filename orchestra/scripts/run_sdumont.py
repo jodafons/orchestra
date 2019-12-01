@@ -42,7 +42,7 @@ else:
 print ("Queue name: %s"%args.queue)
 print ("Shedule time: %d"%args.schedule_time)
 
-from orchestra import Pilot, Schedule, LCGRule, Cluster
+from orchestra import Pilot, Schedule, NoRule, Cluster
 from orchestra.db import OrchestraDB
 from orchestra import Cluster, Queue
 from orchestra.constants import HOUR
@@ -52,7 +52,7 @@ max_update_time = None if args.schedule_time < 0 else args.schedule_time * MINUT
 
 
 # Create all services
-schedule      = Schedule( "Schedule", LCGRule(), max_update_time=max_update_time)
+schedule      = Schedule( "Schedule", NoRule(), max_update_time=max_update_time)
 db            = OrchestraDB(cluster=Cluster.SDUMONT)
 
 from orchestra.subprocess.Orchestrator import Orchestrator
