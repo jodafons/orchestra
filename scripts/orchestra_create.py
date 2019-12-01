@@ -107,6 +107,7 @@ if db.getUser(username).getTask(args.task) is not None:
 
 
 # check data (file) is in database
+print(db.getDataset(username, args.dataFile))
 if db.getDataset(username, args.dataFile) is None:
   logger.fatal("The file (%s) does not exist into the database. Should be registry first.", args.dataFile)
 

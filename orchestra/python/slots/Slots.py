@@ -169,7 +169,7 @@ class Slots( Logger ):
         consumer.node().unlock()
 
         # increment the failed counter in node table just for monitoring
-        self.db().getMachine( self.__cluster, consumer.node().name() ).failed( gpu= True if (consumer.node().device() is not None) else False )
+        self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).failed( gpu= True if (consumer.node().device() is not None) else False )
         self.__slots.remove(consumer)
       # Kubernetes job is running. Go to the next slot...
       elif consumer.status() is Status.RUNNING:
@@ -181,7 +181,7 @@ class Slots( Logger ):
         consumer.node().unlock()
 
         # increment the completed counter in node table just for monitoring
-        self.db().getMachine( self.__cluster, consumer.node().name() ).completed( gpu= True if (consumer.node().device() is not None) else False )
+        self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).completed( gpu= True if (consumer.node().device() is not None) else False )
         self.__slots.remove(consumer)
 
     self.db().commit()
@@ -202,7 +202,7 @@ class Slots( Logger ):
   def isAvailable(self):
     return True if len(self.__slots) < self.size() else False
 
-  
+
   def empty(self):
     return False if len(self.__slots)>0 else True
 

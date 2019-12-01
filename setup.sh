@@ -1,6 +1,6 @@
 
 
-
+rm -rf .python_dir
 mkdir .python_dir
 cd .python_dir
 
