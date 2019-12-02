@@ -23,7 +23,8 @@ class LCGRule(Rule):
     # defined,assigned,activated,sent,starting,running)
     T = self.getTotalJobsExisting(user)
     n = 0
-    for task in user.getAllTasks():
+    tasks = user.getAllTasks()
+    for idx, task in enumerate(tasks):
       for job in task.getAllJobs():
         if job.getStatus()==Status.ASSIGNED:
           # This is the LCG rule
@@ -34,9 +35,9 @@ class LCGRule(Rule):
           MSG_INFO(self, "We dont need to caculate running jobs since this still into the slot.")
         else: # REGISTERED, DONE, BROKEN, KILLED
           job.setPriority(-1)
+      db.commit()
+      MSG_INFO(self, "Commiting all priorities (%d/%d)...",idx, len(tasks))
 
-    MSG_INFO(self, "Commiting all priorities...")
-    db.commit()
     MSG_INFO(self, "done.")
 
 

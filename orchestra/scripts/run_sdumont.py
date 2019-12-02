@@ -9,14 +9,15 @@ parser = argparse.ArgumentParser(description = '', add_help = False)
 parser = argparse.ArgumentParser()
 
 
-parser.add_argument('-s','--schedule_time', action='store',
-                    dest='schedule_time', required = False, type=int, default=-1,
-                    help = "The time in minutes to configurate the schedule clock calc. time.")
-
 
 parser.add_argument('-q','--queue', action='store',
                     dest='queue', required = True,
                     help = "The SDUMONT queue name.")
+
+
+parser.add_argument('--as_server', action='store_true',
+                    dest='as_server', required = False, default = False,
+                    help = "Run as server. Disable slots and run only the schedule.")
 
 
 
@@ -40,29 +41,49 @@ else:
 
 
 print ("Queue name: %s"%args.queue)
-print ("Shedule time: %d"%args.schedule_time)
 
-from orchestra import Pilot, Schedule, NoRule, Cluster
+from orchestra import Pilot, Schedule, LCGRule , NoRule, Cluster
 from orchestra.db import OrchestraDB
 from orchestra import Cluster, Queue
 from orchestra.constants import HOUR
 
 
-max_update_time = None if args.schedule_time < 0 else args.schedule_time * MINUTE
+if args.as_server:
+  print( "Run as server...")
+  # Create all services
+  schedule      = Schedule( "Schedule", LCGRule(), max_update_time=0.5*MINUTE)
+  db            = OrchestraDB(cluster=Cluster.SDUMONT)
+  
+  from orchestra.subprocess.Orchestrator import Orchestrator
+  orchestrator  = Orchestrator()
+  
+  # create the pilot
+  pilot = Pilot( db, schedule, orchestrator, 
+                 bypass_gpu_rule=True ,
+                 run_slots = False,
+                 update_task_boards = True,
+                 cluster= Cluster.SDUMONT , # cluster
+                 queue_name = args.queue, # queue name
+                 timeout = None, # run forever
+                 )
 
+else:
 
-# Create all services
-schedule      = Schedule( "Schedule", NoRule(), max_update_time=max_update_time)
-db            = OrchestraDB(cluster=Cluster.SDUMONT)
+  # Create all services
+  schedule      = Schedule( "Schedule", NoRule(), max_update_time=None)
+  db            = OrchestraDB(cluster=Cluster.SDUMONT)
 
-from orchestra.subprocess.Orchestrator import Orchestrator
-orchestrator  = Orchestrator()
+  from orchestra.subprocess.Orchestrator import Orchestrator
+  orchestrator  = Orchestrator()
 
-# create the pilot
-pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=True ,
-               cluster= Cluster.SDUMONT ,
-               queue_name = args.queue,
-               timeout = timeout )
+  # create the pilot
+  pilot = Pilot( db, schedule, orchestrator, 
+                 bypass_gpu_rule=True ,
+                 run_slots = True,
+                 update_task_boards = False,
+                 cluster= Cluster.SDUMONT ,
+                 queue_name = args.queue,
+                 timeout = timeout )
 
 
 # start!

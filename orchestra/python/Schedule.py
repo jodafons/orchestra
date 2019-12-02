@@ -200,10 +200,10 @@ class Schedule(Logger):
         self.db().commit()
 
 
-
-  def getCPUQueue( self ):
+  def getCPUQueue( self, njobs ):
     try:
-      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(Job.priority).all()
+      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , 
+        Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
       jobs.reverse()
       return jobs
       #return []
@@ -213,9 +213,10 @@ class Schedule(Logger):
 
 
 
-  def getGPUQueue( self ):
+  def getGPUQueue( self, njobs ):
     try:
-      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).all()
+      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , 
+        Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []
@@ -225,7 +226,7 @@ class Schedule(Logger):
     try:
 
       MSG_INFO(self, "Getting all jobs with status: " + Color.CGREEN2+"[RUNNING]" + Color.CEND)
-      return self.db().session().query(Job).filter( and_( Job.cluster==self.__cluster , Job.status==Status.RUNNING) ).all()
+      return self.db().session().query(Job).filter( and_( Job.cluster==self.__cluster , Job.status==Status.RUNNING) ).with_for_update().all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []

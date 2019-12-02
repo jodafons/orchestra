@@ -13,7 +13,12 @@ db            = OrchestraDB(cluster=Cluster.LPS)
 orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
 
 # create the pilot
-pilot = Pilot( db, schedule, orchestrator, bypass_gpu_rule=True, queue_name = Queue.LPS, cluster=Cluster.LPS )
+pilot = Pilot(db, schedule, orchestrator, 
+              bypass_gpu_rule=True, 
+              run_slots = True,
+              update_task_boards = True,
+              timeout = None, # run forever
+              queue_name = Queue.LPS, cluster=Cluster.LPS )
 
 
 # start!

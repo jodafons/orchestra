@@ -203,6 +203,10 @@ class Slots( Logger ):
     return True if len(self.__slots) < self.size() else False
 
 
+  def allocated( self ):
+    return len(self.__slots)
+
+
   def empty(self):
     return False if len(self.__slots)>0 else True
 

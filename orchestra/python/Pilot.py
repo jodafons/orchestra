@@ -14,7 +14,13 @@ from orchestra.enumerations import *
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator, bypass_gpu_rule=False, cluster=Cluster.LPS, timeout=None, queue_name = Queue.LPS):
+  def __init__(self, db, schedule, orchestrator, 
+               bypass_gpu_rule=False, 
+               cluster=Cluster.LPS, 
+               update_task_boards=True,
+               timeout=None, 
+               run_slots = True,
+               queue_name = Queue.LPS):
     Logger.__init__(self)
     self.__cpu_slots = Slots("CPU", cluster, queue_name)
     self.__gpu_slots = Slots("GPU", cluster, queue_name, gpu=True)
@@ -25,9 +31,9 @@ class Pilot(Logger):
     self.__bypass_gpu_rule = bypass_gpu_rule
     self.__cluster = cluster
     self.__queue_name = queue_name
-
+    self.__update_task_boards = update_task_boards
     self.__timeout_clock = Clock( timeout )
-
+    self.__run_slots = run_slots
 
 
 
@@ -90,7 +96,8 @@ class Pilot(Logger):
 
   def execute(self):
 
-    self.treatRunningJobsBeforeStart()
+    if self.__run_slots:
+      self.treatRunningJobsBeforeStart()
 
 
 
@@ -102,32 +109,44 @@ class Pilot(Logger):
         # Calculate all priorities for all REGISTERED jobs for each 5 minutes
         self.schedule().execute()
 
-        ## Prepare jobs for CPU slots only
-        jobs = self.schedule().getCPUQueue()
+        jobs = self.schedule().getCPUQueue(5)
+        # If in standalone mode, these slots will not in running mode. Only schedule will run.
+        if self.__run_slots:
+          if self.cpuSlots().isAvailable():
+            ## Prepare jobs for CPU slots only
+            njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
+            MSG_INFO(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
+            jobs = self.schedule().getCPUQueue(njobs)
+          
+            while (self.cpuSlots().isAvailable()) and len(jobs)>0:
+              self.cpuSlots().push_back( jobs.pop() )
 
 
-        if self.__bypass_gpu_rule:
-          # Taken from CPU queue. In this case, the job can be
-          # assigned to gpu or gpu.
-          while (self.gpuSlots().isAvailable()) and len(jobs)>0:
-            self.gpuSlots().push_back( jobs.pop() )
-        else:
-          jobs_gpu = self.schedule().getGPUQueue()
-          while (self.gpuSlots().isAvailable()) and len(jobs_gpu)>0:
-            self.gpuSlots().push_back( jobs_gpu.pop() )
+          if self.gpuSlots().isAvailable():
+            njobs = self.gpuSlots().size() - self.gpuSlots().allocated()
+            if self.__bypass_gpu_rule:
+              MSG_INFO(self,"There are GPU slots available. Retrieving the first %d jobs from the CPU queue since bypass gpu rule is True",njobs )
+              jobs = self.schedule().getCPUQueue(njobs)
+            else:
+              MSG_INFO(self,"There are GPU slots available. Retrieving the first %d jobs from the GPU queue.",njobs )
+              jobs = self.schedule().getGPUQueue()
 
-
-        while (self.cpuSlots().isAvailable()) and len(jobs)>0:
-          self.cpuSlots().push_back( jobs.pop() )
-
+            while (self.gpuSlots().isAvailable()) and len(jobs)>0:
+              self.gpuSlots().push_back( jobs.pop() )
 
       
-        ## Run the pilot for cpu queue
-        self.cpuSlots().execute()
-        ## Run the pilot for gpu queue
-        self.gpuSlots().execute()
-        MSG_INFO(self, "Calculate all task boards...")
-        self.updateAllBoards()
+          ## Run the pilot for cpu queue
+          self.cpuSlots().execute()
+          ## Run the pilot for gpu queue
+          self.gpuSlots().execute()
+
+
+        # If in standalone mode, this can be calculated or note. Depend on demand.
+        if self.__update_task_boards:
+          MSG_INFO(self, "Calculate all task boards...")
+          self.updateAllBoards()
+
+
 
       else:
         # Stop the main loop obly when all jobs are finished
@@ -176,7 +195,6 @@ class Pilot(Logger):
 
 
       for task in tasks:
-
         #MSG_INFO(self, "Looking into %s", task.taskName)
         try:
           board = self.db().session().query(Board).filter( Board.taskName==task.taskName ).first()
