@@ -109,7 +109,6 @@ class Pilot(Logger):
         # Calculate all priorities for all REGISTERED jobs for each 5 minutes
         self.schedule().execute()
 
-        jobs = self.schedule().getCPUQueue(5)
         # If in standalone mode, these slots will not in running mode. Only schedule will run.
         if self.__run_slots:
           if self.cpuSlots().isAvailable():
