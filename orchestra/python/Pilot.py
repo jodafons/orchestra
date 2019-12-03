@@ -14,11 +14,11 @@ from orchestra.enumerations import *
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator, 
-               bypass_gpu_rule=False, 
-               cluster=Cluster.LPS, 
+  def __init__(self, db, schedule, orchestrator,
+               bypass_gpu_rule=False,
+               cluster=Cluster.LPS,
                update_task_boards=True,
-               timeout=None, 
+               timeout=None,
                run_slots = True,
                queue_name = Queue.LPS):
     Logger.__init__(self)
@@ -116,7 +116,7 @@ class Pilot(Logger):
             njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
             MSG_INFO(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
             jobs = self.schedule().getCPUQueue(njobs)
-          
+
             while (self.cpuSlots().isAvailable()) and len(jobs)>0:
               self.cpuSlots().push_back( jobs.pop() )
 
@@ -128,12 +128,12 @@ class Pilot(Logger):
               jobs = self.schedule().getCPUQueue(njobs)
             else:
               MSG_INFO(self,"There are GPU slots available. Retrieving the first %d jobs from the GPU queue.",njobs )
-              jobs = self.schedule().getGPUQueue()
+              jobs = self.schedule().getGPUQueue(njobs)
 
             while (self.gpuSlots().isAvailable()) and len(jobs)>0:
               self.gpuSlots().push_back( jobs.pop() )
 
-      
+
           ## Run the pilot for cpu queue
           self.cpuSlots().execute()
           ## Run the pilot for gpu queue
