@@ -3,17 +3,69 @@
 # How to install Postgres and PgAdmin4 in your local server?
 
 
+The postgres database was set to restart always when the system reboot on the main node machine `(146.164.147.170)` at LPS lab. The files and the creation script remains in an offuscated file in `home/rancher/.postgres` where we store all persistent files (volume) created by the postgres server. You must be sudo (for security reasons) to enter or operate the docker in this machine. 
+
+This is the creation script used to setup the database server at LPS:
+
 ```bash
 # in your root dir
-docker run --name postgres --network=postgres-network -e "POSTGRES_PASSWORD=postgres" -p 5432:5432 -v $PWD/volume:/var/lib/postgresql/data -d postgres
-docker run --name pgadmin --network=postgres-network -p 15432:80 -e "PGADMIN_DEFAULT_EMAIL=username@lps.ufrj.br" -e "PGADMIN_DEFAULT_PASSWORD=password" -d dpage/pgadmin4
+docker run --name postgres --restart=always --network=postgres-network -e "POSTGRES_PASSWORD=postgres" -p 5432:5432 -v $PWD/volume:/var/lib/postgresql/data -d postgres
+docker run --name pgadmin --restart=always --network=postgres-network -p 15432:80 -e "PGADMIN_DEFAULT_EMAIL=username@lps.ufrj.br" -e "PGADMIN_DEFAULT_PASSWORD=password" -d dpage/pgadmin4
 ```
 
-and to connect in your local machine:
+To connect the pgadmin console at your local machine you must apply the follow command in your terminal:
 
 ```bash
 ssh -L 15432:146.164.147.170:15432 username@bastion.lps.ufrj.br
 ```
+
+This will open an port foward and externalize the server pgadmin port to your `localhost`. Now you will be able to use the pgadmin in your web browser.
+
+
+## Connect the pgadmin to your postgres database:
+
+- Click on Add Server;
+- In the general form: (name=LPS);
+- In the connection form: (hostname=146.164.147.170, port=5432, username=postgres, password=postgres)
+- Click on connect. Now you will be able to administrate the database using the pgadmin web browser interface.
+
+
+# How to launch and configure the Orchestra:
+
+## Create the orchestra database:
+
+To write the database objects, create the list of users and the list of machines you must run the script in `orchestra/orchestra/python/db/models/init_rancher.py`. If you have an database installed at the postgres server, you must remove all tables using the pgadmin first otherwise you will not be able to run this script.
+
+
+## Configure the nodes that will be used bu the orchestra:
+
+On your local pgadmin console connect with the LPS database. After you stablish one connection click in `Tools->QueryTool` on top of the dashboard. This will open the query editor. To access all config nodes run this command:
+
+```bash
+SELECT * FROM NODE
+```
+
+After run this command you will be able to edit the list of nodes machines registered in the database.
+Each line is composed by the follow columns:
+- machine name in the LPS cluster;
+- CPUJobs: The number of slots allocated to run using the CPU hardware;
+- GPUJobs: The number of slots allocated to run using the GPU hardware;
+- maxCPUJobs: The number of slots allow to run using the CPU hardware (default is 30);
+- maxGPUJobs: The number of slots allow to run using the GPU hardware (default is the number of GPUs installed);
+- queueName: The name of the queue (default is lps, but can be expanded to sdumont, cern or loboc for future);
+- others job counts control used in the dashboard painel.
+
+
+To increase or decreased the number of slots for each much just double click at the CPU/GPUJobs field and change the value. After edit you just send the command (F6 or Save data changes) to the server and the orchestra will take care to update the schedule mechanism.
+
+
+## Launch the orchestra:
+
+
+
+
+
+
 
 
 # How to Install NVIDIA device plugin for Kubernetes?
