@@ -78,6 +78,13 @@ Each line is composed by the follow columns:
 
 To increase or decreased the number of slots for each much just double click at the CPU/GPUJobs field and change the value. After edit you just send the command (F6 or Save data changes) to the server and the orchestra will take care to update the schedule mechanism.
 
+## Run LPS Cluster Pilot:
+
+To run the LPS Cluster pilot you must open a screen into the adminsitrator account in Zeus machine and run the follow command:
+```bash
+cd /opt/orchestra/orchestra/scripts/
+python3 run_rancher.py
+```
 
 # How to Configure Rancher:
 
