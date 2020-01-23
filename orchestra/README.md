@@ -68,7 +68,7 @@ The account creation has three parts:
 - Part 2: Create the user account into the Zeus (146.164.147.170) machine (i.e: Same username in the LPS Lab.);
 - Part 3: Create the user the volume into rancher and point to the LPS Cluster storage loccated at `/mnt/cluster-volume/`.
 
-All these parts must be apply into the rancher server using the `admin` account.
+**NOTE**: All these parts must be apply into the rancher server using the `admin` account.
 
 ## Create An User Account (Part 1):
 
@@ -92,7 +92,7 @@ Please follow these steps to create an account into the rancher cluster (link is
 
 ## Create An User Volume (Part 3):
 
-Here `jodafons` is an username example. 
+**NOTE**: Here `jodafons` is an username example. 
 
 - Step 1: Into the rancher, go to the cluster area and click in `Storage->Persistent Volumes`;
 - Step 2: Click in `Add volume`;
