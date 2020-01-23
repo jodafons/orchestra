@@ -140,7 +140,11 @@ The `--exec` command contruction must follow some rules to work:
 
 
 
-### View all User Tasks:
+### Print All Tasks:
+
+```bash
+orchestra_print.py --cluster LPS
+```
 
 
 ### Delete Task:
@@ -150,8 +154,13 @@ This command will remove the task from the orchestra database.
 ```bash
 orchestra_delete.py -t user.jodafons.my_first_task --cluster LPS
 ```
-**WARNING**: You must remove the task directory (`user.jodafons.my_first_task`) by hand to relaunch a task with same name.
+> **WARNING**: You must remove the task directory (`user.jodafons.my_first_task`) by hand to relaunch a task with same name.
 
+### Retry Task:
+
+```bash
+orchestra_retry.py -t user.jodafons.my_first_task --cluster LPS
+```
 
 
 
