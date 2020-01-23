@@ -33,6 +33,24 @@ This will open an port foward and externalize the server pgadmin port to your `l
 
 # How to Configure Orchestra:
 
+## Setup Orchestra:
+
+Into the Zeus machine using the adminstrator privilegies go to `/opt/` directory and clone the orchestra repository.
+```bash
+git clone https://github.com/jodafons/orchestra.git
+cd /opt/orchestra/
+source setup_modules.sh
+source setup_modules.sh --head
+source setup.sh
+```
+
+To configure the orchestra user scripts for all users open the file `/etc/bashrc` with adminstrator privilegies and append the follow lines into the bash scripts:
+
+```bash
+# Add orchestra to the path for all users
+export PYTHONPATH=/opt/orchestra/build:$PYTHONPATH
+export PATH=/opt/orchestra/scripts:$PATH
+```
 
 ## Create the orchestra database:
 
