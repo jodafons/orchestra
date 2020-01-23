@@ -1,159 +1,103 @@
 
 
 
-# Orchestra tutorial:
+# Orchestra Tutorial (LPS Cluster Support):
 
-Here, we will provide a simple tutorial to show the job concept implemented in the orchestra, the docker
-file contruction using a simple tensorflow image, the job preparation into the server and the job laucher
-scripts assistent.
+This document will provide a simple tutorial to show the job concept implemented into the orchestra code, 
+As example, this tutorial will use a docker container based on the tensorflow image (with GPU support) and some examples to explain all steps to create a configuration and data file, write the tuning job script, prepare the docker file and push to the public repository and finally how to launch this example into the LPS cluster.
 
-### Create my python job:
+## Prepare the Docker Container:
 
-The python is a script where will be executed all training steps. The job script must receive by argument:
+### Create the Job Tuning Script:
 
-- A data file path where is store your trainig data;
-- A job configuration file path where are store all training parameters and other things;
-- The output name where will be store the job result;
+The tuning job script (in python language) is a script where will be executed all steps needed by the training and the fitting. The job script must receive three mandatory argument to works using the orchestra job schemma:
 
-Evetually, you can include more parameters in your job but the orchestra will only works with these three 
-parameters. The logical behind this is:
+- A data file path where was stored your trainig data (Implemented as `-d` or `--dataFile`);
+- A job configuration file path where was store all training parameters and other things needed by your tuning script (Implemented as `-c` or `--configFile`);
+- The output path where will be store the job result (Implemented as `-o` or `--output`);
 
-- Each slot (or job node) will be allocated to run a specifi job configuration (i.e, if you must apply the cross validation method with 10 sorts and 10 inits, you can produce 100 job configurations and your stack will be conposed by these 100 jobs and the orchestra will consume this stack);
-- For each slot, we will point the data file path. Here we have only one dataset and all nodes will look to this file;
-- When the job is finalized, one output file with an specifical name (for the current slot, i.e: my_output_sort_1_init_2.pic) will be store at the user file in the rancher storage.
+Eventually, you can include more parameters in your job but the orchestra will works at least with these three 
+parameters (mandatory). The schemma behind the orchestra job is:
 
-Its recommended that your python script has at least these argumentes to receive these parameters by the orchestra:
+- Create a task with N jobs where N is the number of job configurations created (i.e: if you apply the cross validation method with 10 sorts and 10 inits this will produce 100 jobs configurations);
+- Each slot (or job node) will be allocated to run a specific job configuration. (This will be consumed by the orchestra schedule);
+- When a job is assigned with the finalized status, one file (i.e: my_output_sort_1_init_2.pic) will be saved into output file assigned fot this task. 
 
-
-```python
-import argparse
-import sys,os
-
-
-parser = argparse.ArgumentParser(description = '', add_help = False)
-parser = argparse.ArgumentParser()
-
-
-parser.add_argument('-c','--configFile', action='store',
-        dest='configFile', required = True,
-            help = "The job config file that will be used to configure the job (sort and init).")
-
-parser.add_argument('-o','--outputFile', action='store',
-        dest='outputFile', required = False, default = None,
-            help = "The output tuning name.")
-
-parser.add_argument('-d','--dataFile', action='store',
-        dest='dataFile', required = False, default = None,
-            help = "The data/target file used to train the model.")
-
-
-if len(sys.argv)==1:
-  parser.print_help()
-  sys.exit(1)
-
-args = parser.parse_args()
-```
 
 See this python [script](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/docker/job_tuning.py) for reference
 
 
 
-### Prepare my data and config files:
+## Prepare Data and Config Files:
 
-These files will be used in the next step.
+Just run these python scripts to create the data and configurations files that will be used in this tutorial.
 
 - See this data [creation](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/create_data.py) file for reference;
 - See this [configuration](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/create_configs.py) file for reference;
 
 
+## Prepare the Docker Container:
 
-### Prepare my docker container:
-
-You must have an docker hub account and your image must be public. Follow the procedures below to build and push your image
-to your public docker repository. This image uses the Ubuntu (tensorflow) as base and included the follow packages
-current installed:
-
-- keras and tensorflow
-- scipy and numpy
-
-A example of docker build and some usefull scripts can be found [here](https://github.com/jodafons/orchestra/tree/master/doc/tutorial/docker).
-
+You must have a [dockerhub](https://hub.docker.com/) account to run the follow commands below. This image example uses an OS based on Linux (Ubuntu) builded by the tensorflow group with GPU support. This [Dockerfile](https://github.com/jodafons/orchestra/tree/master/doc/tutorial/docker) is used in this example.
 
 ### How to build the image
-
+Compilation process to build the image using.
 ```bash
 # build the docker image
 source buildthis.sh
 ```
 
-### How to run as bash
-
+### How to run as bash (Just for Validation, No Mandatory)
+Use this command if you would like to enter inside of the container in bash mode .
 ```bash
 # run the docker image
 source runthis.sh
 ```
 
 ### How to push to your public repository
-
-You must login before push your image into the docker repository.
+You must login before push your image into the docker repository. This container must be public.
 ```bash
-# push
-docker push ${USER}/my_orchestra_tutorial
+docker push jodafons/orchestra_tutorial
 ```
 
-The idea to use a docker container here is:
-
-- The user has the total control of all dependences;
-- easy to implement and share (with containers) with the group;
-- The adminsitrator is not responsible for this.
 
 
+## Prepare the Workspace (LPS Cluster):
+
+To run the steps below you will must have an account into the LPS Cluster front-end (zeus, 146.164.147.170 into the LPS network). If you don't have an account please contat the administrator.
+
+### Storage Organization:
+
+The LPS Cluster uses a different storage (first machine on top) to store all cluster user account datas. This storage is only visiable into the private cluster network and can not be externalized. Into the Zeus machine this storage was mounted in `/mnt/cluster-volume/`. Each user will have an file into the storage path (i.e: /mnt/cluster-volume/jodafons).
+
+The orchestra policy follow some rules
+- The data file must be store into `/mnt/cluster-volume/jodafons/files/my_data_file.pic`. Where files is the directory that will be used to hold all datasets;
+- The configuration data must be store into `/mnt/cluster-volume/jodafons/files/my_config_files/` where `my_config_files` is an directory the store all configuration files;
+
+To build this workspace you just upload all created files (using scp) into the zeus machine and than organize your storage file as presented.
+
+Note: The zeus ip address is 146.164.147.170.
 
 
-### Prepare your workspace inside of the server :
+## Registry The Dataset Into the Orchestra:
 
-At this point we have all files and the docker container into your docker hub repository (must be public). Now, lets connect to 
-upload all files into the lab and connect to the cluster front-end (you must have access).
+Into the `/mnt/cluster-volume/jodafons/files`, for example, you must run the follow commands to registry all uploaded filesas datasets into the orchestra database. An dataset is a name who point to a file or an directory path (key, value) into the storage. The dataset name must be start as user.username.* always (i.e. user.jodafons.my_config_files).
 
-```bash
-# run the docker image
-scp -r *.pic $USER@bastion.lps.ufrj.br:~/
-```
-connect to the LPS server by ssh and upload your files in your home to 146.164.147.170 (cluster) machine using scp.
-
-```bash
-# Into the lps bastion
-scp -r *.pic $USER@146.164.147.170:~/
-```
-
-and connect by ssh into 146.164.147.170 machine. 
-
-Into the /mnt/cluster-volume/$USER file you must create an file folder where will be used to hold all file dirs.
-
-- /mnt/cluster-volume/$USER/files/my_data/ is the file where you will put your data file created locally by the create_data.py script;
-- /mnt/cluster-volume/$USER/files/my_configs/ is the file where you will put your config file created locally by the create_config.py script;
-
-
-### Registry your data into the orchestra:
-
-In this step you will register all files into the file data manager used by orchestra. Use the follow commands to registy all files.
-
-
-Registry the data file into the orchestra database:
-
+Registry the data file into the orchestra database as `user.jodafons.my_data_file.pic`:
 ```bash
 # you must add this prefix in your dataset name: user.username.(...)
-orchestra_registry.py -d user.$USER.my_data_example -p my_data/ --cluster LPS
+orchestra_registry.py -d user.jodafons.my_data_file.pic -p my_data_file.pic --cluster LPS
 ```
 
-Registry all config files into the orchestra database:
-
+Registry all configurations files (in the directory) into the orchestra database as `user.jodafons.my_config_files`: 
 ```bash
 # you must add this prefix in your dataset name: user.username.(...)
-orchestra_registry.py -d user.$USER.my_configs_example -p my_configs/ --cluster LPS
+orchestra_registry.py -d user.jodafons.my_config_files -p my_config_files/ --cluster LPS
 ```
+Here, `-d` is the dataset name and `-p` is the path of the file or directory that will be used.
 
-### Launch your job into the orchestra:
+
+## Create the Task:
 
 ```bash
 orchestra_create.py  \
