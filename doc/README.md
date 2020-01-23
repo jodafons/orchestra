@@ -97,7 +97,11 @@ orchestra_registry.py -d user.jodafons.my_config_files -p my_config_files/ --clu
 Here, `-d` is the dataset name and `-p` is the path of the file or directory that will be used.
 
 
-## Create the Task:
+## Orchestra Task Manager:
+
+Some scripts provide the orchestra to help the user to create/delete/view tasks.
+
+### Create Task:
 
 
 After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. This command must run inside of your user directory (here, into the `/mnt/cluster-volume/jodafons/`).
@@ -128,8 +132,9 @@ The orchestra allow some custom commands like:
 - `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
 
-## Print the Task Table:
+### Delete Task:
 
+### View all User Tasks:
 
 
 
