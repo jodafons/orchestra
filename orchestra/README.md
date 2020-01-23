@@ -30,14 +30,16 @@ This will open an port foward and externalize the server pgadmin port to your `l
 - Click on connect. Now you will be able to administrate the database using the pgadmin web browser interface.
 
 
-# How to launch and configure the Orchestra:
+
+# How to Configure Orchestra:
+
 
 ## Create the orchestra database:
 
 To write the database objects, create the list of users and the list of machines you must run the script in `orchestra/orchestra/python/db/models/init_rancher.py`. If you have an database installed at the postgres server, you must remove all tables using the pgadmin first otherwise you will not be able to run this script.
 
 
-## Configure the nodes that will be used bu the orchestra:
+## Configure the nodes that will be used into the orchestra:
 
 On your local pgadmin console connect with the LPS database. After you stablish one connection click in `Tools->QueryTool` on top of the dashboard. This will open the query editor. To access all config nodes run this command:
 
@@ -59,9 +61,49 @@ Each line is composed by the follow columns:
 To increase or decreased the number of slots for each much just double click at the CPU/GPUJobs field and change the value. After edit you just send the command (F6 or Save data changes) to the server and the orchestra will take care to update the schedule mechanism.
 
 
-## Launch the orchestra:
+# How to Configure Rancher:
+
+The account creation has three parts:
+- Part 1: Create the user into the rancher (See below);
+- Part 2: Create the user account into the Zeus (146.164.147.170) machine (i.e: Same username in the LPS Lab.);
+- Part 3: Create the user the volume into rancher and point to the LPS Cluster storage loccated at `/mnt/cluster-volume/`.
+
+All these parts must be apply into the rancher server using the `admin` account.
+
+## Create An User Account (Part 1):
+
+Please follow these steps to create an account into the rancher cluster (link is https://146.164.147.170);
+- Step 1: Enter as administrator in rancher server;
+- Step 2: Click in `Users` (top bar) and than `Add User`;
+- Step 3: Choose the username (i.e: equal than LPS without `.`), mark `Ask user to change their password on first log` and stardard permissions and `Create`;
+- Step 4: Now go to the `Cluster` area and click in `Projects/Namespaces`;
+- Step 5:Click in `Add Project`;
+- Step 6: The project name must be the username created in `Step 3`;
+- Step 7: In `Add Member` botton, choose the user created in `Step 3` to be the `Project Owner`. Finally click in `Create`;
+- Step 8: Now in the `Projects/Namespace` area, go to the created project in `Step 7` (The name of the user) and click in `Add namespace`;
+- Step 9: The namespace must be equal than the username; (i.e: At this point you must have: project=jodafons, namespace=jodafons, account=jodafons);
+
+## Create An User Account into Cluster Front-end (Part 2):
+
+- Step 1: Connect at Zeus (146.164.147.170) as adminstrator;
+- Step 2: Create an user account (same name as rancher. i.e: jodafons);
+- Step 3: Go to `/mnt/cluster-volume/` and create the user directory (i.e: `/mnt/cluster-volume/jodafons`).
 
 
+## Create An User Volume (Part 3):
+
+Here `jodafons` is an username example. 
+
+- Step 1: Into the rancher, go to the cluster area and click in `Storage->Persistent Volumes`;
+- Step 2: Click in `Add volume`;
+- Step 3: Configure the parameters (Name=`jodafons`, Path=`/root_dir/jodafons`, Server=`10.1.1.100`, Volume plugin=`NFS Share`, Capacity=`100`, In custumize area mark `Many Nodes Read-Write`)
+- Step 4: Save the persistent volume click in `Save`;
+- Step 5: Now go to the user area (`cluster-lps->jodafons`);
+- Step 6: Click in `Volumes` and than `Add volume`;
+- Step 7: Configure the volume with these parameters (name=`volume`, namespace=`jodafons`, Persistent Volume=`jodafons` and mark `Many Nodes Read-Write`.
+- Step 8: Click in `Create`;
+
+After apply all steps, the rancher will create an docker volume with name `volume` store into `/mnt/cluster-volume/jodafons` (Path=`/root_dir/jodafons`, Server=`10.1.1.100`).
 
 
 
@@ -70,20 +112,6 @@ To increase or decreased the number of slots for each much just double click at 
 
 # How to Install NVIDIA device plugin for Kubernetes?
 
-## Table of Contents
-
-- [About](#about)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-  - [Preparing your GPU Nodes](#preparing-your-gpu-nodes)
-  - [Enabling GPU Support in Kubernetes](#enabling-gpu-support-in-kubernetes)
-  - [Running GPU Jobs](#running-gpu-jobs)
-- [Docs](#docs)
-- [Changelog](#changelog)
-- [Issues and Contributing](#issues-and-contributing)
-
-
-## About
 
 The NVIDIA device plugin for Kubernetes is a Daemonset that allows you to automatically:
 - Expose the number of GPUs on each nodes of your cluster
