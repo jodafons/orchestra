@@ -44,7 +44,7 @@ source setup_modules.sh --head
 source setup.sh
 ```
 
-To configure the orchestra user scripts for all users open the file `/etc/bashrc` with adminstrator privilegies and append the follow lines into the bash scripts:
+To configure the orchestra user scripts just append these paths into the Linux environments.
 
 ```bash
 # Add orchestra to the path for all users
