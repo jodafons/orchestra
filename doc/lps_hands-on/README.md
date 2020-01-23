@@ -71,7 +71,8 @@ To run the steps below you will must have an account into the LPS Cluster front-
 
 ```bash
 # Setup orchestra for users
-source SetupOrchestraForUsers.sh
+export PYTHONPATH=/opt/orchestra/build:$PYTHONPATH
+export PATH=/opt/orchestra/scripts:$PATH
 ```
 
 ### Storage Organization:
