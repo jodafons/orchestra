@@ -116,14 +116,14 @@ The task name must follow the same rule defined in the dataset policy name.
 
 ```bash
 orchestra_create.py  \
-    -c user.jodafons.my_configs_files \ # The name of the configuration dataset
-    -o output \ # The name of the output file (allways used as output)
-    -d user.jodafons.my_data_file \ # The name of the data dataset
-    -t user.jodafons.my_task_tutorial \ # The place where will save all output files and links used by the orchestra
-    --containerImage $USER/my_orchestra_tutorial \ # the container into the docker repository
-    --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \ # The command the will be executed by kubernetes
-    --cluster LPS \ # Cluster name (Can be LPS/SDUMONT/LOBOC/LCG)
-    --bypass \ # Use this if you would like to skip the test jobs (10 jobs assigned as testers)
+    -c user.jodafons.my_configs_files \
+    -o output/my_output \
+    -d user.jodafons.my_data_file \
+    -t user.jodafons.my_task_tutorial \
+    --containerImage $USER/my_orchestra_tutorial \
+    --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \
+    --cluster LPS \
+    --bypass \
 ```
 
 The `--exec` command contruction must follow some rules to work:
@@ -132,6 +132,7 @@ The `--exec` command contruction must follow some rules to work:
 - The `%IN` tag will be substitute by the configuration file (storage) path into the orchestra. (This tag is mandatory); 
 - The `%OUT` tag will be substitute by the output file path (storage)into the orchestra. (This tag is mandatory); 
 
+**NOTE**: The `--bypass` will skip the 10 jobs tester. Do not use this command if you are not sure that your task will works on LPS Cluster.
 
 **NOTE**: The orchestra allow some custom commands like:
 - `--exec " . /setup_envs.sh && python3 /job_tuning.py -d %DATA -c %IN -o %OUT"`, run the `setup_envs.sh` script if you need to do some other things before start;
