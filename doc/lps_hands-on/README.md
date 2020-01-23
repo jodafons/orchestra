@@ -144,6 +144,13 @@ The `--exec` command contruction must follow some rules to work:
 
 ### Delete Task:
 
+This command will remove the task from the orchestra database.
+
+```bash
+orchestra_delete.py -t user.jodafons.my_first_task --cluster LPS
+```
+**WARNING**: You must remove the task directory (`user.jodafons.my_first_task`) by hand to relaunch a task with same name.
+
 
 
 
