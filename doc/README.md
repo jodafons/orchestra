@@ -79,7 +79,7 @@ To build this workspace you just upload all created files (using scp) into the z
 Note: The zeus ip address is 146.164.147.170.
 
 
-## Registry The Dataset Into the Orchestra:
+### Registry The Dataset Into the Orchestra:
 
 Into the `/mnt/cluster-volume/jodafons/files`, for example, you must run the follow commands to registry all uploaded filesas datasets into the orchestra database. An dataset is a name who point to a file or an directory path (key, value) into the storage. The dataset name must be start as user.username.* always (i.e. user.jodafons.my_config_files).
 
@@ -99,25 +99,36 @@ Here, `-d` is the dataset name and `-p` is the path of the file or directory tha
 
 ## Create the Task:
 
+
+After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. This command must run inside of your user directory (here, into the `/mnt/cluster-volume/jodafons/`).
+The task name must follow the same rule defined in the dataset policy name.
+
 ```bash
 orchestra_create.py  \
-    -c user.$USER.my_configs_example \
-    -o output \
-    -d user.$USER.my_data_example \
-    -t user.$USER.my_task_example \ # The place where will save all output files
+    -c user.jodafons.my_configs_files \ # The name of the configuration dataset
+    -o output \ # The name of the output file (allways used as output)
+    -d user.jodafons.my_data_file \ # The name of the data dataset
+    -t user.jodafons.my_task_tutorial \ # The place where will save all output files and links used by the orchestra
     --containerImage $USER/my_orchestra_tutorial \ # the container into the docker repository
-    --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \
-    --cluster LPS \
-    --bypass \
-
-
-
+    --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \ # The command the will be executed by kubernetes
+    --cluster LPS \ # Cluster name (Can be LPS/SDUMONT/LOBOC/LCG)
+    --bypass \ # Use this if you would like to skip the test jobs (10 jobs assigned as testers)
 ```
 
+The `--exec` command contruction must follow some rules to work:
+
+- The `%DATA` tag will be substitute by the data file path (storage) into the orchestra. (This tag is mandatory); 
+- The `%IN` tag will be substitute by the configuration file (storage) path into the orchestra. (This tag is mandatory); 
+- The `%OUT` tag will be substitute by the output file path (storage)into the orchestra. (This tag is mandatory); 
 
 
+The orchestra allow some custom commands like:
+
+- `--exec " . /setup_envs.sh && python3 /job_tuning.py -d %DATA -c %IN -o %OUT"`, run the `setup_envs.sh` script if you need to do some other things before start;
+- `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
 
+## Print the Task Table:
 
 
 
