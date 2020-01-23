@@ -24,7 +24,7 @@ parameters (mandatory). The schemma behind the orchestra job is:
 - When a job is assigned with the finalized status, one file (i.e: my_output_sort_1_init_2.pic) will be saved into output file assigned fot this task. 
 
 
-**NOTE**: See this python [script](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/docker/job_tuning.py) for reference
+> **NOTE**: See this python [script](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/docker/job_tuning.py) for reference
 
 
 
@@ -86,7 +86,7 @@ The orchestra policy follow some rules:
 
 To build this workspace you just upload all created files (using scp) into the zeus machine and than organize your storage file as presented.
 
-**Note**: The zeus ip address is `146.164.147.170`. (i.e: To connect just run `ssh jodafons@146.164.147.170` into the LPS `bastion` machine)
+> **Note**: The zeus ip address is `146.164.147.170`. (i.e: To connect just run `ssh jodafons@146.164.147.170` into the LPS `bastion` machine)
 
 
 ### Registry The Dataset Into the Orchestra:
@@ -132,9 +132,9 @@ The `--exec` command contruction must follow some rules to work:
 - The `%IN` tag will be substitute by the configuration file (storage) path into the orchestra. (This tag is mandatory); 
 - The `%OUT` tag will be substitute by the output file path (storage)into the orchestra. (This tag is mandatory); 
 
-**NOTE**: The `--bypass` will skip the 10 jobs tester. Do not use this command if you are not sure that your task will works on LPS Cluster.
+> **NOTE**: The `--bypass` will skip the 10 jobs tester. Do not use this command if you are not sure that your task will works on LPS Cluster.
 
-**NOTE**: The orchestra allow some custom commands like:
+> **NOTE**: The orchestra allow some custom commands like:
 - `--exec " . /setup_envs.sh && python3 /job_tuning.py -d %DATA -c %IN -o %OUT"`, run the `setup_envs.sh` script if you need to do some other things before start;
 - `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
