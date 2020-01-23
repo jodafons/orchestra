@@ -24,7 +24,7 @@ parameters (mandatory). The schemma behind the orchestra job is:
 - When a job is assigned with the finalized status, one file (i.e: my_output_sort_1_init_2.pic) will be saved into output file assigned fot this task. 
 
 
-See this python [script](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/docker/job_tuning.py) for reference
+**NOTE**: See this python [script](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/docker/job_tuning.py) for reference
 
 
 
@@ -47,14 +47,14 @@ Compilation process to build the image using.
 source buildthis.sh
 ```
 
-### How to run as bash (Just for Validation, No Mandatory)
+### How to run as bash (Just for Validation, No Mandatory):
 Use this command if you would like to enter inside of the container in bash mode .
 ```bash
 # run the docker image
 source runthis.sh
 ```
 
-### How to push to your public repository
+### How to push to your public repository:
 You must login before push your image into the docker repository. This container must be public.
 ```bash
 docker push jodafons/orchestra_tutorial
@@ -62,28 +62,38 @@ docker push jodafons/orchestra_tutorial
 
 
 
-## Prepare the Workspace (LPS Cluster):
+## Submit Jobs into the Orchestra (LPS Cluster):
 
-To run the steps below you will must have an account into the LPS Cluster front-end (zeus, 146.164.147.170 into the LPS network). If you don't have an account please contat the administrator.
+To run the steps below you will must have an account into the LPS Cluster front-end (zeus, `146.164.147.170` into the LPS network). If you don't have an account please contat the administrator.
+
+
+### Setup Orchestra For Users (Mandatory):
+
+```bash
+# Setup orchestra for users
+source SetupOrchestraForUsers.sh
+```
 
 ### Storage Organization:
 
-The LPS Cluster uses a different storage (first machine on top) to store all cluster user account datas. This storage is only visiable into the private cluster network and can not be externalized. Into the Zeus machine this storage was mounted in `/mnt/cluster-volume/`. Each user will have an file into the storage path (i.e: /mnt/cluster-volume/jodafons).
+The LPS Cluster uses a different storage (first machine on top) to store all cluster user account datas. This storage is only visiable into the private cluster network and can not be externalized. Into the Zeus machine this storage was mounted in `/mnt/cluster-volume/`. Each user will have an file into the storage path (i.e: `/mnt/cluster-volume/jodafons`).
 
-The orchestra policy follow some rules
+The orchestra policy follow some rules:
+
 - The data file must be store into `/mnt/cluster-volume/jodafons/files/my_data_file.pic`. Where files is the directory that will be used to hold all datasets;
 - The configuration data must be store into `/mnt/cluster-volume/jodafons/files/my_config_files/` where `my_config_files` is an directory the store all configuration files;
 
 To build this workspace you just upload all created files (using scp) into the zeus machine and than organize your storage file as presented.
 
-Note: The zeus ip address is 146.164.147.170.
+**Note**: The zeus ip address is `146.164.147.170`. (i.e: To connect just run `ssh jodafons@146.164.147.170` into the LPS `bastion` machine)
 
 
 ### Registry The Dataset Into the Orchestra:
 
-Into the `/mnt/cluster-volume/jodafons/files`, for example, you must run the follow commands to registry all uploaded filesas datasets into the orchestra database. An dataset is a name who point to a file or an directory path (key, value) into the storage. The dataset name must be start as user.username.* always (i.e. user.jodafons.my_config_files).
+Into the `/mnt/cluster-volume/jodafons/files`, for example, you must run the follow commands to registry all uploaded filesas datasets into the orchestra database. A `dataset` is a name who point to a file or an directory path (key, value) into the storage. The dataset name must start with `user.username.*` always (i.e. `user.jodafons.my_config_files`).
 
 Registry the data file into the orchestra database as `user.jodafons.my_data_file.pic`:
+
 ```bash
 # you must add this prefix in your dataset name: user.username.(...)
 orchestra_registry.py -d user.jodafons.my_data_file.pic -p my_data_file.pic --cluster LPS
@@ -97,11 +107,7 @@ orchestra_registry.py -d user.jodafons.my_config_files -p my_config_files/ --clu
 Here, `-d` is the dataset name and `-p` is the path of the file or directory that will be used.
 
 
-## Orchestra Task Manager:
-
-Some scripts provide the orchestra to help the user to create/delete/view tasks.
-
-### Create Task:
+### Task Creation:
 
 
 After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. This command must run inside of your user directory (here, into the `/mnt/cluster-volume/jodafons/`).
@@ -126,15 +132,18 @@ The `--exec` command contruction must follow some rules to work:
 - The `%OUT` tag will be substitute by the output file path (storage)into the orchestra. (This tag is mandatory); 
 
 
-The orchestra allow some custom commands like:
-
+**NOTE**: The orchestra allow some custom commands like:
 - `--exec " . /setup_envs.sh && python3 /job_tuning.py -d %DATA -c %IN -o %OUT"`, run the `setup_envs.sh` script if you need to do some other things before start;
 - `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
 
-### Delete Task:
 
 ### View all User Tasks:
+
+
+### Delete Task:
+
+
 
 
 
