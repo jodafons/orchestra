@@ -104,7 +104,6 @@ class Orchestrator(Logger):
     #posExecArgs = "if ! (($?)); then exit 1; fi"
     posExecArgs = "exit $?"
 
-    print(node.device())
     if node.device() is not None:
       MSG_INFO( self, "Setting this (%s) with GPU device (%d)", name, node.device() )
       template['spec']['template']['spec']['containers'][0]['resources']=\

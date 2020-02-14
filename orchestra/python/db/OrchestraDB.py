@@ -17,7 +17,7 @@ class OrchestraDB(Logger):
   def __init__( self, cluster=Cluster.LPS ):
 
     Logger.__init__(self)
-
+    self.__cluster = cluster
     if cluster == Cluster.LPS:
       url = DEFAULT_URL_LPS
     elif cluster == Cluster.SDUMONT:
@@ -32,6 +32,10 @@ class OrchestraDB(Logger):
       self.__session = Session()
     except Exception as e:
       MSG_FATAL( self, e )
+
+
+  def getCluster(self):
+    return self.__cluster
 
 
   def getStoragePath(self):
