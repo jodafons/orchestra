@@ -67,7 +67,6 @@ class TaskParser(Logger):
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
       delete_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
                     help = "The task name to be remove")
-
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
       list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
                     help = "The username.")

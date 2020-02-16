@@ -31,7 +31,7 @@ class DatasetParser( Logger ):
     self.__db = db
     if args:
       # Upload dataset using the dataset CLI
-      upload_parser = argparse.ArgumentParser(description = 'Dataset upload command lines.' )
+      upload_parser = argparse.ArgumentParser(description = 'Dataset upload command lines.' , add_help = False)
       upload_parser.add_argument('-d', '--dataset', action='store', dest='datasetname', required=True,
                                   help = "The dataset name used to registry into the database. (e.g: user.jodafons...)")
       upload_parser.add_argument('-p','--path', action='store', dest='path', required=True,
@@ -51,7 +51,7 @@ class DatasetParser( Logger ):
 
 
 
-      parent = argparse.ArgumentParser(description = 'Dataset commands.')
+      parent = argparse.ArgumentParser(description = '',add_help = False)
       subparser = parent.add_subparsers(dest='option')
       # Datasets
       subparser.add_parser('upload', parents=[upload_parser])
