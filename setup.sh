@@ -1,9 +1,9 @@
 
 
-rm -rf build
-mkdir build
-cd build
-ln -s ../gaugi/python Gaugi
+rm -rf __python__
+mkdir __python__
+cd __python__
+ln -s ../Gaugi/python Gaugi
 ln -s ../orchestra/python orchestra
 export PYTHONPATH=`pwd`:$PYTHONPATH
 export PYTHONPATH=`pwd`:$PYTHONPATH

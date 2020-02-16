@@ -190,22 +190,9 @@ class Pilot(Logger):
     for user in self.db().getAllUsers():
       # Get the number of tasks
       tasks = user.getAllTasks( self.__cluster)
-      #MSG_INFO(self, "Updating all task parameters for user(%s)",user.username)
-
 
       for task in tasks:
-        #MSG_INFO(self, "Looking into %s", task.taskName)
-        try:
-          board = self.db().session().query(Board).filter( Board.taskName==task.taskName ).first()
-        except:
-          board = None
-          #MSG_INFO(self, "The task (%s) does not exist into the table monitoring. Including...",task.taskName)
-
-        # This board is not exist into the database. This should be created first
-        if board is None:
-          board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
-          self.db().session().add(board)
-
+        board = self.db().session().query(Board).filter( Board.taskName==task.taskName ).first()
         board.jobs = len(task.getAllJobs())
         # Get he number of registered jobs for this task
         #board.registered    = len(self.db().session().query(Job).filter( and_( Job.status==Status.REGISTERED, Job.taskId==task.id )).all())

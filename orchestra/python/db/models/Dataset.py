@@ -19,6 +19,7 @@ class Dataset (Base):
   files = relationship("File", order_by="File.id", back_populates="dataset")
   cluster = Column(String)
 
+  task_usage = Column(Boolean, default=False)
 
 
   def getDatasetName(self):
@@ -38,6 +39,7 @@ class Dataset (Base):
 
   def getCluster(self):
     return self.cluster
+
 
 
 class File(Base):
