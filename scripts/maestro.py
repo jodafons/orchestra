@@ -4,8 +4,8 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser()
-
 subparser = parser.add_subparsers(dest='mode')
+
 
 from orchestra.db import OrchestraDB
 from orchestra import Cluster

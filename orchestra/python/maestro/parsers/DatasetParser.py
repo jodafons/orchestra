@@ -31,7 +31,7 @@ class DatasetParser( Logger ):
     self.__db = db
     if args:
       # Upload dataset using the dataset CLI
-      upload_parser = argparse.ArgumentParser(description = 'Dataset upload command lines.', add_help = False)
+      upload_parser = argparse.ArgumentParser(description = 'Dataset upload command lines.' )
       upload_parser.add_argument('-d', '--dataset', action='store', dest='datasetname', required=True,
                                   help = "The dataset name used to registry into the database. (e.g: user.jodafons...)")
       upload_parser.add_argument('-p','--path', action='store', dest='path', required=True,
@@ -51,7 +51,7 @@ class DatasetParser( Logger ):
 
 
 
-      parent = argparse.ArgumentParser(description = '', add_help = False)
+      parent = argparse.ArgumentParser(description = 'Dataset commands.')
       subparser = parent.add_subparsers(dest='option')
       # Datasets
       subparser.add_parser('upload', parents=[upload_parser])
@@ -75,26 +75,6 @@ class DatasetParser( Logger ):
         self.list(args.username)
 
 
-
-
-  #
-  # Print dataset
-  #
-  def print( self, datasetname ):
-
-    # check task policy
-    if datasetname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The dataset name must starts with: user.%USER.taskname.')
-    username = datasetname.split('.')[1]
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
-
-    db = self.__db.getDataset( username, datasetname )
-    if not db:
-      MSG_FATAL( self, "The dataset exist into the database")
-
-    # Loop over all files inside of this dataset
-    print ( "| %s | %s | %d |".format(username, datasetname, len(ds.files)) )
 
 
 
@@ -156,7 +136,7 @@ class DatasetParser( Logger ):
     # check if this path exist
     if os.path.exists(file_dir):
       command = 'rm -rf {FILE}'.format(FILE=file_dir)
-      print(command)
+      os.system(command)
     else:
       MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
 
@@ -224,7 +204,7 @@ class DatasetParser( Logger ):
       os.system( 'cp -r {FILE} {DESTINATION}'.format(FILE=filename, DESTINATION=destination_dir) )
       # Loop over files
       for path in expandFolders(destination_dir):
-        print("Registry %s into %s"%(path,datasetname))
+        MSG_INFO( self, "Registry %s into %s", path,datasetname)
         hash_object = hashlib.md5(str.encode(path))
         ds.addFile( File(path=path, hash=hash_object.hexdigest()) )
       self.__db.createDataset(ds)
