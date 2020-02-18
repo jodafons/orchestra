@@ -88,7 +88,7 @@ class Schedule(Logger):
           # the priority of all jobs inside of this task.
           self.checkTask( task )
 
-        else: # HOLDED, DONE, BROKEN or FAILED Status
+        else: # HOLDED, DONE, BROKEN, FAILED or KILLED Status
           continue
 
       self.calculatePriorities( user )
@@ -151,6 +151,7 @@ class Schedule(Logger):
         MSG_INFO( self, "still stesting....")
         #task.setStatus( Status.TESTING )
 
+
     elif task.getStatus() == Status.RUNNING:
 
       # The task is running. Here, we will check if its completed.
@@ -166,6 +167,14 @@ class Schedule(Logger):
         MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
         MSG_INFO( self, "The task will receive the finalized status since we have more than zero jobs with status as failed.")
         task.setStatus( Status.FINALIZED )
+
+
+      # If the number of killed jobs is equal than the number of jobs, than the task will be assgined as killed
+      # running to killed only if all jobs was assigned as killed
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all())== \
+           len(self.db().session().query(Job).filter( Job.taskId==task.id ).all()) :
+        task.setStatus( Status.KILLED )
+
 
       else: # All jobs were completed with done status
         MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
@@ -202,7 +211,7 @@ class Schedule(Logger):
 
   def getCPUQueue( self, njobs ):
     try:
-      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , 
+      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
         Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
       jobs.reverse()
       return jobs
@@ -215,7 +224,7 @@ class Schedule(Logger):
 
   def getGPUQueue( self, njobs ):
     try:
-      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED , 
+      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
         Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
     except Exception as e:
       MSG_ERROR(self,e)

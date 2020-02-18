@@ -173,6 +173,11 @@ class Slots( Logger ):
         self.__slots.remove(consumer)
       # Kubernetes job is running. Go to the next slot...
       elif consumer.status() is Status.RUNNING:
+
+        # Check if this job in runnning mode was killed by the pilot
+        if consumer.job().getStatus() is Status.KILL:
+          consumer.kill()
+
         continue
 
       elif consumer.status() is Status.DONE:
@@ -182,6 +187,16 @@ class Slots( Logger ):
 
         # increment the completed counter in node table just for monitoring
         self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).completed( gpu= True if (consumer.node().device() is not None) else False )
+        self.__slots.remove(consumer)
+
+      elif consumer.status() is Status.KILL:
+        # Tell to db that this job was killed
+        consumer.job().setStatus( Status.KILLED )
+        consumer.finalize()
+        # Remove this job into the stack
+        consumer.node().unlock()
+        # increment the killed counter in node table just for monitoring
+        #self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).killed( gpu= True if (consumer.node().device() is not None) else False )
         self.__slots.remove(consumer)
 
     self.db().commit()

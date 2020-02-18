@@ -30,6 +30,7 @@ class Board (Base):
   done           = Column( Integer )
   failed         = Column( Integer )
 
+  killed         = Column( Integer )
 
 
 

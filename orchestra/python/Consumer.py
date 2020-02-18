@@ -24,6 +24,7 @@ class Consumer( Logger ):
     self.__node = node
     self.__pending=True
     self.__broken=False
+    self.__killed=False
     hash_object = hashlib.md5(str.encode(job.execArgs))
     self.__hash = hash_object.hexdigest()
     # the namespace is the username
@@ -86,6 +87,13 @@ class Consumer( Logger ):
 
     return StatusCode.SUCCESS
 
+  def kill(self):
+    self.__killed=True
+
+
+  def killed(self):
+    return self.__killed
+
 
   def broken(self):
     return self.__broken
@@ -98,6 +106,8 @@ class Consumer( Logger ):
   def status(self):
     if self.pending():
       return Status.PENDING
+    elif self.killed():
+      return Status.KILL
     elif self.broken():
       return Status.BROKEN
     else: # Return the kubernetes status

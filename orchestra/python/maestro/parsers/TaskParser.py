@@ -369,7 +369,9 @@ class TaskParser(Logger):
       elif status == 'done':
         return Color.CGREEN2+"DONE"+Color.CEND
       elif status == 'failed':
-        return Color.CRED2+"FAILED"+Color.CEND
+        return Color.CGREEN2+"DONE"+Color.CEND
+      elif status == 'killed':
+        return Color.CRED2+"KILLED"+Color.CEND
       elif status == 'finalized':
         return Color.CRED2+"FINALIZED"+Color.CEND
       elif status == 'hold':
@@ -378,19 +380,20 @@ class TaskParser(Logger):
 
     from prettytable import PrettyTable
     t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
-                      Color.CGREEN2 + 'Taskname'  + Color.CEND,
+                      Color.CGREEN2 + 'Taskname' + Color.CEND,
                       Color.CGREEN2 + 'Assigned' + Color.CEND,
-                      Color.CGREEN2 + 'Testing' + Color.CEND,
-                      Color.CGREEN2 + 'Running' + Color.CEND,
-                      Color.CRED2   + 'Failed' + Color.CEND,
-                      Color.CGREEN2 + 'Done' + Color.CEND,
-                      Color.CGREEN2 + 'Status' + Color.CEND,
+                      Color.CGREEN2 + 'Testing'  + Color.CEND,
+                      Color.CGREEN2 + 'Running'  + Color.CEND,
+                      Color.CRED2   + 'Failed'   + Color.CEND,
+                      Color.CGREEN2 + 'Done'     + Color.CEND,
+                      Color.CRED2   + 'killed'   + Color.CEND,
+                      Color.CGREEN2 + 'Status'   + Color.CEND,
                       ])
 
     tasks = self.__db.session().query(Board).filter( Board.username==username ).all()
     # Loop over all datasets inside of the username
     for b in tasks:
-      t.add_row(  [username, b.taskName, b.assigned, b.testing, b.running, b.failed,  b.done, getStatus(b.status)] )
+      t.add_row(  [username, b.taskName, b.assigned, b.testing, b.running, b.failed,  b.done, b.killed, getStatus(b.status)] )
     print(t)
 
 
@@ -406,16 +409,14 @@ class TaskParser(Logger):
       MSG_INFO( self, "Remove all tasks inside of %s username", username )
       for task in user.getAllTasks():
         for job in task.getAllJobs():
-          job.setStatus(Status.KILLED)
-        task.setStatus(Status.KILLED)
+          job.setStatus(Status.KILLED if job.getStatus() is Status.ASSIGNED else Status.KILL)
     else:
       if taskname.split('.')[0] != 'user':
         MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
       try:
         task = self.__db.getTask( taskname )
         for job in task.getAllJobs():
-          job.setStatus(Status.KILLED)
-        task.setStatus(Status.KILLED)
+          job.setStatus(Status.KILLED if job.getStatus() is Status.ASSIGNED else Status.KILL)
       except:
         MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
 
@@ -432,7 +433,7 @@ class TaskParser(Logger):
     board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
     board.jobs = len(task.getAllJobs())
     board.registered = board.jobs
-    board.assigned=board.testing=board.running=board.failed=board.done=0
+    board.assigned=board.testing=board.running=board.failed=board.done=board.killed=0
     board.status = task.status
     self.__db.session().add(board)
 

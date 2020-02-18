@@ -6,19 +6,20 @@ from Gaugi import EnumStringification
 
 class Status ( EnumStringification ):
 
-  HOLDED = "holded"
-  BROKEN = "broken"
-  FAILED = "failed"
-  KILLED = "killed"
-  DONE = "done"
+  HOLDED     = "holded"
+  BROKEN     = "broken"
+  FAILED     = "failed"
+  KILL       = "killed"
+  KILLED     = "killed"
+  DONE       = "done"
   REGISTERED = "registered"
-  TESTING = "testing"
-  ASSIGNED = "assigned"
-  ACTIVATED = "activated"
-  PENDING = "pending"
-  STARTING = "starting"
-  RUNNING  = "running"
-  FINALIZED = "finalized"
+  TESTING    = "testing"
+  ASSIGNED   = "assigned"
+  ACTIVATED  = "activated"
+  PENDING    = "pending"
+  STARTING   = "starting"
+  RUNNING    = "running"
+  FINALIZED  = "finalized"
 
 
 
@@ -31,7 +32,7 @@ class Cluster( EnumStringification ):
 
 class Queue( EnumStringification ):
 
-  # For LPS rancher cluster 
+  # For LPS rancher cluster
   LPS = 'lps'
   # For SDumont cluster
   CPU = 'cpu'
