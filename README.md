@@ -26,6 +26,7 @@ If this job return success than the task will be swith to running state and all 
 - kubernetes;
 - benedict;
 - numpy
+- Gaugi 
 
 ### Setup:
 
