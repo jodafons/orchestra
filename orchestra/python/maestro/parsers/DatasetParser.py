@@ -53,6 +53,7 @@ class DatasetParser( Logger ):
 
       parent = argparse.ArgumentParser(description = '',add_help = False)
       subparser = parent.add_subparsers(dest='option')
+
       # Datasets
       subparser.add_parser('upload', parents=[upload_parser])
       subparser.add_parser('download', parents=[download_parser])
@@ -95,7 +96,6 @@ class DatasetParser( Logger ):
     # Loop over all datasets inside of the username
     for ds in self.__db.getAllDatasets( username ):
       t.add_row(  [username, ds.dataset, len(ds.files)] )
-
     print(t)
 
 

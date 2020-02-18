@@ -2,22 +2,25 @@
 
 import sys
 import argparse
-
-parser = argparse.ArgumentParser()
-subparser = parser.add_subparsers(dest='mode')
-
-
 from orchestra.db import OrchestraDB
 from orchestra import Cluster
+from orchestra.maestro.parsers import DatasetParser, TaskParser
+
+
+parser = argparse.ArgumentParser()
+commands = parser.add_subparsers(dest='mode')
+
+
+
 # create the database manager
 db = OrchestraDB(cluster = Cluster.LPS)
 
-
-from orchestra.maestro.parsers import DatasetParser, TaskParser
 engine = [
-            DatasetParser(db, subparser),
-            TaskParser(db, subparser),
+            DatasetParser(db, commands),
+            TaskParser(db, commands),
           ]
+
+
 
 if len(sys.argv)==1:
   print(parser.print_help())

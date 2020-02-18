@@ -20,17 +20,15 @@ class Board (Base):
   taskName      = Column(String, unique=True)
   taskId        = Column(Integer)
   status        = Column(String)
-
-
-  jobs           = Column( Integer )
-  registered     = Column( Integer )
-  assigned       = Column( Integer )
-  testing        = Column( Integer )
-  running        = Column( Integer )
-  done           = Column( Integer )
-  failed         = Column( Integer )
-
-  killed         = Column( Integer )
+  jobs          = Column( Integer )
+  registered    = Column( Integer )
+  assigned      = Column( Integer )
+  testing       = Column( Integer )
+  running       = Column( Integer )
+  done          = Column( Integer )
+  failed        = Column( Integer )
+  kill          = Column( Integer )
+  killed        = Column( Integer )
 
 
 
