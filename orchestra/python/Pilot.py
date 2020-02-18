@@ -72,7 +72,7 @@ class Pilot(Logger):
     self.schedule().setDatabase( self.db() )
 
     # Update the priority for each N minutes
-    #self.schedule().setUpdateTime( 5 )
+    self.schedule().setUpdateTime( 5 )
 
     if self.schedule().initialize().isFailure():
       MSG_FATAL( self, "Not possible to initialize the Schedule tool. abort" )
@@ -114,7 +114,7 @@ class Pilot(Logger):
           if self.cpuSlots().isAvailable():
             ## Prepare jobs for CPU slots only
             njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
-            MSG_INFO(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
+            MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
             jobs = self.schedule().getCPUQueue(njobs)
 
             while (self.cpuSlots().isAvailable()) and len(jobs)>0:
@@ -124,10 +124,10 @@ class Pilot(Logger):
           if self.gpuSlots().isAvailable():
             njobs = self.gpuSlots().size() - self.gpuSlots().allocated()
             if self.__bypass_gpu_rule:
-              MSG_INFO(self,"There are GPU slots available. Retrieving the first %d jobs from the CPU queue since bypass gpu rule is True",njobs )
+              MSG_DEBUG(self,"There are GPU slots available. Retrieving the first %d jobs from the CPU queue since bypass gpu rule is True",njobs )
               jobs = self.schedule().getCPUQueue(njobs)
             else:
-              MSG_INFO(self,"There are GPU slots available. Retrieving the first %d jobs from the GPU queue.",njobs )
+              MSG_DEBUG(self,"There are GPU slots available. Retrieving the first %d jobs from the GPU queue.",njobs )
               jobs = self.schedule().getGPUQueue(njobs)
 
             while (self.gpuSlots().isAvailable()) and len(jobs)>0:
@@ -142,7 +142,7 @@ class Pilot(Logger):
 
         # If in standalone mode, this can be calculated or note. Depend on demand.
         if self.__update_task_boards:
-          MSG_INFO(self, "Calculate all task boards...")
+          MSG_DEBUG(self, "Calculate all task boards...")
           self.updateAllBoards()
 
 
@@ -174,10 +174,12 @@ class Pilot(Logger):
     if len(jobs) > 0:
       for job in jobs:
         job.setStatus( Status.ASSIGNED )
+        job.getTask().setStatus( Status.RUNNING )
       i=0
       while (self.cpuSlots().isAvailable()) and i<len(jobs):
         self.cpuSlots().push_back( jobs[i] )
         i+=1
+      self.db().commit()
       self.cpuSlots().execute()
 
 

@@ -9,7 +9,7 @@ class Status ( EnumStringification ):
   HOLDED     = "holded"
   BROKEN     = "broken"
   FAILED     = "failed"
-  KILL       = "killed"
+  KILL       = "kill"
   KILLED     = "killed"
   DONE       = "done"
   REGISTERED = "registered"

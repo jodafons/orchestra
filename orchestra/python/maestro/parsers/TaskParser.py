@@ -244,6 +244,7 @@ class TaskParser(Logger):
         ds.addFile( File(path=outputFile, hash='' ) ) # the real path
         self.__db.createDataset(ds)
         self.createBoard( user, task )
+        task.setStatus('registered')
         self.__db.commit()
       except Exception as e:
         MSG_FATAL(self, e)
@@ -328,7 +329,6 @@ class TaskParser(Logger):
     username = taskname.split('.')[1]
     if username in self.__db.getAllUsers():
       MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
-
     try:
       user = self.__db.getUser( username )
     except:
@@ -336,15 +336,16 @@ class TaskParser(Logger):
 
     try:
       task = self.__db.getTask( taskname )
+      for job in task.getAllJobs():
+        print(job)
+        if ( (job.getStatus() == Status.FAILED) or (job.getStatus() == Status.KILL) or \
+            (job.getStatus() == Status.KILLED) or (job.getStatus() == Status.BROKEN) ):
+
+          job.setStatus(Status.REGISTERED)
+      task.setStatus(Status.REGISTERED)
+
     except:
       MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
-
-    for job in task.getAllJobs():
-      try:
-        if job.getStatus() == Status.FAILED:
-          job.setStatus(Status.ASSIGNED)
-      except:
-        MSG_FATAL( self, "Impossible to assigned this job for (%d) task", id)
 
     self.__db.commit()
 
@@ -416,7 +417,11 @@ class TaskParser(Logger):
       try:
         task = self.__db.getTask( taskname )
         for job in task.getAllJobs():
-          job.setStatus(Status.KILLED if job.getStatus() is Status.ASSIGNED else Status.KILL)
+          if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
+            # Remove all jobs from the slot
+            job.setStatus(Status.KILL)
+          else:
+            job.setStatus(Status.KILLED)
       except:
         MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
 

@@ -88,6 +88,15 @@ class Schedule(Logger):
           # the priority of all jobs inside of this task.
           self.checkTask( task )
 
+
+        elif task.getStatus() == Status.KILL:
+
+          total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+          if len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
+            task.setStatus( Status.KILLED )
+
+
+
         else: # HOLDED, DONE, BROKEN, FAILED or KILLED Status
           continue
 
@@ -136,8 +145,28 @@ class Schedule(Logger):
 
 
     if task.getStatus() == Status.TESTING:
-      # Maybe we need to checge these rules
-      if len(self.db().session().query(Job).filter( and_( or_( Job.status==Status.FAILED,  Job.status==Status.BROKEN), Job.taskId==task.id )).all()) == MAX_FAILED_JOBS:
+
+      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+
+      # If the number of jobs is less than the MIN jobs
+      if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FAILED ) ).all()) == total:
+        task.setStatus( Status.BROKEN )
+      elif len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.BROKEN ) ).all()) == total:
+        task.setStatus( Status.BROKEN )
+
+
+      # If the number of killed jobs is equal than the number of jobs, than the task will be assgined as killed
+      # running to killed only if all jobs was assigned as killed
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
+        task.setStatus( Status.KILLED )
+      # If there are any job with KILL status, so this task is in kill process
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
+        task.setStatus( Status.KILL )
+
+
+      # Here, the number of jobs is higher than the minimal, apply the job pass condition (MAX_FAILED and MIN_SUCCESS)
+
+      elif len(self.db().session().query(Job).filter( and_( or_( Job.status==Status.FAILED,  Job.status==Status.BROKEN), Job.taskId==task.id )).all()) == MAX_FAILED_JOBS:
         task.setStatus( Status.BROKEN )
         MSG_INFO(self, "The current task will be signoff with status: " + Color.CRED2 + "[BROKEN]" + Color.CEND)
         # kill all jobs into the task assigned as broken status
@@ -147,33 +176,35 @@ class Schedule(Logger):
         task.setStatus( Status.RUNNING )
         self.db().commit()
         self.assignedAllJobs(task)
+
+
       else:
         MSG_INFO( self, "still stesting....")
-        #task.setStatus( Status.TESTING )
 
 
     elif task.getStatus() == Status.RUNNING:
 
+      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+      # (Check KILL process) If there are any job with KILL status, so this task is in kill process.
+      if len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
+        task.setStatus( Status.KILL )
+
+
+
       # The task is running. Here, we will check if its completed.
-      if len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) > 0:
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) > 0:
         MSG_INFO(self, "The task still with assigned jobs inside of the task list. Still with running status...")
 
       # Here, we have zero assigned jobs. But we can have running jobs inside of the jobs list
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING, Job.taskId==task.id )).all()) > 0:
         MSG_INFO(self, "We don't have any assigned jobs any more. But the task still with running jobs inside of the task list. Still with running status...")
 
+
       # Here, we have zero assigned/running jobs. Now, we will decide if the task is done (100% done jobs) or finalized (failed jobs > zero)
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED, Job.taskId==task.id )).all()) > 0:
         MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
         MSG_INFO( self, "The task will receive the finalized status since we have more than zero jobs with status as failed.")
         task.setStatus( Status.FINALIZED )
-
-
-      # If the number of killed jobs is equal than the number of jobs, than the task will be assgined as killed
-      # running to killed only if all jobs was assigned as killed
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all())== \
-           len(self.db().session().query(Job).filter( Job.taskId==task.id ).all()) :
-        task.setStatus( Status.KILLED )
 
 
       else: # All jobs were completed with done status
