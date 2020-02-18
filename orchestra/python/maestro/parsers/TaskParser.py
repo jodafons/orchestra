@@ -71,6 +71,19 @@ class TaskParser(Logger):
       list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
                     help = "The username.")
 
+      kill_parser = argparse.ArgumentParser(description = '', add_help = False)
+      kill_parser.add_argument('-u','--user', action='store', dest='username', required=True,
+                    help = "The username.")
+      kill_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
+                    help = "The taskname to be killed.")
+      kill_parser.add_argument('-a','--all', action='store_true', dest='kill_all', required=False, default=False,
+                    help = "Remove all tasks.")
+
+
+
+
+
+
       parent = argparse.ArgumentParser(description = '', add_help = False)
       subparser = parent.add_subparsers(dest='option')
 
@@ -79,6 +92,7 @@ class TaskParser(Logger):
       subparser.add_parser('retry', parents=[retry_parser])
       subparser.add_parser('delete', parents=[delete_parser])
       subparser.add_parser('list', parents=[list_parser])
+      subparser.add_parser('kill', parents=[kill_parser])
       args.add_parser( 'task', parents=[parent] )
 
 
@@ -95,6 +109,9 @@ class TaskParser(Logger):
         self.delete(args.taskname)
       elif args.option == 'list':
         self.list(args.username)
+      elif args.option == 'kill':
+        self.kill(args.username, 'all' if args.kill_all else args.taskname)
+
 
 
 
@@ -330,7 +347,6 @@ class TaskParser(Logger):
         MSG_FATAL( self, "Impossible to assigned this job for (%d) task", id)
 
     self.__db.commit()
-    self.__db.close()
 
 
 
@@ -377,6 +393,33 @@ class TaskParser(Logger):
       t.add_row(  [username, b.taskName, b.assigned, b.testing, b.running, b.failed,  b.done, getStatus(b.status)] )
     print(t)
 
+
+
+  def kill( self, username, taskname ):
+
+    try:
+      user = self.__db.getUser( username )
+    except:
+      MSG_FATAL( self , "The user name (%s) does not exist into the data base", username)
+
+    if taskname=='all':
+      MSG_INFO( self, "Remove all tasks inside of %s username", username )
+      for task in user.getAllTasks():
+        for job in task.getAllJobs():
+          job.setStatus(Status.KILLED)
+        task.setStatus(Status.KILLED)
+    else:
+      if taskname.split('.')[0] != 'user':
+        MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
+      try:
+        task = self.__db.getTask( taskname )
+        for job in task.getAllJobs():
+          job.setStatus(Status.KILLED)
+        task.setStatus(Status.KILLED)
+      except:
+        MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
+
+    self.__db.commit()
 
 
 
