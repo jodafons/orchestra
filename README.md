@@ -26,6 +26,7 @@ If this job return success than the task will be swith to running state and all 
 - kubernetes;
 - benedict;
 - numpy
+- Gaugi
 
 ### Setup:
 
@@ -64,14 +65,12 @@ After organize your user directory into the storage with the data/configuration 
 The task name must follow the same rule defined in the dataset policy name.
 
 ```bash
-orchestra_create.py  \
+maestro.py task create \
     -c user.jodafons.my_configs_files \
-    -o output/my_output \
     -d user.jodafons.my_data_file \
     -t user.jodafons.my_task_tutorial \
     --containerImage $USER/my_orchestra_tutorial \
     --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \
-    --cluster LPS \
     --bypass \
 ```
 
@@ -92,7 +91,7 @@ The `--exec` command contruction must follow some rules to work:
 ### Print All Tasks:
 
 ```bash
-orchestra_print.py --cluster LPS
+maestro.py task list -u jodafons
 ```
 
 
@@ -101,17 +100,14 @@ orchestra_print.py --cluster LPS
 This command will remove the task from the orchestra database.
 
 ```bash
-orchestra_delete.py -t user.jodafons.my_first_task --cluster LPS
+maestro.py task delete -t user.jodafons.my_first_task
 ```
-> **WARNING**: You must remove the task directory (`user.jodafons.my_first_task`) by hand to relaunch a task with same name.
 
 ### Retry Task:
 
 ```bash
-orchestra_retry.py -t user.jodafons.my_first_task --cluster LPS
+mestro.py task retry -t user.jodafons.my_first_task
 ```
-
-
 
 
 
