@@ -1,6 +1,3 @@
-[submodule "Gaugi"]
-	path = Gaugi
-	url = https://github.com/jodafons/Gaugi
 [submodule "external/maestro"]
 	path = external/maestro
 	url = https://github.com/gabriel-milan/maestro.git
