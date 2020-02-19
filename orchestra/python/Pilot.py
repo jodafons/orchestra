@@ -111,15 +111,6 @@ class Pilot(Logger):
 
         # If in standalone mode, these slots will not in running mode. Only schedule will run.
         if self.__run_slots:
-          if self.cpuSlots().isAvailable():
-            ## Prepare jobs for CPU slots only
-            njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
-            MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
-            jobs = self.schedule().getCPUQueue(njobs)
-
-            while (self.cpuSlots().isAvailable()) and len(jobs)>0:
-              self.cpuSlots().push_back( jobs.pop() )
-
 
           if self.gpuSlots().isAvailable():
             njobs = self.gpuSlots().size() - self.gpuSlots().allocated()
@@ -132,6 +123,15 @@ class Pilot(Logger):
 
             while (self.gpuSlots().isAvailable()) and len(jobs)>0:
               self.gpuSlots().push_back( jobs.pop() )
+
+          if self.cpuSlots().isAvailable():
+            ## Prepare jobs for CPU slots only
+            njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
+            MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
+            jobs = self.schedule().getCPUQueue(njobs)
+
+            while (self.cpuSlots().isAvailable()) and len(jobs)>0:
+              self.cpuSlots().push_back( jobs.pop() )
 
 
           ## Run the pilot for cpu queue
