@@ -140,20 +140,20 @@ maestro.py task delete -t user.jodafons.my_first_task
 ### Retry Task:
 
 ```bash
-maestor.py task -t user.jodafons.my_first_task
+maestro.py task -t user.jodafons.my_first_task
 ```
 
 ### Download Outputs
 
 ```bash
-maestor.py castor download -t user.jodafons.my_first_task
+maestro.py castor download -t user.jodafons.my_first_task
 ```
 
 
 ### Delete a Dataset
 
 ```bash
-maestor.py castor delete -d user.jodafons.my_configs_files
+maestro.py castor delete -d user.jodafons.my_configs_files
 ```
 
 
