@@ -380,21 +380,27 @@ class TaskParser(Logger):
 
 
     from prettytable import PrettyTable
-    t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
-                      Color.CGREEN2 + 'Taskname' + Color.CEND,
-                      Color.CGREEN2 + 'Assigned' + Color.CEND,
-                      Color.CGREEN2 + 'Testing'  + Color.CEND,
-                      Color.CGREEN2 + 'Running'  + Color.CEND,
-                      Color.CRED2   + 'Failed'   + Color.CEND,
-                      Color.CGREEN2 + 'Done'     + Color.CEND,
-                      Color.CRED2   + 'killed'   + Color.CEND,
-                      Color.CGREEN2 + 'Status'   + Color.CEND,
+    t = PrettyTable([ Color.CGREEN2 + 'Username'    + Color.CEND,
+                      Color.CGREEN2 + 'Taskname'    + Color.CEND,
+                      Color.CGREEN2 + 'Registered'  + Color.CEND,
+                      Color.CGREEN2 + 'Assigned'    + Color.CEND,
+                      Color.CGREEN2 + 'Testing'     + Color.CEND,
+                      Color.CGREEN2 + 'Running'     + Color.CEND,
+                      Color.CRED2   + 'Failed'      + Color.CEND,
+                      Color.CGREEN2 + 'Done'        + Color.CEND,
+                      Color.CRED2   + 'kill'        + Color.CEND,
+                      Color.CRED2   + 'killed'      + Color.CEND,
+                      Color.CGREEN2 + 'Status'      + Color.CEND,
                       ])
 
     tasks = self.__db.session().query(Board).filter( Board.username==username ).all()
     # Loop over all datasets inside of the username
     for b in tasks:
-      t.add_row(  [username, b.taskName, b.assigned, b.testing, b.running, b.failed,  b.done, b.killed, getStatus(b.status)] )
+      if len(b.taskName)>80:
+        taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
+      else:
+        taskname = b.taskName
+      t.add_row(  [username, taskname, b.registered,  b.assigned, b.testing, b.running, b.failed,  b.done, b.kill, b.killed, getStatus(b.status)] )
     print(t)
 
 
@@ -410,20 +416,23 @@ class TaskParser(Logger):
       MSG_INFO( self, "Remove all tasks inside of %s username", username )
       for task in user.getAllTasks():
         for job in task.getAllJobs():
-          job.setStatus(Status.KILLED if job.getStatus() is Status.ASSIGNED else Status.KILL)
+          if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
+            job.setStatus(Status.KILL)
+          else:
+            job.setStatus(Status.KILLED)
     else:
       if taskname.split('.')[0] != 'user':
         MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
-      try:
         task = self.__db.getTask( taskname )
+        if not task:
+          MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
         for job in task.getAllJobs():
           if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
             # Remove all jobs from the slot
             job.setStatus(Status.KILL)
           else:
             job.setStatus(Status.KILLED)
-      except:
-        MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
+
 
     self.__db.commit()
 
