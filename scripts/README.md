@@ -24,16 +24,8 @@ parameters (mandatory). The schemma behind the orchestra job is:
 - When a job is assigned with the finalized status, one file (i.e: my_output_sort_1_init_2.pic) will be saved into output file assigned fot this task. 
 
 
-> **NOTE**: See this python [script](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/docker/job_tuning.py) for reference
+> **NOTE**: See this python [script](https://github.com/jodafons/saphyra/blob/master/analysis/RingerTuning_2020/tunings/Zee/v10/create_jobs.py) for reference
 
-
-
-## Prepare Data and Config Files:
-
-Just run these python scripts to create the data and configurations files that will be used in this tutorial.
-
-- See this data [creation](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/create_data.py) file for reference;
-- See this [configuration](https://github.com/jodafons/orchestra/blob/master/doc/tutorial/create_configs.py) file for reference;
 
 
 ## Prepare the Docker Container:
@@ -57,7 +49,7 @@ source runthis.sh
 ### How to push to your public repository:
 You must login before push your image into the docker repository. This container must be public.
 ```bash
-docker push jodafons/orchestra_tutorial
+docker push jodafons/saphyra
 ```
 
 
@@ -79,31 +71,23 @@ export PATH=/opt/orchestra/scripts:$PATH
 
 The LPS Cluster uses a different storage (first machine on top) to store all cluster user account datas. This storage is only visiable into the private cluster network and can not be externalized. Into the Zeus machine this storage was mounted in `/mnt/cluster-volume/`. Each user will have an file into the storage path (i.e: `/mnt/cluster-volume/jodafons`).
 
-The orchestra policy follow some rules:
-
-- The data file must be store into `/mnt/cluster-volume/jodafons/files/my_data_file.pic`. Where files is the directory that will be used to hold all datasets;
-- The configuration data must be store into `/mnt/cluster-volume/jodafons/files/my_config_files/` where `my_config_files` is an directory the store all configuration files;
-
-To build this workspace you just upload all created files (using scp) into the zeus machine and than organize your storage file as presented.
 
 > **Note**: The zeus ip address is `146.164.147.170`. (i.e: To connect just run `ssh jodafons@146.164.147.170` into the LPS `bastion` machine)
 
 
 ### Registry The Dataset Into the Orchestra:
 
-Into the `/mnt/cluster-volume/jodafons/files`, for example, you must run the follow commands to registry all uploaded filesas datasets into the orchestra database. A `dataset` is a name who point to a file or an directory path (key, value) into the storage. The dataset name must start with `user.username.*` always (i.e. `user.jodafons.my_config_files`).
-
 Registry the data file into the orchestra database as `user.jodafons.my_data_file.pic`:
 
 ```bash
 # you must add this prefix in your dataset name: user.username.(...)
-orchestra_registry.py -d user.jodafons.my_data_file.pic -p my_data_file.pic --cluster LPS
+maestro.py castor upload -d user.jodafons.my_data_file.pic -p my_data_file.pic
 ```
 
 Registry all configurations files (in the directory) into the orchestra database as `user.jodafons.my_config_files`: 
 ```bash
 # you must add this prefix in your dataset name: user.username.(...)
-orchestra_registry.py -d user.jodafons.my_config_files -p my_config_files/ --cluster LPS
+maestro.py castor upload -d user.jodafons.my_config_files -p my_config_files
 ```
 Here, `-d` is the dataset name and `-p` is the path of the file or directory that will be used.
 
@@ -111,18 +95,15 @@ Here, `-d` is the dataset name and `-p` is the path of the file or directory tha
 ### Task Creation:
 
 
-After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. This command must run inside of your user directory (here, into the `/mnt/cluster-volume/jodafons/`).
-The task name must follow the same rule defined in the dataset policy name.
+After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. The task name must follow the same rule defined in the dataset policy name.
 
 ```bash
-orchestra_create.py  \
+maestro.py task create  \
     -c user.jodafons.my_configs_files \
-    -o output/my_output \
     -d user.jodafons.my_data_file \
     -t user.jodafons.my_task_tutorial \
-    --containerImage $USER/my_orchestra_tutorial \
+    --containerImage jodafons/saphyra \
     --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \
-    --cluster LPS \
     --bypass \
 ```
 
@@ -143,7 +124,7 @@ The `--exec` command contruction must follow some rules to work:
 ### Print All Tasks:
 
 ```bash
-orchestra_print.py --cluster LPS
+maestro.py task list -u jodafons
 ```
 
 
@@ -152,14 +133,27 @@ orchestra_print.py --cluster LPS
 This command will remove the task from the orchestra database.
 
 ```bash
-orchestra_delete.py -t user.jodafons.my_first_task --cluster LPS
+maestro.py task delete -t user.jodafons.my_first_task
 ```
 > **WARNING**: You must remove the task directory (`user.jodafons.my_first_task`) by hand to relaunch a task with same name.
 
 ### Retry Task:
 
 ```bash
-orchestra_retry.py -t user.jodafons.my_first_task --cluster LPS
+maestor.py task -t user.jodafons.my_first_task
+```
+
+### Download Outputs
+
+```bash
+maestor.py castor download -t user.jodafons.my_first_task
+```
+
+
+### Delete a Dataset
+
+```bash
+maestor.py castor delete -d user.jodafons.my_configs_files
 ```
 
 
