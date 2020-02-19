@@ -336,13 +336,19 @@ class TaskParser(Logger):
 
     try:
       task = self.__db.getTask( taskname )
-      for job in task.getAllJobs():
-        print(job)
-        if ( (job.getStatus() == Status.FAILED) or (job.getStatus() == Status.KILL) or \
-            (job.getStatus() == Status.KILLED) or (job.getStatus() == Status.BROKEN) ):
 
+      if task.getStatus() == Status.BROKEN:
+        # We need to test the job since the task is broken using the initial jobs
+        for job in task.getAllJobs():
+          # All jobs are in broken status
           job.setStatus(Status.REGISTERED)
-      task.setStatus(Status.REGISTERED)
+        task.setStatus(Status.REGISTERED)
+      else:
+        for job in task.getAllJobs():
+          if ( (job.getStatus() == Status.FAILED) or (job.getStatus() == Status.KILL) or (job.getStatus() == Status.KILLED) ):
+            job.setStatus(Status.ASSIGNED)
+        task.setStatus(Status.RUNNING)
+
 
     except:
       MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
@@ -375,6 +381,8 @@ class TaskParser(Logger):
         return Color.CRED2+"KILLED"+Color.CEND
       elif status == 'finalized':
         return Color.CRED2+"FINALIZED"+Color.CEND
+      elif status == 'broken':
+        return Color.CRED2+"BROKEN"+Color.CEND
       elif status == 'hold':
         return Color.CRED2+"HOLD"+Color.CEND
 
