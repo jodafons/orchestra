@@ -106,7 +106,7 @@ maestro.py task delete -t user.jodafons.my_first_task
 ### Retry Task:
 
 ```bash
-mestro.py task retry -t user.jodafons.my_first_task
+maestro.py task retry -t user.jodafons.my_first_task
 ```
 
 
