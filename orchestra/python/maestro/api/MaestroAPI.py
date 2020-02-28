@@ -22,8 +22,8 @@ class MaestroAPI (Logger):
 
     self.__app = Flask (__name__)
     self.__db = OrchestraDB()
-    self.__api = Api(app)
-    self.__login = LoginManager(app)
+    self.__api = Api(self.__app)
+    self.__login = LoginManager(self.__app)
 
     self.__api.add_resource(Authenticate, '/authenticate')
 
