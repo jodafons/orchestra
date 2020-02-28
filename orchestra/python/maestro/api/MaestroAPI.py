@@ -38,7 +38,7 @@ class MaestroAPI (Logger):
           user = db.getUser(request.form['username'])
           password = request.form['password']
 
-          if (user.getUserName() == request.form['username']) and (password == user.getPassword()):
+          if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
             try:
               login_user(user, remember=False)
             except:
@@ -59,11 +59,6 @@ class MaestroAPI (Logger):
 
   def run (self):
     self.__app.run (host = '0.0.0.0', port = API_PORT)
-
-  def hashPw (self, password):
-    m = sha256()
-    m.update(password.encode('utf-8'))
-    return m.hexdigest()
 
   class List (Resource):
     def get (self):
