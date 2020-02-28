@@ -29,7 +29,7 @@ BASEPATH_SG_LPS = '/mnt/cluster-volume'
 #
 # Flask
 #
-api_port = '5020'
+API_PORT = '5020'
 CLUSTER_VOLUME = '/mnt/cluster-volume'
 
 #

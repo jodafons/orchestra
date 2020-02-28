@@ -25,6 +25,11 @@ class MaestroAPI (Logger):
     self.__api = Api(app)
     self.__login = LoginManager(app)
 
+    self.__api.add_resource(Authenticate, '/authenticate')
+
+  def run (self):
+    self.__app.run (host = '0.0.0.0', port = API_PORT)
+
   def hashPw (self, password):
     m = sha256()
     m.update(password.encode('utf-8'))
@@ -38,10 +43,10 @@ class MaestroAPI (Logger):
           message="User is already authenticated!"
         )
       else:
-        user = db.getUser(request.form['username'])
+        user = self.__db.getUser(request.form['username'])
         password = request.form['password']
 
-        if (user.getUserName() == 'gabriel.milan') and (password == user.getPassword()):
+        if (user.getUserName() == request.form['username']) and (password == user.getPassword()):
           try:
             login_user(user, remember=False)
           except:
@@ -58,30 +63,43 @@ class MaestroAPI (Logger):
           message="Authentication failed!"
         )
 
-  class CopyFile (Resource):
-    def post(self):
+  class List (Resource):
+    def get (self):
       if current_user.is_authenticated:
-        # Get file and assure file name is OK
-        receivedFile = request.files['file']
-        filename = secure_filename(receivedFile.filename)
-        destination_dir = CLUSTER_VOLUME + current_user.getUserName() + '/files'
+        from Gaugi import Color
+        from prettytable import PrettyTable
+        t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
+                          Color.CGREEN2 + 'Dataset'  + Color.CEND,
+                          Color.CGREEN2 + 'Files' + Color.CEND])
+        for ds in self.__db.getAllDatasets( username ):
+          t.add_row(  [username, ds.dataset, len(ds.files)] )
+        return t
 
-        # If dir doesn't exist, creates it
-        if not os.path.exists(destination_dir):
-          os.makedirs(destination_dir)
+
+  # class CopyFile (Resource):
+  #   def post(self):
+  #     if current_user.is_authenticated:
+  #       # Get file and assure file name is OK
+  #       receivedFile = request.files['file']
+  #       filename = secure_filename(receivedFile.filename)
+  #       destination_dir = CLUSTER_VOLUME + current_user.getUserName() + '/files'
+
+  #       # If dir doesn't exist, creates it
+  #       if not os.path.exists(destination_dir):
+  #         os.makedirs(destination_dir)
         
-        # Save received file
-        receivedFile.save(os.path.join(destination_dir, filename))
+  #       # Save received file
+  #       receivedFile.save(os.path.join(destination_dir, filename))
 
-        return jsonify(
-          error_code=ERR_OK,
-          message="File saved successfully."
-        )
-      else:
-        return jsonify(
-          error_code=ERR_UNAUTHORIZED,
-          message="Please authenticate."
-        )
+  #       return jsonify(
+  #         error_code=ERR_OK,
+  #         message="File saved successfully."
+  #       )
+  #     else:
+  #       return jsonify(
+  #         error_code=ERR_UNAUTHORIZED,
+  #         message="Please authenticate."
+  #       )
 
 
 #
