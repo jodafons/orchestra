@@ -20,6 +20,11 @@ class MaestroAPI (Logger):
 
   def __init__ (self):
 
+    self.__app = Flask (__name__)
+    self.__db = OrchestraDB()
+    self.__api = Api(self.__app)
+    self.__login = LoginManager(self.__app)
+
     class Authenticate (Resource):
       def post(self):
         if current_user.is_authenticated:
@@ -47,11 +52,6 @@ class MaestroAPI (Logger):
             error_code=HTTPStatus.UNAUTHORIZED,
             message="Authentication failed!"
           )
-
-    self.__app = Flask (__name__)
-    self.__db = OrchestraDB()
-    self.__api = Api(self.__app)
-    self.__login = LoginManager(self.__app)
 
     self.__api.add_resource(Authenticate, '/authenticate')
 
