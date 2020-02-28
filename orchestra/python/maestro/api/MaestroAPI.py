@@ -18,35 +18,35 @@ from http import HTTPStatus
 
 class MaestroAPI (Logger):
 
-  class Authenticate (Resource):
-    def post(self):
-      if current_user.is_authenticated:
-        return jsonify(
-          error_code=v,
-          message="User is already authenticated!"
-        )
-      else:
-        user = self.__db.getUser(request.form['username'])
-        password = request.form['password']
+  def __init__ (self):
 
-        if (user.getUserName() == request.form['username']) and (password == user.getPassword()):
-          try:
-            login_user(user, remember=False)
-          except:
+    class Authenticate (Resource):
+      def post(self):
+        if current_user.is_authenticated:
+          return jsonify(
+            error_code=v,
+            message="User is already authenticated!"
+          )
+        else:
+          user = self.__db.getUser(request.form['username'])
+          password = request.form['password']
+
+          if (user.getUserName() == request.form['username']) and (password == user.getPassword()):
+            try:
+              login_user(user, remember=False)
+            except:
+              return jsonify(
+                error_code=HTTPStatus.UNAUTHORIZED,
+                message="Failed to login."
+              )
             return jsonify(
-              error_code=HTTPStatus.UNAUTHORIZED,
-              message="Failed to login."
+              error_code=HTTPStatus.OK,
+              message="Authentication successful!"
             )
           return jsonify(
-            error_code=HTTPStatus.OK,
-            message="Authentication successful!"
+            error_code=HTTPStatus.UNAUTHORIZED,
+            message="Authentication failed!"
           )
-        return jsonify(
-          error_code=HTTPStatus.UNAUTHORIZED,
-          message="Authentication failed!"
-        )
-
-  def __init__ (self):
 
     self.__app = Flask (__name__)
     self.__db = OrchestraDB()
