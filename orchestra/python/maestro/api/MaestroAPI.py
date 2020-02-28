@@ -77,7 +77,10 @@ class MaestroAPI (Logger):
                             Color.CGREEN2 + 'Files' + Color.CEND])
           for ds in db.getAllDatasets( username ):
             t.add_row(  [username, ds.dataset, len(ds.files)] )
-          return t.get_string()
+          return jsonify(
+            error_code=HTTPStatus.OK
+            message=t.get_string()
+          )
     ###
 
     self.__api.add_resource(Authenticate, '/authenticate')
