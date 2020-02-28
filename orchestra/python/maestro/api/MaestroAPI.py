@@ -18,23 +18,6 @@ from http import HTTPStatus
 
 class MaestroAPI (Logger):
 
-  def __init__ (self):
-
-    self.__app = Flask (__name__)
-    self.__db = OrchestraDB()
-    self.__api = Api(app)
-    self.__login = LoginManager(app)
-
-    self.__api.add_resource(Authenticate, '/authenticate')
-
-  def run (self):
-    self.__app.run (host = '0.0.0.0', port = API_PORT)
-
-  def hashPw (self, password):
-    m = sha256()
-    m.update(password.encode('utf-8'))
-    return m.hexdigest()
-
   class Authenticate (Resource):
     def post(self):
       if current_user.is_authenticated:
@@ -62,6 +45,23 @@ class MaestroAPI (Logger):
           error_code=HTTPStatus.UNAUTHORIZED,
           message="Authentication failed!"
         )
+
+  def __init__ (self):
+
+    self.__app = Flask (__name__)
+    self.__db = OrchestraDB()
+    self.__api = Api(self.__app)
+    self.__login = LoginManager(self.__app)
+
+    self.__api.add_resource(Authenticate, '/authenticate')
+
+  def run (self):
+    self.__app.run (host = '0.0.0.0', port = API_PORT)
+
+  def hashPw (self, password):
+    m = sha256()
+    m.update(password.encode('utf-8'))
+    return m.hexdigest()
 
   class List (Resource):
     def get (self):
