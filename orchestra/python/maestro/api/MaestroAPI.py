@@ -81,6 +81,7 @@ class MaestroAPI (Logger):
     ###
 
     self.__api.add_resource(Authenticate, '/authenticate')
+    self.__api.add_resource(ListDatasets, '/list-datasets')
 
   def run (self):
     self.__app.run (host = '0.0.0.0', port = API_PORT)
