@@ -27,6 +27,7 @@ class MaestroAPI (Logger):
 
     db = self.__db
 
+    ###
     class Authenticate (Resource):
       def post(self):
         if current_user.is_authenticated:
@@ -36,6 +37,11 @@ class MaestroAPI (Logger):
           )
         else:
           user = db.getUser(request.form['username'])
+          if user is None:
+            return jsonify(
+              error_code=HTTPStatus.UNAUTHORIZED,
+              message="Authentication failed!"
+            )
           password = request.form['password']
 
           if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
@@ -54,23 +60,31 @@ class MaestroAPI (Logger):
             error_code=HTTPStatus.UNAUTHORIZED,
             message="Authentication failed!"
           )
+    ###
+
+    ###
+    class ListDatasets (Resource):
+      def post (self):
+        # if current_user.is_authenticated:
+        if True:
+          from Gaugi import Color
+          from prettytable import PrettyTable
+
+          username = request.form['username']
+
+          t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
+                            Color.CGREEN2 + 'Dataset'  + Color.CEND,
+                            Color.CGREEN2 + 'Files' + Color.CEND])
+          for ds in db.getAllDatasets( username ):
+            t.add_row(  [username, ds.dataset, len(ds.files)] )
+          return t
+    ###
 
     self.__api.add_resource(Authenticate, '/authenticate')
 
   def run (self):
     self.__app.run (host = '0.0.0.0', port = API_PORT)
 
-  class List (Resource):
-    def get (self):
-      if current_user.is_authenticated:
-        from Gaugi import Color
-        from prettytable import PrettyTable
-        t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
-                          Color.CGREEN2 + 'Dataset'  + Color.CEND,
-                          Color.CGREEN2 + 'Files' + Color.CEND])
-        for ds in self.__db.getAllDatasets( username ):
-          t.add_row(  [username, ds.dataset, len(ds.files)] )
-        return t
 
 
   # class CopyFile (Resource):
