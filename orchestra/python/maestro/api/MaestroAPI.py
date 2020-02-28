@@ -25,6 +25,8 @@ class MaestroAPI (Logger):
     self.__api = Api(self.__app)
     self.__login = LoginManager(self.__app)
 
+    db = self.__db
+
     class Authenticate (Resource):
       def post(self):
         if current_user.is_authenticated:
@@ -33,7 +35,7 @@ class MaestroAPI (Logger):
             message="User is already authenticated!"
           )
         else:
-          user = self.__db.getUser(request.form['username'])
+          user = db.getUser(request.form['username'])
           password = request.form['password']
 
           if (user.getUserName() == request.form['username']) and (password == user.getPassword()):
