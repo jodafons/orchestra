@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from flask_login import LoginManager, current_user, login_user
 from sqlalchemy import create_engine
-from constants import *
+from orchestra.constants import *
 from orchestra import OrchestraDB, TaskBoard
 from hashlib import sha256
 from werkzeug.utils import secure_filename
