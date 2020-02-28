@@ -78,7 +78,7 @@ class MaestroAPI (Logger):
           for ds in db.getAllDatasets( username ):
             t.add_row(  [username, ds.dataset, len(ds.files)] )
           return jsonify(
-            error_code=HTTPStatus.OK
+            error_code=HTTPStatus.OK,
             message=t.get_string()
           )
     ###
