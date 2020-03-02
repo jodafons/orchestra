@@ -274,11 +274,13 @@ class MaestroAPI (Logger):
           )
 
         import zipfile
+        from os.path import basename
 
         def zipdir(path, ziph):
           for root, dirs, files in os.walk(path):
-              for file in files:
-                  ziph.write(os.path.join(root, file))
+            for file in files:
+              full_path = os.path.join(root, file)
+              ziph.write(full_path, basename(full_path))
 
         zipfilename = '{}.zip'.format(datasetname)
         zipfilepath = os.path.join(home, zipfilename)
@@ -286,7 +288,7 @@ class MaestroAPI (Logger):
         zipf = zipfile.ZipFile(zipfilepath, 'w', zipfile.ZIP_DEFLATED)
         zipdir(file_dir, zipf)
         zipf.close()
-        
+
         return send_file(zipfilepath, attachment_filename=zipfilename)
     ###
 
