@@ -273,16 +273,20 @@ class MaestroAPI (Logger):
             message="Dataset files not found!"
           )
 
-        from zipfile import ZipFile
+        import zipfile
+
+        def zipdir(path, ziph):
+          for root, dirs, files in os.walk(path):
+              for file in files:
+                  ziph.write(os.path.join(root, file))
+
         zipfilename = '{}.zip'.format(datasetname)
         zipfilepath = os.path.join(home, zipfilename)
 
-        with ZipFile(zipfilepath, 'w') as zipObj:
-          for folderName, subfolders, filenames in os.walk(file_dir):
-            for filename in filenames:
-              filePath = os.path.join(folderName, filename)
-              zipObj.write(filePath)
-
+        zipf = zipfile.ZipFile(zipfilepath, 'w', zipfile.ZIP_DEFLATED)
+        zipdir(file_dir, zipf)
+        zipf.close()
+        
         return send_file(zipfilepath, attachment_filename=zipfilename)
     ###
 
