@@ -211,6 +211,13 @@ class MaestroAPI (Logger):
         datasetname = request.form['datasetname']
 
         ds = db.getDataset( username, datasetname )
+
+        if ds is None:
+          return jsonify(
+            error_code=HTTPStatus.NOT_FOUND,
+            message="Dataset not found on the database."
+          )
+
         if ds.task_usage:
           return jsonify(
             error_code=HTTPStatus.CONFLICT,
