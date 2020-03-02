@@ -145,7 +145,7 @@ class MaestroAPI (Logger):
                             Color.CGREEN2 + 'Status'      + Color.CEND,
                             ])
 
-          tasks = self.__db.session().query(Board).filter( Board.username==username ).all()
+          tasks = db.session().query(Board).filter( Board.username==username ).all()
           for b in tasks:
             if len(b.taskName)>80:
               taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
