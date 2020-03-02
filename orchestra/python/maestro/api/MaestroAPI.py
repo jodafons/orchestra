@@ -294,7 +294,7 @@ class MaestroAPI (Logger):
         path = os.path.join(destination_dir, filename)
         hash_object = md5(str.encode(path))
         file_obj = File(path=path, hash=hash_object.hexdigest())
-        if file_obj in ds:
+        if file_obj in ds.getAllFiles():
           return jsonify (
             error_code=HTTPStatus.CONFLICT,
             message="A file with same name as {} is already on this dataset!".format(filename)
