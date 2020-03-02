@@ -278,41 +278,41 @@ class MaestroAPI (Logger):
         username = request.form['username']
         datasetname = request.form['datasetname']
 
-        # try:
-        ds_exists = True
-        ds = db.getDataset(username, datasetname)
-        if ds is None:
-          ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
-          ds_exists = False
-        receivedFile = request.files['file']
-        filename = secure_filename(receivedFile.filename)
-        destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
-        destination_dir = destination_dir.replace('//','/')
-        if not os.path.exists(destination_dir):
-          os.makedirs(destination_dir)
-        receivedFile.save(os.path.join(destination_dir, filename))
-        path = os.path.join(destination_dir, filename)
-        hash_object = md5(str.encode(path))
-        file_obj = File(path=path, hash=hash_object.hexdigest())
-        for ds_file in ds.getAllFiles():
-          if ds_file.hash == file_obj.hash:
-            return jsonify (
-              error_code=HTTPStatus.CONFLICT,
-              message="A file with same name as {} is already on this dataset!".format(filename)
-            )
-        ds.addFile( file_obj )
-        if not ds_exists:
-          db.createDataset(ds)
-        db.commit()
-        return jsonify (
-          error_code=HTTPStatus.OK,
-          message="File {} successfully uploaded!".format(filename)
-        )
-        # except:
-        #   return jsonify (
-        #     error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-        #     message="Unknown error when uploading this dataset."
-        #   )
+        try:
+          ds_exists = True
+          ds = db.getDataset(username, datasetname)
+          if ds is None:
+            ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
+            ds_exists = False
+          receivedFile = request.files['file']
+          filename = secure_filename(receivedFile.filename)
+          destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+          destination_dir = destination_dir.replace('//','/')
+          if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
+          receivedFile.save(os.path.join(destination_dir, filename))
+          path = os.path.join(destination_dir, filename)
+          hash_object = md5(str.encode(path))
+          file_obj = File(path=path, hash=hash_object.hexdigest())
+          for ds_file in ds.getAllFiles():
+            if ds_file.hash == file_obj.hash:
+              return jsonify (
+                error_code=HTTPStatus.CONFLICT,
+                message="A file with same name as {} is already on this dataset!".format(filename)
+              )
+          ds.addFile( file_obj )
+          if not ds_exists:
+            db.createDataset(ds)
+          db.commit()
+          return jsonify (
+            error_code=HTTPStatus.OK,
+            message="File {} successfully uploaded!".format(filename)
+          )
+        except:
+          return jsonify (
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message="Unknown error when uploading this dataset. Please report."
+          )
     ###
 
     ###
