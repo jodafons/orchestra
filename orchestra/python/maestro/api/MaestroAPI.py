@@ -278,34 +278,34 @@ class MaestroAPI (Logger):
         username = request.form['username']
         datasetname = request.form['datasetname']
 
-        # try:
-        ds_exists = True
-        ds = db.getDataset(username, datasetname)
-        if ds is None:
-          ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
-          ds_exists = False
-        receivedFile = request.files['file']
-        filename = secure_filename(receivedFile.filename)
-        destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
-        destination_dir = destination_dir.replace('//','/')
-        if not os.path.exists(destination_dir):
-          os.makedirs(destination_dir)
-        receivedFile.save(os.path.join(destination_dir, filename))
-        for path in expandFolders(destination_dir):
+        try:
+          ds_exists = True
+          ds = db.getDataset(username, datasetname)
+          if ds is None:
+            ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
+            ds_exists = False
+          receivedFile = request.files['file']
+          filename = secure_filename(receivedFile.filename)
+          destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+          destination_dir = destination_dir.replace('//','/')
+          if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
+          receivedFile.save(os.path.join(destination_dir, filename))
+          path = os.path.join(destination_dir, filename)
           hash_object = md5(str.encode(path))
           ds.addFile( File(path=path, hash=hash_object.hexdigest()) )
-        if not ds_exists:
-          db.createDataset(ds)
-        db.commit()
-        return jsonify (
-          error_code=HTTPStatus.OK,
-          message="Successfully uploaded!"
-        )
-        # except:
-        #   return jsonify (
-        #     error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-        #     message="Unknown error when uploading this dataset."
-        #   )
+          if not ds_exists:
+            db.createDataset(ds)
+          db.commit()
+          return jsonify (
+            error_code=HTTPStatus.OK,
+            message="Successfully uploaded!"
+          )
+        except:
+          return jsonify (
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message="Unknown error when uploading this dataset."
+          )
     ###
 
     ###
