@@ -18,6 +18,34 @@ from http import HTTPStatus
 import pickle
 import base64
 
+def pickledAuth (data, db):
+  pickled = data.decode('utf-8')
+  auth_data = pickle.loads(base64.b64decode(pickled.encode()))
+  user = db.getUser(auth_data['username'])
+  if user is None:
+    return jsonify(
+      error_code=HTTPStatus.UNAUTHORIZED,
+      message="Authentication failed!"
+    )
+  password = auth_data['password']
+
+  if (user.getUserName() == auth_data['username']) and (password == user.getPasswordHash()):
+    try:
+      login_user(user, remember=False)
+    except:
+      return jsonify(
+        error_code=HTTPStatus.UNAUTHORIZED,
+        message="Failed to login."
+      )
+    return jsonify(
+      error_code=HTTPStatus.OK,
+      message="Authentication successful!"
+    )
+  return jsonify(
+    error_code=HTTPStatus.UNAUTHORIZED,
+    message="Authentication failed!"
+  )
+
 class MaestroAPI (Logger):
 
   def __init__ (self):
@@ -29,34 +57,6 @@ class MaestroAPI (Logger):
     self.__login = LoginManager(self.__app)
 
     db = self.__db
-
-    def pickledAuth (self, data):
-      pickled = data.decode('utf-8')
-      auth_data = pickle.loads(base64.b64decode(pickled.encode()))
-      user = db.getUser(auth_data['username'])
-      if user is None:
-        return jsonify(
-          error_code=HTTPStatus.UNAUTHORIZED,
-          message="Authentication failed!"
-        )
-      password = auth_data['password']
-
-      if (user.getUserName() == auth_data['username']) and (password == user.getPasswordHash()):
-        try:
-          login_user(user, remember=False)
-        except:
-          return jsonify(
-            error_code=HTTPStatus.UNAUTHORIZED,
-            message="Failed to login."
-          )
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message="Authentication successful!"
-        )
-      return jsonify(
-        error_code=HTTPStatus.UNAUTHORIZED,
-        message="Authentication failed!"
-      )
 
     ###
     class Authenticate (Resource):
@@ -97,7 +97,7 @@ class MaestroAPI (Logger):
     class ListDatasets (Resource):
       def post (self):
         if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'])
+          auth = pickledAuth(request.form['credentials'], db)
           if auth['error_code'] != 200:
             return auth
 
@@ -128,10 +128,10 @@ class MaestroAPI (Logger):
     class ListTasks (Resource):
       def post (self):
         if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'])
+          auth = pickledAuth(request.form['credentials'], db)
           if auth['error_code'] != 200:
             return auth
-            
+
         from Gaugi import Color
         from prettytable import PrettyTable
 
