@@ -299,7 +299,7 @@ class MaestroAPI (Logger):
           db.commit()
           return jsonify (
             error_code=HTTPStatus.OK,
-            message="Successfully uploaded!"
+            message="File {} successfully uploaded!".format(filename)
           )
         except:
           return jsonify (
