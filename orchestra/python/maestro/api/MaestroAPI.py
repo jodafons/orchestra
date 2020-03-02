@@ -278,13 +278,12 @@ class MaestroAPI (Logger):
         username = request.form['username']
         datasetname = request.form['datasetname']
 
-        if db.getDataset( username, datasetname ):
-          return jsonify(
-            error_code=HTTPStatus.CONFLICT,
-            message="This dataset is already on the database"
-          )
         # try:
-        ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
+        ds_exists = True
+        ds = db.getDataset(username, datasetname)
+        if ds is None:
+          ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
+          ds_exists = False
         receivedFile = request.files['file']
         filename = secure_filename(receivedFile.filename)
         destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
@@ -295,7 +294,8 @@ class MaestroAPI (Logger):
         for path in expandFolders(destination_dir):
           hash_object = md5(str.encode(path))
           ds.addFile( File(path=path, hash=hash_object.hexdigest()) )
-        db.createDataset(ds)
+        if not ds_exists:
+          db.createDataset(ds)
         db.commit()
         return jsonify (
           error_code=HTTPStatus.OK,
