@@ -15,7 +15,7 @@ from orchestra import Status
 from hashlib import sha256, md5
 from werkzeug.utils import secure_filename
 import subprocess
-from Gaugi import Logger, StringLogger
+from Gaugi import Logger, StringLogger, expandFolders
 from http import HTTPStatus
 import pickle
 import base64
