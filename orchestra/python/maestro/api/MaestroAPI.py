@@ -19,6 +19,9 @@ from Gaugi import Logger, StringLogger, expandFolders
 from http import HTTPStatus
 import pickle
 import base64
+from pathlib import Path
+
+home = str(Path.home())
 
 def pickledAuth (data, db):
   try:
@@ -271,13 +274,16 @@ class MaestroAPI (Logger):
           )
 
         from zipfile import ZipFile
-        with ZipFile('{}.zip'.format(datasetname), 'w') as zipObj:
+        zipfilename = '{}.zip'.format(datasetname)
+        zipfilepath = os.path.join(home, zipfilename)
+
+        with ZipFile(zipfilepath, 'w') as zipObj:
           for folderName, subfolders, filenames in os.walk(file_dir):
             for filename in filenames:
               filePath = os.path.join(folderName, filename)
               zipObj.write(filePath)
 
-        return send_file('{}.zip'.format(datasetname), attachment_filename='{}.zip'.format(datasetname))
+        return send_file(zipfilepath, attachment_filename=zipfilename)
     ###
 
     ###
