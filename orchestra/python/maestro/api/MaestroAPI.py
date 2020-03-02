@@ -9,7 +9,7 @@ from flask_restful import Resource, Api
 from flask_login import LoginManager, current_user, login_user
 from sqlalchemy import create_engine
 from orchestra.constants import *
-from orchestra import OrchestraDB
+from orchestra import OrchestraDB, Board
 from hashlib import sha256
 from werkzeug.utils import secure_filename
 import subprocess
@@ -46,13 +46,13 @@ class MaestroAPI (Logger):
           password = request.form['password']
 
           if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
-            # try:
-            login_user(user, remember=False)
-            # except:
-            #   return jsonify(
-            #     error_code=HTTPStatus.UNAUTHORIZED,
-            #     message="Failed to login."
-            #   )
+            try:
+              login_user(user, remember=False)
+            except:
+              return jsonify(
+                error_code=HTTPStatus.UNAUTHORIZED,
+                message="Failed to login."
+              )
             return jsonify(
               error_code=HTTPStatus.OK,
               message="Authentication successful!"
@@ -66,6 +66,7 @@ class MaestroAPI (Logger):
     ###
     class ListDatasets (Resource):
       def post (self):
+        # TODO:
         # if current_user.is_authenticated:
         if True:
           from Gaugi import Color
@@ -85,6 +86,72 @@ class MaestroAPI (Logger):
                             Color.CGREEN2 + 'Files' + Color.CEND])
           for ds in db.getAllDatasets( username ):
             t.add_row(  [username, ds.dataset, len(ds.files)] )
+          return jsonify(
+            error_code=HTTPStatus.OK,
+            message=t.get_string()
+          )
+    ###
+
+    ###
+    class ListTasks (Resource):
+      def post (self):
+        # TODO:
+        # if current_user.is_authenticated:
+        if True:
+          from Gaugi import Color
+          from prettytable import PrettyTable
+
+          username = request.form['username']
+
+          user = db.getUser(request.form['username'])
+          if user is None:
+            return jsonify(
+              error_code=HTTPStatus.NOT_FOUND,
+              message="User not found."
+            )
+
+          def getStatus(status):
+            if status == 'registered':
+              return Color.CWHITE2+"REGISTERED"+Color.CEND
+            elif status == 'assigned':
+              return Color.CWHITE2+"ASSIGNED"+Color.CEND
+            elif status == 'testing':
+              return Color.CGREEN2+"TESTING"+Color.CEND
+            elif status == 'running':
+              return Color.CGREEN2+"RUNNING"+Color.CEND
+            elif status == 'done':
+              return Color.CGREEN2+"DONE"+Color.CEND
+            elif status == 'failed':
+              return Color.CGREEN2+"DONE"+Color.CEND
+            elif status == 'killed':
+              return Color.CRED2+"KILLED"+Color.CEND
+            elif status == 'finalized':
+              return Color.CRED2+"FINALIZED"+Color.CEND
+            elif status == 'broken':
+              return Color.CRED2+"BROKEN"+Color.CEND
+            elif status == 'hold':
+              return Color.CRED2+"HOLD"+Color.CEND
+
+          t = PrettyTable([ Color.CGREEN2 + 'Username'    + Color.CEND,
+                            Color.CGREEN2 + 'Taskname'    + Color.CEND,
+                            Color.CGREEN2 + 'Registered'  + Color.CEND,
+                            Color.CGREEN2 + 'Assigned'    + Color.CEND,
+                            Color.CGREEN2 + 'Testing'     + Color.CEND,
+                            Color.CGREEN2 + 'Running'     + Color.CEND,
+                            Color.CRED2   + 'Failed'      + Color.CEND,
+                            Color.CGREEN2 + 'Done'        + Color.CEND,
+                            Color.CRED2   + 'kill'        + Color.CEND,
+                            Color.CRED2   + 'killed'      + Color.CEND,
+                            Color.CGREEN2 + 'Status'      + Color.CEND,
+                            ])
+
+          tasks = self.__db.session().query(Board).filter( Board.username==username ).all()
+          for b in tasks:
+            if len(b.taskName)>80:
+              taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
+            else:
+              taskname = b.taskName
+            t.add_row(  [username, taskname, b.registered,  b.assigned, b.testing, b.running, b.failed,  b.done, b.kill, b.killed, getStatus(b.status)] )
           return jsonify(
             error_code=HTTPStatus.OK,
             message=t.get_string()
