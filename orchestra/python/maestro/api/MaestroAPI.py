@@ -227,7 +227,7 @@ class MaestroAPI (Logger):
         else:
           return jsonify(
             error_code=HTTPStatus.NOT_FOUND,
-            message="This dataset does not exist in the database (%s)", file_dir
+            message="This dataset does not exist in the database ({})".format(file_dir)
           )
         db.commit()
         return jsonify(
@@ -500,7 +500,7 @@ class MaestroAPI (Logger):
         try:
           db.session().query(Board).filter(Board.taskId==id).delete()
         except Exception as e:
-          print( "Impossible to remove Task board lines from (%d) task", id)
+          print( "Impossible to remove Task board lines from ({}) task".format(id))
 
         ds = db.getDataset( username, taskname )
         if not ds.task_usage:
@@ -519,7 +519,7 @@ class MaestroAPI (Logger):
         if os.path.exists(file_dir):
           command = 'rm -rf {FILE}'.format(FILE=file_dir)
         else:
-          print (self, "This dataset is not in the database: %s.", file_dir)
+          print (self, "This dataset is not in the database: {}.".format(file_dir))
         db.commit()
 
         return jsonify(
