@@ -101,7 +101,7 @@ class MaestroAPI (Logger):
       def post (self):
         if not current_user.is_authenticated:
           auth = pickledAuth(request.form['credentials'], db)
-          if auth.json()['error_code'] != 200:
+          if auth.json['error_code'] != 200:
             return auth
 
         from Gaugi import Color
@@ -132,7 +132,7 @@ class MaestroAPI (Logger):
       def post (self):
         if not current_user.is_authenticated:
           auth = pickledAuth(request.form['credentials'], db)
-          if auth.json()['error_code'] != 200:
+          if auth.json['error_code'] != 200:
             return auth
 
         from Gaugi import Color
