@@ -269,7 +269,15 @@ class MaestroAPI (Logger):
             error_code=HTTPStatus.NOT_FOUND,
             message="Dataset files not found!"
           )
-        return send_file(file_dir, attachment_filename=datasetname)
+
+        from zipfile import ZipFile
+        with ZipFile('{}.zip'.format(datasetname), 'w') as zipObj:
+          for folderName, subfolders, filenames in os.walk(file_dir):
+            for filename in filenames:
+              filePath = os.path.join(folderName, filename)
+              zipObj.write(filePath)
+
+        return send_file('{}.zip'.format(datasetname), attachment_filename='{}.zip'.format(datasetname))
     ###
 
     ###
