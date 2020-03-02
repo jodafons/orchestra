@@ -283,29 +283,29 @@ class MaestroAPI (Logger):
             error_code=HTTPStatus.CONFLICT,
             message="This dataset is already on the database"
           )
-        try:
-          ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
-          receivedFile = request.files['file']
-          filename = secure_filename(receivedFile.filename)
-          destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
-          destination_dir = destination_dir.replace('//','/')
-          if not os.path.exists(destination_dir):
-            os.makedirs(destination_dir)
-          receivedFile.save(os.path.join(destination_dir, filename))
-          for path in expandFolders(destination_dir):
-            hash_object = md5(str.encode(path))
-            ds.addFile( File(path=path, hash=hash_object.hexdigest()) )
-          db.createDataset(ds)
-          db.commit()
-          return jsonify (
-            error_code=HTTPStatus.OK,
-            message="Successfully uploaded!"
-          )
-        except:
-          return jsonify (
-            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            message="Unknown error when uploading this dataset."
-          )
+        # try:
+        ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
+        receivedFile = request.files['file']
+        filename = secure_filename(receivedFile.filename)
+        destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+        destination_dir = destination_dir.replace('//','/')
+        if not os.path.exists(destination_dir):
+          os.makedirs(destination_dir)
+        receivedFile.save(os.path.join(destination_dir, filename))
+        for path in expandFolders(destination_dir):
+          hash_object = md5(str.encode(path))
+          ds.addFile( File(path=path, hash=hash_object.hexdigest()) )
+        db.createDataset(ds)
+        db.commit()
+        return jsonify (
+          error_code=HTTPStatus.OK,
+          message="Successfully uploaded!"
+        )
+        # except:
+        #   return jsonify (
+        #     error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        #     message="Unknown error when uploading this dataset."
+        #   )
     ###
 
     ###
