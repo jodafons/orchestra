@@ -44,6 +44,8 @@ class MaestroAPI (Logger):
             )
           password = request.form['password']
 
+          print ("Password hash: {}".format(user.getPasswordHash()))
+
           if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
             try:
               login_user(user, remember=False)
