@@ -10,11 +10,13 @@ from flask_login import LoginManager, current_user, login_user
 from sqlalchemy import create_engine
 from orchestra.constants import *
 from orchestra import OrchestraDB, Board
-from hashlib import sha256
+from hashlib import sha256, md5
 from werkzeug.utils import secure_filename
 import subprocess
 from Gaugi import Logger, StringLogger
 from http import HTTPStatus
+import pickle
+import base64
 
 class MaestroAPI (Logger):
 
@@ -28,12 +30,40 @@ class MaestroAPI (Logger):
 
     db = self.__db
 
+    def pickledAuth (self, data):
+      pickled = data.decode('utf-8')
+      auth_data = pickle.loads(base64.b64decode(pickled.encode()))
+      user = db.getUser(auth_data['username'])
+      if user is None:
+        return jsonify(
+          error_code=HTTPStatus.UNAUTHORIZED,
+          message="Authentication failed!"
+        )
+      password = auth_data['password']
+
+      if (user.getUserName() == auth_data['username']) and (password == user.getPasswordHash()):
+        try:
+          login_user(user, remember=False)
+        except:
+          return jsonify(
+            error_code=HTTPStatus.UNAUTHORIZED,
+            message="Failed to login."
+          )
+        return jsonify(
+          error_code=HTTPStatus.OK,
+          message="Authentication successful!"
+        )
+      return jsonify(
+        error_code=HTTPStatus.UNAUTHORIZED,
+        message="Authentication failed!"
+      )
+
     ###
     class Authenticate (Resource):
       def post(self):
         if current_user.is_authenticated:
           return jsonify(
-            error_code=v,
+            error_code=HTTPStatus.UNAUTHORIZED,
             message="User is already authenticated!"
           )
         else:
@@ -66,96 +96,100 @@ class MaestroAPI (Logger):
     ###
     class ListDatasets (Resource):
       def post (self):
-        # TODO:
-        # if current_user.is_authenticated:
-        if True:
-          from Gaugi import Color
-          from prettytable import PrettyTable
+        if not current_user.is_authenticated:
+          auth = pickledAuth(request.form['credentials'])
+          if auth['error_code'] != 200:
+            return auth
 
-          username = request.form['username']
+        from Gaugi import Color
+        from prettytable import PrettyTable
 
-          user = db.getUser(request.form['username'])
-          if user is None:
-            return jsonify(
-              error_code=HTTPStatus.NOT_FOUND,
-              message="User not found."
-            )
+        username = request.form['username']
 
-          t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
-                            Color.CGREEN2 + 'Dataset'  + Color.CEND,
-                            Color.CGREEN2 + 'Files' + Color.CEND])
-          for ds in db.getAllDatasets( username ):
-            t.add_row(  [username, ds.dataset, len(ds.files)] )
+        user = db.getUser(request.form['username'])
+        if user is None:
           return jsonify(
-            error_code=HTTPStatus.OK,
-            message=t.get_string()
+            error_code=HTTPStatus.NOT_FOUND,
+            message="User not found."
           )
+
+        t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
+                          Color.CGREEN2 + 'Dataset'  + Color.CEND,
+                          Color.CGREEN2 + 'Files' + Color.CEND])
+        for ds in db.getAllDatasets( username ):
+          t.add_row(  [username, ds.dataset, len(ds.files)] )
+        return jsonify(
+          error_code=HTTPStatus.OK,
+          message=t.get_string()
+        )
     ###
 
     ###
     class ListTasks (Resource):
       def post (self):
-        # TODO:
-        # if current_user.is_authenticated:
-        if True:
-          from Gaugi import Color
-          from prettytable import PrettyTable
+        if not current_user.is_authenticated:
+          auth = pickledAuth(request.form['credentials'])
+          if auth['error_code'] != 200:
+            return auth
+            
+        from Gaugi import Color
+        from prettytable import PrettyTable
 
-          username = request.form['username']
+        username = request.form['username']
 
-          user = db.getUser(request.form['username'])
-          if user is None:
-            return jsonify(
-              error_code=HTTPStatus.NOT_FOUND,
-              message="User not found."
-            )
-
-          def getStatus(status):
-            if status == 'registered':
-              return Color.CWHITE2+"REGISTERED"+Color.CEND
-            elif status == 'assigned':
-              return Color.CWHITE2+"ASSIGNED"+Color.CEND
-            elif status == 'testing':
-              return Color.CGREEN2+"TESTING"+Color.CEND
-            elif status == 'running':
-              return Color.CGREEN2+"RUNNING"+Color.CEND
-            elif status == 'done':
-              return Color.CGREEN2+"DONE"+Color.CEND
-            elif status == 'failed':
-              return Color.CGREEN2+"DONE"+Color.CEND
-            elif status == 'killed':
-              return Color.CRED2+"KILLED"+Color.CEND
-            elif status == 'finalized':
-              return Color.CRED2+"FINALIZED"+Color.CEND
-            elif status == 'broken':
-              return Color.CRED2+"BROKEN"+Color.CEND
-            elif status == 'hold':
-              return Color.CRED2+"HOLD"+Color.CEND
-
-          t = PrettyTable([ Color.CGREEN2 + 'Username'    + Color.CEND,
-                            Color.CGREEN2 + 'Taskname'    + Color.CEND,
-                            Color.CGREEN2 + 'Registered'  + Color.CEND,
-                            Color.CGREEN2 + 'Assigned'    + Color.CEND,
-                            Color.CGREEN2 + 'Testing'     + Color.CEND,
-                            Color.CGREEN2 + 'Running'     + Color.CEND,
-                            Color.CRED2   + 'Failed'      + Color.CEND,
-                            Color.CGREEN2 + 'Done'        + Color.CEND,
-                            Color.CRED2   + 'kill'        + Color.CEND,
-                            Color.CRED2   + 'killed'      + Color.CEND,
-                            Color.CGREEN2 + 'Status'      + Color.CEND,
-                            ])
-
-          tasks = db.session().query(Board).filter( Board.username==username ).all()
-          for b in tasks:
-            if len(b.taskName)>80:
-              taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
-            else:
-              taskname = b.taskName
-            t.add_row(  [username, taskname, b.registered,  b.assigned, b.testing, b.running, b.failed,  b.done, b.kill, b.killed, getStatus(b.status)] )
+        user = db.getUser(request.form['username'])
+        if user is None:
           return jsonify(
-            error_code=HTTPStatus.OK,
-            message=t.get_string()
+            error_code=HTTPStatus.NOT_FOUND,
+            message="User not found."
           )
+
+        def getStatus(status):
+          if status == 'registered':
+            return Color.CWHITE2+"REGISTERED"+Color.CEND
+          elif status == 'assigned':
+            return Color.CWHITE2+"ASSIGNED"+Color.CEND
+          elif status == 'testing':
+            return Color.CGREEN2+"TESTING"+Color.CEND
+          elif status == 'running':
+            return Color.CGREEN2+"RUNNING"+Color.CEND
+          elif status == 'done':
+            return Color.CGREEN2+"DONE"+Color.CEND
+          elif status == 'failed':
+            return Color.CGREEN2+"DONE"+Color.CEND
+          elif status == 'killed':
+            return Color.CRED2+"KILLED"+Color.CEND
+          elif status == 'finalized':
+            return Color.CRED2+"FINALIZED"+Color.CEND
+          elif status == 'broken':
+            return Color.CRED2+"BROKEN"+Color.CEND
+          elif status == 'hold':
+            return Color.CRED2+"HOLD"+Color.CEND
+
+        t = PrettyTable([ Color.CGREEN2 + 'Username'    + Color.CEND,
+                          Color.CGREEN2 + 'Taskname'    + Color.CEND,
+                          Color.CGREEN2 + 'Registered'  + Color.CEND,
+                          Color.CGREEN2 + 'Assigned'    + Color.CEND,
+                          Color.CGREEN2 + 'Testing'     + Color.CEND,
+                          Color.CGREEN2 + 'Running'     + Color.CEND,
+                          Color.CRED2   + 'Failed'      + Color.CEND,
+                          Color.CGREEN2 + 'Done'        + Color.CEND,
+                          Color.CRED2   + 'kill'        + Color.CEND,
+                          Color.CRED2   + 'killed'      + Color.CEND,
+                          Color.CGREEN2 + 'Status'      + Color.CEND,
+                          ])
+
+        tasks = db.session().query(Board).filter( Board.username==username ).all()
+        for b in tasks:
+          if len(b.taskName)>80:
+            taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
+          else:
+            taskname = b.taskName
+          t.add_row(  [username, taskname, b.registered,  b.assigned, b.testing, b.running, b.failed,  b.done, b.kill, b.killed, getStatus(b.status)] )
+        return jsonify(
+          error_code=HTTPStatus.OK,
+          message=t.get_string()
+        )
     ###
 
     self.__api.add_resource(Authenticate, '/authenticate')
@@ -195,23 +229,6 @@ class MaestroAPI (Logger):
 
 #
 # TODO>
-#
-# * Build endpoint for authentication
-#
-# * Build endpoint for the "list" command:
-    # if username in self.__db.getAllUsers():
-    #   MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
-
-    # from Gaugi import Color
-    # from prettytable import PrettyTable
-    # t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
-    #                   Color.CGREEN2 + 'Dataset'  + Color.CEND,
-    #                   Color.CGREEN2 + 'Files' + Color.CEND])
-
-    # # Loop over all datasets inside of the username
-    # for ds in self.__db.getAllDatasets( username ):
-    #   t.add_row(  [username, ds.dataset, len(ds.files)] )
-    # print(t)
 #
 # * Build endpoint for deleting datasets, checking if both dataset and users exist:
     # ds = self.__db.getDataset( username, datasetname )
