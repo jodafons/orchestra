@@ -19,7 +19,10 @@ import pickle
 import base64
 
 def pickledAuth (data, db):
-  pickled = data.decode('utf-8')
+  try:
+    pickled = data.decode('utf-8')
+  except:
+    pickled = data
   auth_data = pickle.loads(base64.b64decode(pickled.encode()))
   user = db.getUser(auth_data['username'])
   if user is None:
