@@ -72,6 +72,13 @@ class MaestroAPI (Logger):
 
           username = request.form['username']
 
+          user = db.getUser(request.form['username'])
+          if user is None:
+            return jsonify(
+              error_code=HTTPStatus.NOT_FOUND,
+              message="User not found."
+            )
+
           t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
                             Color.CGREEN2 + 'Dataset'  + Color.CEND,
                             Color.CGREEN2 + 'Files' + Color.CEND])
