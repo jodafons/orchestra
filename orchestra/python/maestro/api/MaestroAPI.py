@@ -20,6 +20,7 @@ from http import HTTPStatus
 import pickle
 import base64
 from pathlib import Path
+import os
 
 home = str(Path.home())
 
