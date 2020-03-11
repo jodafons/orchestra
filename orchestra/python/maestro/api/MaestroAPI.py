@@ -474,6 +474,19 @@ class MaestroAPI (Logger):
         #     error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
         #     message="Unknown error"
         #   )
+
+      #
+      # This is for monitoring purpose. Should be used to dashboard view
+      #
+      def createBoard( self , user, task):
+
+        board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
+        board.jobs = len(task.getAllJobs())
+        board.registered = board.jobs
+        board.assigned=board.testing=board.running=board.failed=board.done=board.killed=0
+        board.status = task.status
+        bd.session().add(board)
+
     ###
 
     ###
