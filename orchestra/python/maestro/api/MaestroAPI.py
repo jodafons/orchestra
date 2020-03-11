@@ -461,7 +461,7 @@ class MaestroAPI (Logger):
         ds  = Dataset( username=username, dataset=taskname, cluster=db.getCluster(), task_usage=True)
         ds.addFile( File(path=outputFile, hash='' ) )
         db.createDataset(ds)
-        self.createBoard( user, task )
+        self.createBoard( user, task, bd )
         task.setStatus('registered')
         db.commit()
         return jsonify(
@@ -478,7 +478,7 @@ class MaestroAPI (Logger):
       #
       # This is for monitoring purpose. Should be used to dashboard view
       #
-      def createBoard( self , user, task):
+      def createBoard( self , user, task, bd ):
 
         board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
         board.jobs = len(task.getAllJobs())
