@@ -134,6 +134,36 @@ class MaestroAPI (Logger):
     ###
 
     ###
+    class ListDatasetsPy (Resource):
+      def post (self):
+        if not current_user.is_authenticated:
+          auth = pickledAuth(request.form['credentials'], db)
+          if auth.json['error_code'] != 200:
+            return auth
+
+        username = request.form['username']
+
+        user = db.getUser(request.form['username'])
+        if user is None:
+          return jsonify(
+            error_code=HTTPStatus.NOT_FOUND,
+            message="User not found."
+          )
+
+        datasets = db.getAllDatasets(username)
+
+        import pickle
+        import base64
+        pickled_datasets = pickle.dumps(datasets)
+        b64_pickled_datasets = base64.b64encode(pickled_datasets)
+
+        return jsonify(
+          error_code=HTTPStatus.OK,
+          message=b64_pickled_datasets
+        )
+    ###
+
+    ###
     class ListTasks (Resource):
       def post (self):
         if not current_user.is_authenticated:
@@ -198,6 +228,37 @@ class MaestroAPI (Logger):
         return jsonify(
           error_code=HTTPStatus.OK,
           message=t.get_string()
+        )
+    ###
+
+    ###
+    class ListTasksPy (Resource):
+      def post (self):
+        if not current_user.is_authenticated:
+          auth = pickledAuth(request.form['credentials'], db)
+          if auth.json['error_code'] != 200:
+            return auth
+
+
+        username = request.form['username']
+
+        user = db.getUser(request.form['username'])
+        if user is None:
+          return jsonify(
+            error_code=HTTPStatus.NOT_FOUND,
+            message="User not found."
+          )
+
+        tasks = db.session().query(Board).filter( Board.username==username ).all()
+        
+        import pickle
+        import base64
+        pickled_tasks = pickle.dumps(tasks)
+        b64_pickled_tasks = base64.b64encode(pickled_tasks)
+
+        return jsonify(
+          error_code=HTTPStatus.OK,
+          message=b64_pickled_tasks
         )
     ###
 
@@ -685,6 +746,7 @@ class MaestroAPI (Logger):
 
     self.__api.add_resource(Authenticate, '/authenticate')
     self.__api.add_resource(ListDatasets, '/list-datasets')
+    self.__api.add_resource(ListDatasetsPy, '/list-datasets-py')
     self.__api.add_resource(DeleteDataset, '/delete-dataset')
     self.__api.add_resource(DownloadDataset, '/download-dataset')
     self.__api.add_resource(UploadDataset, '/upload-dataset')
@@ -692,6 +754,7 @@ class MaestroAPI (Logger):
     self.__api.add_resource(DeleteTask, '/delete-task')
     self.__api.add_resource(RetryTask, '/retry-task')
     self.__api.add_resource(ListTasks, '/list-tasks')
+    self.__api.add_resource(ListTasksPy, '/list-tasks-py')
     self.__api.add_resource(KillTask, '/kill-task')
 
   def run (self):
