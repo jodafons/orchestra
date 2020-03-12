@@ -151,6 +151,7 @@ class MaestroAPI (Logger):
           )
 
         datasets = db.getAllDatasets(username)
+        datasets = [ds.dataset for ds in datasets]
 
         import pickle
         import base64
@@ -247,6 +248,7 @@ class MaestroAPI (Logger):
           )
 
         tasks = db.session().query(Board).filter( Board.username==username ).all()
+        tasks = [task.taskName for task in tasks]
         
         import pickle
         import base64
