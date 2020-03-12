@@ -20,7 +20,7 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base.metadata.create_all(engine)
 
-users = ["jodafons", "mverissimo", "gabriel.milan","wsfreund","cadu.covas","torres","philipp.gaspar"]
+users = ["jodafons", "mverissi", "gabriel.milan","wsfreund","cadu.covas","torres","philipp.gaspar"]
 
 
 for user in users:
