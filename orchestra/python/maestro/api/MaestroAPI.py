@@ -4,7 +4,7 @@ __all__ = [
 ]
 
 # Imports
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response
 from flask_restful import Resource, Api
 from flask_login import LoginManager, current_user, login_user
 from sqlalchemy import create_engine
@@ -157,10 +157,7 @@ class MaestroAPI (Logger):
         pickled_datasets = pickle.dumps(datasets)
         b64_pickled_datasets = base64.b64encode(pickled_datasets)
 
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message=b64_pickled_datasets
-        )
+        return Response(b64_pickled_datasets)
     ###
 
     ###
@@ -256,10 +253,7 @@ class MaestroAPI (Logger):
         pickled_tasks = pickle.dumps(tasks)
         b64_pickled_tasks = base64.b64encode(pickled_tasks)
 
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message=b64_pickled_tasks
-        )
+        return Response(b64_pickled_tasks)
     ###
 
     ###
