@@ -22,7 +22,7 @@ roles_workers = Table(
 #
 #   Users Table
 #
-class Worker (object, db.Model, UserMixin, Base):
+class Worker (db.Model, UserMixin, Base):
 
   __tablename__ = 'worker'
 
