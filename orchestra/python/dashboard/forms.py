@@ -16,57 +16,57 @@ class ExtendedRegisterForm(RegisterForm):
     username = StringField('Username', [Required()])
 
     def validate(self):
-        try:
-            session = Session()
-            if self.username.data == "":
-                print ("Username empty")
-                return False
-            if '.' in self.username.data:
-                print ("Username contains dots")
-                return False
-            if self.email.data == "":
-                print ("Email empty")
-                return False
-            if not self.email.data.endswith('lps.ufrj.br'):
-                print ("Not an LPS e-mail")
-                return False
-            if self.password.data == "":
-                print ("PW empty")
-                return False
-            if self.password_confirm.data == "":
-                print ("PWC empty")
-                return False
-            if not (self.password.data == self.password_confirm.data):
-                print ("Passwords don't match")
-                return False
-            user = session.query(Worker).filter_by(Worker.username == self.username.data).first()
+        # try:
+        session = Session()
+        if self.username.data == "":
+            print ("Username empty")
+            return False
+        if '.' in self.username.data:
+            print ("Username contains dots")
+            return False
+        if self.email.data == "":
+            print ("Email empty")
+            return False
+        if not self.email.data.endswith('lps.ufrj.br'):
+            print ("Not an LPS e-mail")
+            return False
+        if self.password.data == "":
+            print ("PW empty")
+            return False
+        if self.password_confirm.data == "":
+            print ("PWC empty")
+            return False
+        if not (self.password.data == self.password_confirm.data):
+            print ("Passwords don't match")
+            return False
+        user = session.query(Worker).filter_by(Worker.username == self.username.data).first()
+        print (user)
+        if user:
+            print ("User already exists")
+            return False
+        else:
+            import hashlib
+            h = hashlib.md5()
+            h.update(self.password.data)
+            passwordHash = h.hexdigest()
+
+            user = Worker(
+                username     = self.username.data,
+                email        = self.email.data,
+                maxPriority  = 1000,
+                passwordHash = passwordHash
+            )
+
             print (user)
-            if user:
-                print ("User already exists")
-                return False
-            else:
-                import hashlib
-                h = hashlib.md5()
-                h.update(self.password.data)
-                passwordHash = h.hexdigest()
 
-                user = Worker(
-                    username     = self.username.data,
-                    email        = self.email.data,
-                    maxPriority  = 1000,
-                    passwordHash = passwordHash
-                )
+            session.add(user)
 
-                print (user)
+            session.commit()
 
-                session.add(user)
-
-                session.commit()
-    
-                print ("Success")
-                return user
-        except:
-            print ("Shit it failed")
-        finally:
+            print ("Success")
+            return user
+        # except:
+        #     print ("Shit it failed")
+        # finally:
             session.close()
 
