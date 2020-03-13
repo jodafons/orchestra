@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base, Worker
 
+Worker()
 
 #
 #   Tasks Table
@@ -37,7 +38,7 @@ class Task (Base):
   # Foreign
   jobs = relationship("Job", order_by="Job.id", back_populates="task")
   userId = Column(Integer, ForeignKey('worker.id'))
-  user = relationship("worker", back_populates="tasks")
+  user = relationship("Worker", back_populates="tasks")
 
 
   # For tinger staff
