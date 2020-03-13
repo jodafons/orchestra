@@ -5,8 +5,6 @@ from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base, Worker
 
-Worker
-
 #
 #   Tasks Table
 #

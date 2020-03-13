@@ -1,5 +1,3 @@
-#from sqlalchemy.ext.declarative import declarative_base
-#Base = declarative_base()
 from orchestra.db.models import *
 
 from sqlalchemy import create_engine
