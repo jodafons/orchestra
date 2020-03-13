@@ -18,17 +18,24 @@ class ExtendedRegisterForm(RegisterForm):
 
     def validate(self):
         if not self.username:
+            print ("Username empty")
             return False
         if not self.email:
+            print ("Email empty")
             return False
         if not self.password:
+            print ("PW empty")
             return False
         if not self.password_confirm:
+            print ("PWC empty")
             return False
         if not (self.password == self.password_confirm):
+            print ("Passwords don't match")
             return False
         user = db.getUser(username)
+        print (user)
         if user:
+            print ("User already exists")
             return False
         else:
 
@@ -46,10 +53,14 @@ class ExtendedRegisterForm(RegisterForm):
                 passwordHash = passwordHash
             )
 
+            print (user)
+
             session.add(user)
 
             session.commit()
             session.close()
+
+            print ("Success")
 
             return user
 
