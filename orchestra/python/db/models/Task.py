@@ -37,7 +37,7 @@ class Task (Base):
   # Foreign
   jobs = relationship("Job", order_by="Job.id", back_populates="task")
   userId = Column(Integer, ForeignKey('worker.id'))
-  user = relationship(Worker, back_populates="tasks")
+  user = relationship("Worker", back_populates="tasks")
 
 
   # For tinger staff

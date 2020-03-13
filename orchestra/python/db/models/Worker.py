@@ -34,7 +34,7 @@ class Worker (db.Model, UserMixin, Base):
   email = Column(String, unique = True)
 
   # Foreign
-  tasks = relationship(Task, order_by="task.id", back_populates="user")
+  tasks = relationship("Task", order_by="task.id", back_populates="user")
   roles = relationship('Role', secondary=roles_workers,
               backref=db.backref('workers', lazy='dynamic'))
 
