@@ -1,12 +1,16 @@
 from flask_security.forms import RegisterForm, Required, StringField
-from orchestra.db.OrchestraDB import OrchestraDB
-from orchestra.db.models import Worker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from orchestra.db.models import Worker, Base
 
 __all__ = [
     'ExtendedRegisterForm'
 ]
 
-db = OrchestraDB()
+engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
+
+Session = sessionmaker(bind=engine)
+Base.metadata.create_all(engine)
 
 class ExtendedRegisterForm(RegisterForm):
 
@@ -27,6 +31,9 @@ class ExtendedRegisterForm(RegisterForm):
         if user:
             return False
         else:
+
+            session = Session()
+
             import hashlib
             h = hashlib.md5()
             h.update(self.password)
@@ -38,4 +45,11 @@ class ExtendedRegisterForm(RegisterForm):
                 maxPriority  = 1000,
                 passwordHash = passwordHash
             )
+
+            session.add(user)
+
+            session.commit()
+            session.close()
+            
+            return user
         

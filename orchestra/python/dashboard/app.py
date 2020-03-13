@@ -16,7 +16,7 @@ from sqlalchemy import Column, Float, DateTime, Integer, String
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import func
 from flask_bootstrap import Bootstrap
-from forms import *
+from forms import ExtendedRegisterForm
 import datetime
 from flask import jsonify
 import json
