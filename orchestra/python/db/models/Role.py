@@ -1,10 +1,12 @@
 __all__=['Role']
 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
-from orchestra.dashboard.app import db
 from flask_login import UserMixin
+
+db = SQLAlchemy()
 
 class Role(db.Model, Base, RoleMixin):
 
