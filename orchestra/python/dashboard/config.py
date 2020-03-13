@@ -2,7 +2,7 @@
 SECRET_KEY = '74FUFRFdtwAhGLge'
 
 # Create in-memory database
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:DmtS_FjA7e+dSkP&@localhost:5433/qualimeter_internal'
+SQLALCHEMY_DATABASE_URI = 'postgres://postgres:postgres@localhost:5432/postgres'
 SQLALCHEMY_ECHO = False
 
 # Flask-Security config
