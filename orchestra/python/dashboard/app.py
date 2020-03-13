@@ -44,7 +44,8 @@ db = OrchestraDB()
 #
 # Stuff for Flask security
 #
-user_datastore = SQLAlchemyUserDatastore(db, Worker)
+# Define models  
+user_datastore = SQLAlchemyUserDatastore(db, Worker, roles_workers)
 security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
 
