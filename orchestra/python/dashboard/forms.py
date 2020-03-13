@@ -21,8 +21,14 @@ class ExtendedRegisterForm(RegisterForm):
         if self.username.data == "":
             print ("Username empty")
             return False
+        if '.' in self.username.data:
+            print ("Username contains dots")
+            return False
         if self.email.data == "":
             print ("Email empty")
+            return False
+        if not self.email.data.endswith('lps.ufrj.br'):
+            print ("Not an LPS e-mail")
             return False
         if self.password.data == "":
             print ("PW empty")
@@ -33,7 +39,7 @@ class ExtendedRegisterForm(RegisterForm):
         if not (self.password.data == self.password_confirm.data):
             print ("Passwords don't match")
             return False
-        user = db.getUser(username)
+        user = db.getUser(self.username.data)
         print (user)
         if user:
             print ("User already exists")
@@ -44,12 +50,12 @@ class ExtendedRegisterForm(RegisterForm):
 
             import hashlib
             h = hashlib.md5()
-            h.update(self.password)
+            h.update(self.password.data)
             passwordHash = h.hexdigest()
 
             user = Worker(
-                username     = self.username,
-                email        = self.email,
+                username     = self.username.data,
+                email        = self.email.data,
                 maxPriority  = 1000,
                 passwordHash = passwordHash
             )
