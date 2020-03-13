@@ -29,8 +29,6 @@ from orchestra.db import roles_workers
 __all__ = [
   'app',
   'db',
-  'validate_database',
-  'build_initial_db'
 ]
 
 # Create Flask application
@@ -44,7 +42,7 @@ db = OrchestraDB()
 #
 # Stuff for Flask security
 #
-# Define models  
+# Define models
 user_datastore = SQLAlchemyUserDatastore(db, Worker, roles_workers)
 security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
