@@ -5,7 +5,7 @@ __all__=[
 ]
 
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from orchestra.db.models import Base, Task
 from flask_login import UserMixin
 
@@ -33,7 +33,7 @@ class Worker (Base, UserMixin):
   # Foreign
   tasks = relationship("Task", order_by="task.id", back_populates="user")
   roles = relationship('Role', secondary=roles_workers,
-              backref=db.backref('workers', lazy='dynamic'))
+              backref=backref('workers', lazy='dynamic'))
 
 
   def __repr__ (self):
