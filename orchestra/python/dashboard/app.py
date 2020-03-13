@@ -36,7 +36,7 @@ app = Flask(__name__)
 bootstrap = Bootstrap(app)
 CORS(app)
 app.config.from_pyfile('config.py')
-db = OrchestraDB()
+db = SQLAlchemy(app)
 
 #########################################################################
 #
