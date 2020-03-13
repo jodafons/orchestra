@@ -3,7 +3,8 @@ __all__=['Task']
 
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from orchestra.db.models import Base, Worker
+from orchestra.db.models import Base
+
 
 #
 #   Tasks Table

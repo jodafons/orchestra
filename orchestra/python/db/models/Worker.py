@@ -1,19 +1,18 @@
 
 __all__=['Worker']
 
-from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
-from sqlalchemy.orm import relationship, backref
-from orchestra.db.models import Base, Task
-from orchestra.db.OrchestraDB import OrchestraDB
-from flask_login import UserMixin
-from flask_sqlalchemy import Model
 
-db = OrchestraDB()
+
+from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
+from sqlalchemy.orm import relationship
+from orchestra.db.models import Base
+from flask_login import UserMixin
+
 
 #
 #   Users Table
 #
-class Worker (Model, Base, UserMixin):
+class Worker (UserMixin, Base):
 
   __tablename__ = 'worker'
 
@@ -22,11 +21,9 @@ class Worker (Model, Base, UserMixin):
   username = Column(String, unique = True)
   maxPriority = Column( Integer )
   passwordHash = Column(String)
-  email = Column(String, unique = True)
 
   # Foreign
-  tasks = relationship("Task", order_by="task.id", back_populates="user")
-  roles = relationship("Role", order_by="role.id", back_populates="users")
+  tasks = relationship("Task", order_by="Task.id", back_populates="user")
 
 
   def __repr__ (self):
@@ -69,6 +66,5 @@ class Worker (Model, Base, UserMixin):
 
   def setMaxPriority(self, value):
     self.maxPriority = value
-
 
 
