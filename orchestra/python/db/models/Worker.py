@@ -12,6 +12,7 @@ from orchestra.dashboard.app import db
 
 roles_workers = Table(
   'roles_workers',
+  Base.metadata,
   Column('worker_id', Integer(), ForeignKey('worker.id')),
   Column('role_id', Integer(), ForeignKey('role.id'))
 )
