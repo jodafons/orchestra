@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
 from flask_login import UserMixin
+from flask_security import RoleMixin
 
 db = SQLAlchemy()
 
