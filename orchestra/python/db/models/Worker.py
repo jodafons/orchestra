@@ -1,8 +1,5 @@
 
-__all__=[
-  'Worker',
-  'roles_workers'
-]
+__all__=['Worker']
 
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship, backref
