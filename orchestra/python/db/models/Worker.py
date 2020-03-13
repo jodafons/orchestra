@@ -43,9 +43,6 @@ class Worker (Model, Base, UserMixin):
   def __repr__ (self):
     return "<User {}, priority {}>".format(self.username, self.maxPriority)
 
-  def query(self):
-    return db.query(self).all()
-
   # Method that adds tasks into user
   def addTask (self, task):
     self.tasks.append(task)
