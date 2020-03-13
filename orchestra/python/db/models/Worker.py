@@ -3,7 +3,7 @@ __all__=['Worker']
 
 
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from orchestra.db.models import Base
 from flask_login import UserMixin
 
