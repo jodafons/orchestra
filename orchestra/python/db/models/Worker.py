@@ -2,7 +2,7 @@
 __all__=['Worker']
 
 
-from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship, backref
 from orchestra.db.models import Base
 from flask_login import UserMixin
@@ -25,8 +25,9 @@ class Worker (UserMixin, Base):
   id = Column(Integer, primary_key = True)
   username = Column(String, unique = True)
   maxPriority = Column( Integer )
-  passwordHash = Column(String)
+  password = Column(String)
   email = Column (String)
+  active = Column(Boolean)
 
   # Foreign
   tasks = relationship("Task", order_by="Task.id", back_populates="user")

@@ -39,7 +39,7 @@ class ExtendedRegisterForm(RegisterForm):
         if not (self.password.data == self.password_confirm.data):
             print ("Passwords don't match")
             return False
-        user = session.query(Worker).filter_by(Worker.username == self.username.data).first()
+        user = session.query(Worker).filter(Worker.username == self.username.data).first()
         print (user)
         if user:
             print ("User already exists")
