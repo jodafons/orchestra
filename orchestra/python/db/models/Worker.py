@@ -11,13 +11,6 @@ from orchestra.db.OrchestraDB import OrchestraDB
 from flask_login import UserMixin
 from flask_sqlalchemy import Model
 
-roles_workers = Table(
-  'roles_workers',
-  Base.metadata,
-  Column('worker_id', Integer(), ForeignKey('worker.id')),
-  Column('role_id', Integer(), ForeignKey('role.id'))
-)
-
 db = OrchestraDB()
 
 #
@@ -36,8 +29,7 @@ class Worker (Model, Base, UserMixin):
 
   # Foreign
   tasks = relationship("Task", order_by="task.id", back_populates="user")
-  roles = relationship('Role', secondary=roles_workers,
-              backref=backref('workers', lazy='dynamic'))
+  roles = relationship("Role", order_by="role.id", back_populates="users")
 
 
   def __repr__ (self):

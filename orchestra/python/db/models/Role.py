@@ -15,5 +15,8 @@ class Role(Model, Base, RoleMixin):
   name = Column(String(80), unique=True)
   description = Column(String(255))
 
+  # Foreign
+  users = relationship("Worker", back_populates="roles")
+
   def __str__(self):
     return self.name
