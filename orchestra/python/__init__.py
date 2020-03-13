@@ -40,7 +40,7 @@ from . import maestro
 __all__.extend(maestro.__all__)
 from .maestro import *
 
-from . import dashboard
-__all__.extend(dashboard.__all__)
-from .dashboard import *
+#from . import dashboard
+#__all__.extend(dashboard.__all__)
+#from .dashboard import *
 #

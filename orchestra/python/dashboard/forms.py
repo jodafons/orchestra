@@ -10,7 +10,7 @@ __all__ = [
 engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
 
 Session = sessionmaker(bind=engine)
-Base.metadata.create_all(engine)
+#Base.metadata.create_all(engine)
 
 class ExtendedRegisterForm(RegisterForm):
 
@@ -50,6 +50,6 @@ class ExtendedRegisterForm(RegisterForm):
 
             session.commit()
             session.close()
-            
+
             return user
-        
+
