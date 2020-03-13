@@ -11,7 +11,7 @@ db = SQLAlchemy()
 
 class Role(db.Model, Base, RoleMixin):
 
-  __tablename__ = 'worker'
+  __tablename__ = 'role'
 
   id = Column(Integer(), primary_key=True)
   name = Column(String(80), unique=True)
