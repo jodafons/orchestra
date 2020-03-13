@@ -1,0 +1,138 @@
+{% extends 'admin/master.html' %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block body %}
+{{ super() }}
+
+{% if current_user.is_authenticated %}
+
+<div id="resultContent">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <h1>
+      Balanço
+      <small>Resultados da consulta</small>
+    </h1>
+    <ol class="breadcrumb">
+      <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+      <li class="active">Balanço</li>
+    </ol>
+  </section>
+
+  <section class="content">
+
+    <!-- First row -->
+    <div class="row">
+
+      <!-- Left padding -->
+      <div class="col-lg-1 col-xs-6">
+      </div>
+
+      <!-- Phase A box (black) -->
+      <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-black">
+          <div class="inner">
+            <h3>{{ data['consumptionA'] }}</h3>
+            <p>Fase A</p>
+          </div>
+        </div>  
+      </div>
+
+      <!-- Phase B box (red) -->
+      <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-red">
+          <div class="inner">
+            <h3>{{ data['consumptionB'] }}</h3>
+            <p>Fase B</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase C box (blue) -->
+      <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-blue">
+          <div class="inner">
+            <h3>{{ data['consumptionC'] }}</h3>
+            <p>Fase C</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- // First row -->
+
+    <!-- Second row -->
+    <div class="row">
+
+      <!-- Left column -->
+      <div class="col-lg-3 col-xs-6">
+      </div>
+
+      <!-- Mid column -->
+      <div class="col-lg-3 col-xs-6">
+
+        <!-- Qualimeter total (gray-light) -->
+        <div class="small-box bg-gray-light">
+          <div class="inner">
+            <h3>{{ data['totalQuali'] }}</h3>
+            <p>Total Qualímetro</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column -->
+      <div class="col-lg-3 col-xs-6">
+
+        <!-- DB total (gray-light) -->
+        <div class="small-box bg-gray-light">
+          <div class="inner">
+            <h3>{{ data['totalDB'] }}</h3>
+            <p>Total BD Light</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div> 
+    <!-- // Second row -->
+
+    <!-- Third row -->
+    <div class="row">
+
+      <!-- Left column -->
+      <div class="col-lg-4 col-xs-6">
+      </div>
+
+      <!-- Mid column -->
+      <div class="col-lg-3 col-xs-6">
+
+        <!-- Diff (gray) -->
+        <div class="small-box bg-gray">
+          <div class="inner">
+            <h3>{{ data['diff'] }}</h3>
+            <p>Diferença</p>
+          </div>
+        </div>
+
+      </div>
+
+
+    </div>
+    <!-- // Third row -->
+
+  </section>
+  <!-- /.content -->
+</div>
+
+<center>
+  <button id="generatePDF">Gerar PDF</button>
+</center>
+<div id="editor"></div>
+
+{% else %}
+
+  {% include "admin/logged_out.html" %}
+
+{% endif %}
+
+{% endblock body %}

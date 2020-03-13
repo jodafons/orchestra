@@ -1,0 +1,37 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+{{ super() }}
+
+{% if current_user.is_authenticated %}
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+      Home 
+      <small>Painel de controle</small>
+  </h1>
+  <ol class="breadcrumb">
+      <li><a href="#"><i class="fa fa-home"></i> Home</a></li>
+  </ol>
+</section>
+
+<section class="content">
+  <!-- Small boxes (Stat box) -->
+  <div class="row">
+
+    <center>
+      <p>
+        <b>Acesse o <a href=/admin/dashboard>dashboard</a>!</b>
+      </p>
+    </center>
+
+  </div>
+</section>
+<!-- /.content -->
+{% else %}
+
+  {% include "admin/logged_out.html" %}
+
+{% endif %}
+
+{% endblock body %}

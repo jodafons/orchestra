@@ -20,11 +20,12 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base.metadata.create_all(engine)
 
-users = ["jodafons", "mverissi", "gabriel.milan","wsfreund","cadu.covas","torres","philipp.gaspar"]
+users = ["jodafons", "mverissi", "gabriel.milan"]
+emails = ["jodafons@lps.ufrj.br", "micael.verissimo@lps.ufrj.br", "gabriel.milan@lps.ufrj.br"]
 
 
-for user in users:
-  obj = Worker( username = user, maxPriority = 1000, passwordHash=passwordHash )
+for i in range(len(users)):
+  obj = Worker( username = users[i], maxPriority = 1000, passwordHash=passwordHash, email=emails[i] )
   session.add(obj)
 
 

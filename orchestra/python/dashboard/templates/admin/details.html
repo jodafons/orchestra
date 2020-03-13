@@ -1,0 +1,320 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+{{ super() }}
+
+{% if current_user.is_authenticated %}
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+      {{ equip }} 
+      <small>Detalhes</small>
+  </h1>
+  <ol class="breadcrumb">
+      <li><a href="/admin"><i class="fa fa-home"></i> Home</a></li>
+  </ol>
+</section>
+
+<section class="content">
+
+  <!-- Overview row -->
+  <div class="row">
+
+    <!-- <center>
+        <b>Essa é a página de exibição de detalhes dos equipamentos. Ela está em desenvolvimento.</b><br>
+        No caso, você tentou acessar o equipamento {{equip}}. Para cálculo de balanço, acesse <a href="/admin/balanco">BALANÇO</a>.<br>
+        Para voltar ao dashboard, acesse <a href="/admin/dashboard">DASHBOARD</a>.
+    </center>
+    <br><br> -->
+
+    <div class="col-lg-3 col-xs-6">
+      <div class="small-box bg-gray" style="height: 150px;">
+        <div class="inner">
+          <h3><sup style="font-size: 20px">{{latest}}</sup></h3>
+          <p>Registro mais recente</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-database"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-xs-6">
+      <div class="small-box bg-gray" style="height: 150px;">
+        <div class="inner">
+          <h3>{{ consumption }}</h3>
+
+          <p>Consumo total</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-bolt"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-xs-6">
+      <div class="small-box bg-gray" style="height: 150px;">
+        <div class="inner">
+          <h3>Rua AAA, 99</h3><br>
+          <small>Barra da Tijuca</small>
+
+          <p>Localização</p>
+        </div>
+        <div class="icon">
+            <i class="fa fa-compass"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- End of Overview row -->
+
+  <!-- Charts row -->
+  <div class="row">
+
+    <!-- Power chart -->
+    <div class="col-lg-4">
+      <div class="box box-solid bg-black-gradient">
+        <div class="box-header">
+          <i class="fa ta-th"></i>
+          <h3 class="box-title">
+            Consumo Acumulado A
+          </h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <div class="chart" style="height: 250px;">
+          <canvas id="canvasA" width="100%" height="100%"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- End of power chart -->
+
+    <!-- Chart #2 -->
+    <div class="col-lg-4">
+      <div class="box box-solid bg-black-gradient">
+        <div class="box-header">
+          <i class="fa ta-th"></i>
+          <h3 class="box-title">
+            Consumo Acumulado B
+          </h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <div class="chart" style="height: 250px;">
+          <canvas id="canvasB" style="position: absolute;"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- End of chart #2 -->
+
+    <!-- Chart #3 -->
+    <div class="col-lg-4">
+      <div class="box box-solid bg-black-gradient">
+        <div class="box-header">
+          <i class="fa ta-th"></i>
+          <h3 class="box-title">
+            Consumo Acumulado C
+          </h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <div class="chart" style="height: 250px;">
+          <canvas id="canvasC" style="position: absolute;"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- End of chart #3 -->
+
+  </div>
+  <!-- End of charts row -->
+
+  <!-- Database Log -->
+  <div class="row">
+
+    <!-- Logger -->
+    <div class="col-lg-12">
+      <div class="box box-solid bg-black-gradient">
+        <div class="box-header">
+          <i class="fa fa-th"></i>
+          <h3 class="box-title">Registros mais recentes</h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <div class="box-body border-radius-none" style="overflow-y: scroll; height: 500px;">
+          <ul class="todo-list">
+            {% for item in registers %}
+              <li><span class="text">
+                {{ item }}
+              </span></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!-- End of logger -->
+
+  </div>
+  <!-- End of database log -->
+
+</section>
+<!-- /.content -->
+
+<script>
+
+  function readableConsumption (watts) {
+    var thresh = 1000;
+    if(Math.abs(watts) < thresh) {
+      return watts.toFixed(2) + ' Wh';
+    }
+    var units = ['kWh','MWh','GWh','TWh','PWh','EWh','ZWh','YWh'];
+    var u = -1;
+    do {
+      watts /= thresh;
+      ++u;
+    } while(Math.abs(watts) >= thresh && u < units.length - 1);
+    return watts.toFixed(2)+' '+units[u];
+  }        
+
+  function formatDate (UNIX_timestamp){
+    var a = new Date(UNIX_timestamp * 1000);
+    var months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    var year = a.getFullYear();
+    var month = months[a.getMonth()];
+    var date = a.getDate();
+    var hour = a.getHours();
+    var min = a.getMinutes();
+    var sec = a.getSeconds();
+    var time = date + '/' + month + '/' + year + ' ' + hour + ':' + min + ':' + sec ;
+    return time;
+  }
+
+  function fitToContainer(canvas) {
+    // Make it visually fill the positioned parent
+    canvas.style.width ='95%';
+    canvas.style.height='95%';
+    // ...then set the internal size to match
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+
+  fitToContainer(document.getElementById("canvasA"));
+  fitToContainer(document.getElementById("canvasB"));
+  fitToContainer(document.getElementById("canvasC"));
+
+  new Chart(document.getElementById("canvasA"), {
+    type: 'line',
+    data: {
+      labels: {{ timestamps }},
+      datasets: [{ 
+          data: {{ accumulatedA }},
+          label: "Fase A",
+          borderColor: "#ffffff",
+          fill: false
+        }]
+    },
+    options: {
+      title: {
+        display: false,
+        text: ''
+      },
+      scales: {
+        xAxes: [{
+          display: false,
+          ticks: {
+            callback: function (value) {
+              return formatDate(value)
+            }
+          }
+        }],
+        yAxes: [{
+          display: true,
+          ticks: {
+            callback: function (value) {
+              return readableConsumption(value)
+            }
+          }
+        }]
+      }
+    }
+  });
+
+  new Chart(document.getElementById("canvasB"), {
+    type: 'line',
+    data: {
+      labels: {{ timestamps }},
+      datasets: [{ 
+          data: {{ accumulatedB }},
+          label: "Fase B",
+          borderColor: "#dd4b39",
+          fill: false
+        }]
+    },
+    options: {
+      title: {
+        display: false,
+        text: ''
+      },
+      scales: {
+        xAxes: [{
+          display: false,
+          ticks: {
+            callback: function (value) {
+              return formatDate(value)
+            }
+          }
+        }],
+        yAxes: [{
+          display: true,
+          ticks: {
+            callback: function (value) {
+              return readableConsumption(value)
+            }
+          }
+        }]
+      }
+    }
+  });
+
+  new Chart(document.getElementById("canvasC"), {
+    type: 'line',
+    data: {
+      labels: {{ timestamps }},
+      datasets: [{ 
+          data: {{ accumulatedC }},
+          label: "Fase C",
+          borderColor: "#0073b7",
+          fill: false
+        }]
+    },
+    options: {
+      title: {
+        display: false,
+        text: ''
+      },
+      scales: {
+        xAxes: [{
+          display: false,
+          ticks: {
+            callback: function (value) {
+              return formatDate(value)
+            }
+          }
+        }],
+        yAxes: [{
+          display: true,
+          ticks: {
+            callback: function (value) {
+              return readableConsumption(value)
+            }
+          }
+        }]
+      }
+    }
+  });
+
+</script>
+
+{% else %}
+
+  {% include "admin/logged_out.html" %}
+
+{% endif %}
+
+{% endblock body %}
