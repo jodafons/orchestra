@@ -42,7 +42,7 @@ db = SQLAlchemy(app)
 #
 # Stuff for Flask security
 #
-# Define models  
+# Define models
 user_datastore = SQLAlchemyUserDatastore(db, Worker, roles_workers)
 security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
