@@ -2,7 +2,7 @@
 __all__=['Worker']
 
 
-
+from flask_sqlalchemy import Table
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
