@@ -22,7 +22,6 @@ import datetime
 from flask import jsonify
 import json
 from config import light_db_endpoint
-from orchestra.db import OrchestraDB
 from orchestra.db.models import *
 
 __all__ = [
