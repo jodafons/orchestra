@@ -4,12 +4,11 @@ __all__=[
   'roles_workers'
 ]
 
-
-
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
 from flask_login import UserMixin
+from orchestra.dashboard.app import db
 
 roles_workers = Table(
   'roles_workers',
@@ -20,7 +19,7 @@ roles_workers = Table(
 #
 #   Users Table
 #
-class Worker (UserMixin, Base):
+class Worker (db.Model, UserMixin, Base):
 
   __tablename__ = 'worker'
 

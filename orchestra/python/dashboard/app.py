@@ -29,8 +29,6 @@ from orchestra.db import roles_workers
 __all__ = [
   'app',
   'db',
-  'validate_database',
-  'build_initial_db'
 ]
 
 # Create Flask application
