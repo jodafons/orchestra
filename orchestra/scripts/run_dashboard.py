@@ -8,7 +8,7 @@ from Akuanduba.triggers import TimerCondition
 from Akuanduba.core.Watchdog import Watchdog
 
 # Importing DashboardAPI service
-from orchestra.api import DashboardAPI 
+from orchestra.maestro.Dashboard import DashboardAPI 
 
 # Creating Akuanduba
 manager = Akuanduba ("Akuanduba", level=LoggingLevel.INFO)
