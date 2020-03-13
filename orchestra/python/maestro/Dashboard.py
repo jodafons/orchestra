@@ -135,7 +135,7 @@ class DashboardAPI (Service):
       'history' : []
     }
 
-    for task in self._session.query(TaskBoard).all():
+    for task in self._session.query(Board).all():
       if (task.status == 'done') or (task.status == 'failed'):
         data['history'].append({
           'name' : task.taskName,
