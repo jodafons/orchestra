@@ -7,7 +7,7 @@ __all__=[
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship, backref
 from orchestra.db.models import Base, Task
-from orchestra.db import OrchestraDB
+from orchestra.db.OrchestraDB import OrchestraDB
 from flask_login import UserMixin
 
 roles_workers = Table(
@@ -43,7 +43,7 @@ class Worker (Base, UserMixin):
     return "<User {}, priority {}>".format(self.username, self.maxPriority)
 
   def query(self):
-    return db.query(self)
+    return db.query(self).all()
 
   # Method that adds tasks into user
   def addTask (self, task):
