@@ -26,6 +26,7 @@ class Worker (UserMixin, Base):
   username = Column(String, unique = True)
   maxPriority = Column( Integer )
   passwordHash = Column(String)
+  email = Column (String)
 
   # Foreign
   tasks = relationship("Task", order_by="Task.id", back_populates="user")
