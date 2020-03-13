@@ -17,19 +17,19 @@ class ExtendedRegisterForm(RegisterForm):
     username = StringField('Username', [Required()])
 
     def validate(self):
-        if not self.username:
+        if self.username.value == "":
             print ("Username empty")
             return False
-        if not self.email:
+        if self.email.value == "":
             print ("Email empty")
             return False
-        if not self.password:
+        if self.password.value == "":
             print ("PW empty")
             return False
-        if not self.password_confirm:
+        if self.password_confirm.value == "":
             print ("PWC empty")
             return False
-        if not (self.password == self.password_confirm):
+        if not (self.password.value == self.password_confirm.value):
             print ("Passwords don't match")
             return False
         user = db.getUser(username)
