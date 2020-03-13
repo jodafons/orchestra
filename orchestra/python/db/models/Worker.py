@@ -7,7 +7,7 @@ __all__=[
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from orchestra.db.models import Base
+from orchestra.db.models import Base, Task
 from flask_login import UserMixin
 
 db = SQLAlchemy()
