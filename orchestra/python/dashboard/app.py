@@ -54,7 +54,7 @@ class AuthenticatedView(sqla.ModelView):
   def is_accessible(self):
     if not current_user.is_active or not current_user.is_authenticated:
       return False
-    return True'
+    return True
 
   def _handle_view(self, name, **kwargs):
     """
@@ -71,7 +71,7 @@ class AuthenticatedView(sqla.ModelView):
 
   # can_edit = True
   edit_modal = True
-  create_modal = True    
+  create_modal = True
   can_export = True
   can_view_details = True
   details_modal = True
