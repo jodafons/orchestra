@@ -45,28 +45,37 @@ class ExtendedRegisterForm(RegisterForm):
             print ("User already exists")
             return False
         else:
-            import hashlib
-            h = hashlib.md5()
-            h.update(self.password.data)
-            passwordHash = h.hexdigest()
+            # import hashlib
+            # h = hashlib.md5()
+            # h.update(self.password.data)
+            # passwordHash = h.hexdigest()
 
-            user = Worker(
-                username     = self.username.data,
-                email        = self.email.data,
-                maxPriority  = 1000,
-                passwordHash = passwordHash
-            )
+            # user = Worker(
+            #     username     = self.username.data,
+            #     email        = self.email.data,
+            #     maxPriority  = 1000,
+            #     passwordHash = passwordHash
+            # )
 
-            print (user)
+            # print (user)
 
-            session.add(user)
+            # session.add(user)
 
-            session.commit()
+            # session.commit()
 
-            print ("Success")
-            return user
+            # print ("Success")
+            return True
         # except:
         #     print ("Shit it failed")
         # finally:
             session.close()
 
+    def validate_on_submit (self):
+        return self.validate()
+
+    def to_dict(self):
+        return {
+            'username' : self.username.data,
+            'password' : self.password.data,
+            'email'    : self.email.data,
+        }
