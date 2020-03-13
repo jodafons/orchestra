@@ -2,15 +2,16 @@ from flask_security.forms import RegisterForm, Required, StringField
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from orchestra.db.models import Worker, Base
+from orchestra.db.OrchestraDB import OrchestraDB
 
 __all__ = [
     'ExtendedRegisterForm'
 ]
 
 engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
-
 Session = sessionmaker(bind=engine)
-#Base.metadata.create_all(engine)
+Base.metadata.create_all(engine)
+db = OrchestraDB()
 
 class ExtendedRegisterForm(RegisterForm):
 
