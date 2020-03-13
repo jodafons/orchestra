@@ -29,7 +29,6 @@ from orchestra.db import roles_workers
 __all__ = [
   'app',
   'db',
-  'MainTableData',
   'validate_database',
   'build_initial_db'
 ]
