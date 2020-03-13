@@ -22,6 +22,7 @@ from flask import jsonify
 import json
 from config import light_db_endpoint
 from orchestra.db.models import *
+from flask_mail import Mail
 
 __all__ = [
   'app',
@@ -34,6 +35,8 @@ bootstrap = Bootstrap(app)
 CORS(app)
 app.config.from_pyfile('config.py')
 db = SQLAlchemy(app)
+mail = Mail()
+mail.init_app(app)
 
 #########################################################################
 #
