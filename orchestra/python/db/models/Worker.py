@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship, backref
 from orchestra.db.models import Base, Task
 from orchestra.db.OrchestraDB import OrchestraDB
 from flask_login import UserMixin
+from flask_sqlalchemy import Model
 
 roles_workers = Table(
   'roles_workers',
@@ -22,7 +23,7 @@ db = OrchestraDB()
 #
 #   Users Table
 #
-class Worker (Base, UserMixin):
+class Worker (Model, Base, UserMixin):
 
   __tablename__ = 'worker'
 
