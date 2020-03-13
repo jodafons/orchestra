@@ -2,7 +2,6 @@ from flask_security.forms import RegisterForm, Required, StringField
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from orchestra.db.models import Worker, Base
-from orchestra.db.OrchestraDB import OrchestraDB
 
 __all__ = [
     'ExtendedRegisterForm'
@@ -11,7 +10,6 @@ __all__ = [
 engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
 Session = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
-db = OrchestraDB()
 
 class ExtendedRegisterForm(RegisterForm):
 
@@ -39,7 +37,7 @@ class ExtendedRegisterForm(RegisterForm):
         if not (self.password.data == self.password_confirm.data):
             print ("Passwords don't match")
             return False
-        user = db.getUser(self.username.data)
+        user = session.query(Worker).filter_by(Worker.username == self.username.data).first()
         print (user)
         if user:
             print ("User already exists")
