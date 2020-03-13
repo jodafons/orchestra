@@ -7,6 +7,10 @@ from . import Worker
 __all__.extend( Worker.__all__ )
 from .Worker import *
 
+from . import Role
+__all__.extend( Role.__all__ )
+from .Role import *
+
 from . import Task
 __all__.extend( Task.__all__ )
 from .Task import *
