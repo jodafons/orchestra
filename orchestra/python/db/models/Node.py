@@ -5,12 +5,12 @@ __all__=['Node']
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
-
+from orchestra.db.models.Worker import db
 
 #
 #   Node Table
 #
-class Node (Base):
+class Node (Base, db.Model):
 
   __tablename__ = 'node'
 
@@ -32,7 +32,7 @@ class Node (Base):
 
   queueName = Column( String )
 
-  
+
   cluster = Column( String )
 
   def getName(self):

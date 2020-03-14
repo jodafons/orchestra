@@ -3,13 +3,13 @@ __all__=['Task']
 
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from orchestra.db.models import Base
-
+from orchestra.db.models import Base, Job
+from orchestra.db.models.Worker import db
 
 #
 #   Tasks Table
 #
-class Task (Base):
+class Task (Base, db.Model):
   __tablename__ = 'task'
 
   # Local

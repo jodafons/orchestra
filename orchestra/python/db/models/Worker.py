@@ -4,20 +4,38 @@ __all__=['Worker']
 
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship, backref
-from orchestra.db.models import Base
+from orchestra.db.models import Base, Role
 from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
 
-roles_workers = Table(
-  'roles_workers',
-  Base.metadata,
-  Column('worker_id', Integer(), ForeignKey('worker.id')),
-  Column('role_id', Integer(), ForeignKey('role.id'))
-)
+db = SQLAlchemy()
+
+#roles_workers = Table(
+#  'roles_workers',
+#  Base.metadata,
+#  Column('worker_id', Integer(), ForeignKey('Worker.id')),
+#  Column('role_id', Integer(), ForeignKey('Role.id'))
+#)
+
+#
+#   Roles_Workers Table
+#
+class RolesWorkers (Base, db.Model):
+
+  __tablename__ = 'roles_workers'
+
+  # Local
+  id = Column(Integer, primary_key = True)
+
+  # Foreign
+  worker_id = Column(Integer, ForeignKey('worker.id'))
+  role_id = Column(Integer, ForeignKey('role.id'))
+
 
 #
 #   Users Table
 #
-class Worker (UserMixin, Base):
+class Worker (Base, db.Model, UserMixin):
 
   __tablename__ = 'worker'
 
@@ -31,7 +49,7 @@ class Worker (UserMixin, Base):
 
   # Foreign
   tasks = relationship("Task", order_by="Task.id", back_populates="user")
-  roles = relationship("Role", secondary=roles_workers,
+  roles = relationship("Role", secondary='roles_workers',
               backref=backref('workers', lazy='dynamic'))
 
   def __repr__ (self):

@@ -4,12 +4,12 @@ __all__ = ["Job"]
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
-
+from orchestra.db.models.Worker import db
 
 #
 #   Jobs Table
 #
-class Job (Base):
+class Job (Base, db.Model):
     __tablename__ = 'job'
 
     # Local

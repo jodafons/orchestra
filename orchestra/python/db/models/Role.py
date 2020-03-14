@@ -5,9 +5,9 @@ from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
 from flask_login import UserMixin
 from flask_security import RoleMixin
-from flask_sqlalchemy import Model
+from orchestra.db.models.Worker import db
 
-class Role(Model, Base, RoleMixin):
+class Role(Base, db.Model, RoleMixin):
 
   __tablename__ = 'role'
 

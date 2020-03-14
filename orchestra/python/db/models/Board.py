@@ -4,12 +4,12 @@ __all__=['Board']
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
-
+from orchestra.db.models.Worker import db
 
 #
 #   Tasks Table
 #
-class Board (Base):
+class Board (Base, db.Model):
   __tablename__ = 'board'
 
   # Local

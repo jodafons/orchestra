@@ -4,12 +4,12 @@ __all__ = ["Dataset","File"]
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
-
+from orchestra.db.models.Worker import db
 
 #
 #   Jobs Table
 #
-class Dataset (Base):
+class Dataset (Base, db.Model):
   __tablename__ = 'dataset'
 
   # Local
