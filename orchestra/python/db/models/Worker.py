@@ -59,6 +59,9 @@ class Worker (Base, db.Model, UserMixin):
   def has_roles(self, *args):
     return set(args).issubset({role.name for role in self.roles})
 
+  def has_role (self, role):
+    return role in self.roles
+
   # Method that turns roles into text
   def getRolesText (self):
     output = ""
