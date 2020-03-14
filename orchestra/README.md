@@ -121,14 +121,13 @@ Please follow these steps to create an account into the rancher cluster (link is
 
 - Step 1: Into the rancher, go to the cluster area and click in `Storage->Persistent Volumes`;
 - Step 2: Click in `Add volume`;
-- Step 3: Configure the parameters (Name=`jodafons`, Path=`/root_dir/jodafons`, Server=`10.1.1.100`, Volume plugin=`NFS Share`, Capacity=`100`, In custumize area mark `Many Nodes Read-Write`)
+- Step 3: Configure the parameters (Name=`jodafons`, Path=`/root_dir/`, Server=`10.1.1.100`, Volume plugin=`NFS Share`, Capacity=`100`, In custumize area mark `Many Nodes Read-Write`)
 - Step 4: Save the persistent volume click in `Save`;
 - Step 5: Now go to the user area (`cluster-lps->jodafons`);
 - Step 6: Click in `Volumes` and than `Add volume`;
 - Step 7: Configure the volume with these parameters (name=`volume`, namespace=`jodafons`, Persistent Volume=`jodafons` and mark `Many Nodes Read-Write`.
 - Step 8: Click in `Create`;
 
-After apply all steps, the rancher will create an docker volume with name `volume` store into `/mnt/cluster-volume/jodafons` (Path=`/root_dir/jodafons`, Server=`10.1.1.100`).
 
 
 
