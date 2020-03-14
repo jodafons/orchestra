@@ -55,6 +55,18 @@ class Worker (Base, db.Model, UserMixin):
   def __repr__ (self):
     return "<User {}, priority {}>".format(self.username, self.maxPriority)
 
+  # Method that turns roles into text
+  def getRolesText (self):
+    output = ""
+    start = True
+    for role in self.roles:
+      if not start:
+        output += " / {}".format(role.name)
+      else:
+        output = "{}".format(role.name)
+        start = False
+    return output
+
   # Method that adds tasks into user
   def addTask (self, task):
     self.tasks.append(task)

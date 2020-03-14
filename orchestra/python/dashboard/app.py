@@ -27,6 +27,7 @@ from flask_mail import Mail
 
 __all__ = [
   'app',
+  'initial_exists'
 ]
 
 # Create Flask application
@@ -35,8 +36,6 @@ bootstrap = Bootstrap(app)
 CORS(app)
 app.config.from_pyfile('config.py')
 db.init_app(app)
-mail = Mail()
-mail.init_app(app)
 
 #########################################################################
 #
@@ -194,6 +193,24 @@ def security_context_processor():
     h=admin_helpers,
     get_url=url_for
   )
+
+def initial_exists ():
+  if False:#db.session.query(Worker).filter('worker.username' == 'gabriel-milan').first():
+    return True
+  else:
+    admin_role = Role(name='superuser')
+    user_role = Role(name='user')
+    db.session.add(admin_role)
+    db.session.add(user_role)
+    db.session.commit()
+    gabriel = user_datastore.create_user(
+        username='gabriel-milan',
+        email='gabriel.milan@lps.ufrj.br',
+        password=encrypt_password('Gazolaa1'),
+        roles=[user_role, admin_role]
+    )
+    db.session.commit()
+
 
 if __name__ == '__main__':
 

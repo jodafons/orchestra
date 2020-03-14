@@ -2,6 +2,7 @@
 from app import app, db
 from time import sleep
 from config import INITIAL_SLEEP_TIME
+from orchestra.db.models import Worker, Role
 
 class WebApp ():
 
