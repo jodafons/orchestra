@@ -45,14 +45,17 @@ db.init_app(app)
 user_datastore = SQLAlchemyUserDatastore(db, Worker, Role)
 security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
-
 # Create customized model view class
-class AuthenticatedView(sqla.ModelView):
+class AdminAccessModelView(sqla.ModelView):
 
   def is_accessible(self):
     if not current_user.is_active or not current_user.is_authenticated:
       return False
-    return True
+
+    if current_user.has_role('superuser'):
+      return True
+
+    return False
 
   def _handle_view(self, name, **kwargs):
     """
@@ -66,101 +69,20 @@ class AuthenticatedView(sqla.ModelView):
         # login
         return redirect(url_for('security.login', next=request.url))
 
+class UserView(AdminAccessModelView):
+  column_editable_list = ['email', 'first_name', 'last_name']
+  column_searchable_list = column_editable_list
+  column_exclude_list = ['password']
+  # form_excluded_columns = column_exclude_list
+  column_details_exclude_list = column_exclude_list
+  column_filters = column_editable_list
 
   # can_edit = True
   edit_modal = True
-  create_modal = True
+  create_modal = True    
   can_export = True
   can_view_details = True
   details_modal = True
-
-class BalancoPage(BaseView):
-
-  @expose('/', methods=['GET', 'POST'])
-  def index(self):
-    errors = []
-    form = BalancoForm()
-    if request.method == 'POST':
-      if (form.cep.data and not form.trafo.data) or (not form.cep.data and form.trafo.data):
-        if form.startDate.data and form.endDate.data:
-          if form.endDate.data > form.startDate.data:
-            return self.render('admin/balanco_resultado.html', data = computeBalance (cep = form.cep.data, trafo = form.trafo.data, start = form.startDate.data, end = form.endDate.data + datetime.timedelta(days=1)))
-          else:
-            errors.append("A data final deve ser maior que a data inicial")
-        else:
-          errors.append("Favor preencher datas inicial e final")
-      else:
-        errors.append("Favor preencher apenas um dos seguintes: identificador do transformador ou CEP")
-    return self.render('admin/balanco_consulta.html', form = form, errors = errors)
-
-  def is_accessible(self):
-    """
-    Overrides is_accessible method in order to allow users AND admins to access it
-    """
-    if not current_user.is_active or not current_user.is_authenticated:
-      return False
-
-    if current_user.has_role('superuser') or current_user.has_role('user'):
-      return True
-
-    return False
-
-class DashboardPage (BaseView):
-
-  @expose('/', methods=['GET'])
-  def index(self):
-    errors = []
-    return self.render('admin/dashboard.html', list = getQualiList(), errors = errors, count = countEntries(), latest = getLatestEntryDelta())
-
-  def is_accessible(self):
-    """
-    Overrides is_accessible method in order to allow users AND admins to access it
-    """
-    if not current_user.is_active or not current_user.is_authenticated:
-      return False
-
-    if current_user.has_role('superuser') or current_user.has_role('user'):
-      return True
-
-    return False
-
-class DetailsPage (BaseView):
-
-  @expose('/', methods=['GET'])
-  def default (self):
-    return self.render('admin/details.html', equip = "Default")
-
-  @expose('/<equipment>', methods=['GET'])
-  def index(self, equipment):
-    errors = [],
-    consumptionA, consumptionB, consumptionC, accumulatedA, accumulatedB, accumulatedC, results, timestamps = getDetailsData(equipment)
-    return self.render(
-      'admin/details.html',
-      equip = equipment,
-      consumption = readableWatts(consumptionA + consumptionB + consumptionC),
-      accumulatedA = accumulatedA,
-      accumulatedB = accumulatedB,
-      accumulatedC = accumulatedC,
-      registers = results,
-      latest = getLatestEntryDelta(equipment),
-      timestamps = timestamps
-    )
-
-  def is_accessible(self):
-    """
-    Overrides is_accessible method in order to allow users AND admins to access it
-    """
-    if not current_user.is_active or not current_user.is_authenticated:
-      return False
-
-    if current_user.has_role('superuser') or current_user.has_role('user'):
-      return True
-
-    return False
-
-  def is_visible (self):
-    return False
-
 #########################################################################
 # Flask views
 @app.route('/')
@@ -179,6 +101,8 @@ admin = flask_admin.Admin(
 # admin.add_view(DashboardPage(name="Dashboard", endpoint='dashboard', menu_icon_type='fa', menu_icon_value='fa-dashboard',))
 # admin.add_view(BalancoPage(name="Balanço", endpoint='balanco', menu_icon_type='fa', menu_icon_value='fa-balance-scale',))
 # admin.add_view(AuthenticatedView(MainTableData, db.session, menu_icon_type='fa', menu_icon_value='fa-table', name="Tabela de dados"))
+admin.add_view(AdminAccessModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-tags', name="Níveis de acesso"))
+admin.add_view(UserView(User, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Usuários"))
 
 # Views not in the menu
 # admin.add_view(DetailsPage(name="Details", endpoint='details'))
