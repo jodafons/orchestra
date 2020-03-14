@@ -54,6 +54,10 @@ class Worker (Base, db.Model, UserMixin):
 
   def __repr__ (self):
     return "<User {}, priority {}>".format(self.username, self.maxPriority)
+  
+  # Check user permissions
+  def has_roles(self, *args):
+    return set(args).issubset({role.name for role in self.roles})
 
   # Method that turns roles into text
   def getRolesText (self):
