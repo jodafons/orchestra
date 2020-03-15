@@ -26,6 +26,8 @@ from orchestra.db.models.Worker import db
 from orchestra.kubernetes import Orchestrator
 from flask_mail import Mail
 import time
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 __all__ = [
   'app',
@@ -39,6 +41,8 @@ CORS(app)
 app.config.from_pyfile('config.py')
 db.init_app(app)
 _orchestra = Orchestrator( "../../data/job_template.yaml",  "../../data/lps_cluster.yaml" )
+_engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
+_session = sessionmaker(bind=_engine)
 
 #########################################################################
 #
@@ -52,7 +56,7 @@ def _getDbData ():
     'history' : []
   }
 
-  for task in db.session.query(Board).all():
+  for task in _session().query(Board).all():
     if (task.status == 'done') or (task.status == 'failed'):
       data['history'].append({
         'name' : task.taskName,
