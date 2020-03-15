@@ -1,7 +1,7 @@
 #!venv/bin/python
 import os
 import requests
-from flask import Flask, url_for, redirect, render_template, request, abort
+from flask import Flask, url_for, redirect, render_template, request, abort, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, \
   UserMixin, RoleMixin, login_required, current_user
@@ -23,7 +23,9 @@ import json
 from config import light_db_endpoint
 from orchestra.db.models import *
 from orchestra.db.models.Worker import db
+from orchestra.kubernetes import Orchestrator
 from flask_mail import Mail
+import time
 
 __all__ = [
   'app',
@@ -36,6 +38,48 @@ bootstrap = Bootstrap(app)
 CORS(app)
 app.config.from_pyfile('config.py')
 db.init_app(app)
+_orchestra = Orchestrator( "../../data/job_template.yaml",  "../../data/lps_cluster.yaml" )
+
+#########################################################################
+#
+# Utils
+#
+# Method that gets data from the database
+def _getDbData ():
+
+  data = {
+    'queue' : [],
+    'history' : []
+  }
+
+  for task in db.query(Board).all():
+    if (task.status == 'done') or (task.status == 'failed'):
+      data['history'].append({
+        'name' : task.taskName,
+        'status' : task.status,
+      })
+    else:
+      data['queue'].append({
+        'name' : task.taskName,
+        'status' : task.status,
+        'n_jobs' : task.jobs,
+        'n_regs' : task.registered,
+        'n_asgn' : task.assigned,
+        'n_test' : task.testing,
+        'n_runn' : task.running,
+        'n_done' : task.done,
+        'n_fail' : task.failed,
+      })
+  return data
+
+# Method that gets data from orchestrator
+def _getUsage ():
+
+  data = {
+    'cpu' : _orchestra.getCPUConsume(),
+    'mem' : _orchestra.getMemoryConsume()
+  }
+  return data
 
 #########################################################################
 #
@@ -84,11 +128,40 @@ class UserView(AdminAccessModelView):
   can_view_details = True
   details_modal = True
 #########################################################################
+#
 # Flask views
+#
+# Index
 @app.route('/')
 def index():
   return redirect(url_for('admin.index'))
 
+# Get queue data
+@app.route('/queue')
+def get_queue():
+  if current_user.is_authenticated:
+    import json
+    def get_data():
+      while True:
+        json_data = json.dumps(_getDbData()) # Data goes here
+        yield "data: {}\n\n".format(json_data)
+        time.sleep(1)
+    return Response(get_data(), mimetype='text/event-stream')
+
+# Get usage data
+@self.__app.route('/usage')
+def get_usage():
+  if current_user.is_authenticated:
+    import json
+    def get_data():
+      while True:
+        json_data = json.dumps(_getUsage()) # Data goes here
+        yield "data: {}\n\n".format(json_data)
+        time.sleep(1)
+    return Response(get_data(), mimetype='text/event-stream')
+
+#########################################################################
+#
 # Create admin
 admin = flask_admin.Admin(
   app,
