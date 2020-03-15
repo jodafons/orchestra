@@ -52,7 +52,7 @@ def _getDbData ():
     'history' : []
   }
 
-  for task in db.query(Board).all():
+  for task in db.session.query(Board).all():
     if (task.status == 'done') or (task.status == 'failed'):
       data['history'].append({
         'name' : task.taskName,
