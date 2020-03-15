@@ -151,6 +151,8 @@ def get_queue():
         yield "data: {}\n\n".format(json_data)
         time.sleep(1)
     return Response(get_data(), mimetype='text/event-stream')
+  else:
+    abort(404)
 
 # Get usage data
 @app.route('/usage')
@@ -163,6 +165,8 @@ def get_usage():
         yield "data: {}\n\n".format(json_data)
         time.sleep(1)
     return Response(get_data(), mimetype='text/event-stream')
+  else:
+    abort(404)
 
 #########################################################################
 #
