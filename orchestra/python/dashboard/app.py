@@ -149,7 +149,7 @@ def get_queue():
     return Response(get_data(), mimetype='text/event-stream')
 
 # Get usage data
-@self.__app.route('/usage')
+@app.route('/usage')
 def get_usage():
   if current_user.is_authenticated:
     import json
