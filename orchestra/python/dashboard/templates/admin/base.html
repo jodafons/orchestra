@@ -9,8 +9,8 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Flask-Admin dashboard login template">
-  <meta name="author" content="Jonathan Ars">
+  <meta name="description" content="LPS Cluster Dashboard">
+  <meta name="author" content="Gabriel Gazola Milan">
   {% endblock head_meta %}
 
   {% block head_css %}
@@ -40,15 +40,10 @@
   <link href="{{url_for('static',filename='plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css')}}" rel="stylesheet"></link>
   <!-- Flask-admin admin styles -->
   <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet">
-
-  <!-- Chart.js -->
-  <script src="{{url_for('static',filename='js/Chart.min.js')}}"></script>
-
   {% if admin_view.extra_css %}
   {% for css_url in admin_view.extra_css %}
   <link href="{{ css_url }}" rel="stylesheet">
   {% endfor %}
-  <link href="{{url_for('static',filename='css/main.css')}}" rel="stylesheet"></link>
   {% endif %}
 
   {% endblock head_css%}
@@ -72,7 +67,9 @@
       {% block brand %}
       <a href="{{ admin_view.admin.url }}" class="logo">
         <!-- mini logo for sidebar mini 50x50 pixels -->
-        <span class="logo-mini"><b>Q</b></span>
+        <span class="logo-mini">
+          LPS
+        </span>
         <!-- logo for regular state and mobile devices -->
         <span class="logo-lg"><b>{{ admin_view.admin.name }}</b></span>
       </a>
@@ -82,25 +79,25 @@
       <nav class="navbar navbar-static-top">
         <!-- Sidebar toggle button-->
         <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
-          <span class="sr-only">Toggle navigation</span>
-        </a>
-        <div class="navbar-custom-menu">
-          <ul class="nav navbar-nav">
-            <!-- Control Sidebar Toggle Button -->
-            <li>
-              {% block access_control %}
-              {% endblock %}
-            </li>
-          </ul>
-
-          {% block menu_links %}
-          <ul class="nav navbar-nav navbar-right">
-            {{ layout.menu_links() }}
-          </ul>
-          {% endblock %}
-
-        </div>
-      </nav>
+            <span class="sr-only">Toggle navigation</span>
+          </a>
+          <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+              <!-- Control Sidebar Toggle Button -->
+              <li>
+                {% block access_control %}
+                {% endblock %}
+              </li>
+            </ul>
+            
+            {% block menu_links %}
+            <ul class="nav navbar-nav navbar-right">
+              {{ layout.menu_links() }}
+            </ul>
+            {% endblock %}
+  
+          </div>
+          </nav>
     </header>
     <!-- / TOP NAVBAR -->
 
@@ -154,8 +151,13 @@
     {% if current_user.is_authenticated %}
   </div>
   <!-- / Content Wrapper. color white -->
+  <!-- /.control-sidebar -->
+  <!-- Add the sidebar's background. This div must be placed
+  immediately after the control sidebar -->
+  <div class="control-sidebar-bg"></div>
+
   <footer class="main-footer">
-    <strong>Copyright &copy; 2019 <a href="http://laspi.ufrj.br/">LASPI/UFRJ - Laboratório de Aplicações Tecnológicas para o Setor Produtivo Industrial</a></strong>. Todos os direitos reservados.
+     <strong>Copyright &copy; 2019 <a href="http://www.lps.ufrj.br/">LPS/UFRJ - Laboratório de Processamento de Sinais</a></strong>. Todos os direitos reservados.
     <div class="pull-right hidden-xs">
       <b>Versão</b> 0.1
     </div>
@@ -197,7 +199,7 @@
 <!-- jQuery Knob Chart -->
 <script src="{{url_for('static',filename='plugins/knob/jquery.knob.js')}}"></script>    
 <!-- daterangepicker -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+<script src="{{url_for('static',filename='js/moment.min.js')}}"></script>
 <script src="{{url_for('static',filename='plugins/daterangepicker/daterangepicker.js')}}"></script>    
 <!-- datepicker -->
 <script src="{{url_for('static',filename='plugins/datepicker/bootstrap-datepicker.js')}}"></script>    
@@ -211,28 +213,11 @@
 <script src="{{url_for('static',filename='js/app.min.js')}}"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="{{url_for('static',filename='js/demo.js')}}"></script>
-{% if admin_view.name=="Home" %}
-  <script src="{{url_for('static',filename='js/pages/dashboard.js')}}"></script>
-{% endif %}
 
-{% if admin_view.name=="Balanço" %}
-<link href="{{url_for('static',filename='css/main.css')}}" rel="stylesheet"></link>
-<script src="{{url_for('static',filename='js/html2canvas.min.js')}}"></script>
-<script src="{{url_for('static',filename='js/jspdf.min.js')}}"></script>
-<script src="{{url_for('static',filename='js/pages/pdf.js')}}"></script>
-<script>
-  $(function() {
-      $.ajax({
-          url: '{{ url_for("trafoautocomplete") }}'
-          }).done(function (data) {
-              $('#trafoautocomplete').autocomplete({
-                  source: data.json_list,
-                  minLength: 2
-              });
-          });
-      });
-  </script>  
-{% endif %}
+<!-- CLUSTER CUSTOM STUFF -->
+<script src="{{url_for('static',filename='js/Chart.min.js')}}"></script>
+<script src="{{url_for('static',filename='js/pages/cluster_usage.js')}}"></script>
+<script src="{{url_for('static',filename='js/pages/cluster_queue.js')}}"></script>
 
 {% endblock tail_js%}
 

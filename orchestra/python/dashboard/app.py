@@ -92,7 +92,7 @@ def index():
 # Create admin
 admin = flask_admin.Admin(
   app,
-  'Qualimeter',
+  'LPS Cluster',
   base_template='my_master.html',
   template_mode='bootstrap3',
 )

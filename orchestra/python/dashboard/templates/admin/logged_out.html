@@ -1,28 +1,26 @@
 <center>
     <section class="content" style="color: white">
         <div class="col-sm-12">
-            <h1>P&D 103/18</h1>
-            <h2>Painel de Controle</h2><br>
+            <h1>LPS Cluster</h1>
             <p class="lead">
-                Autenticação
+                Authentication
             </p>
             <p>
-                Se você está vendo essa página, você tentou acessar o painel de controle do projeto 103/18. Para completar o acesso, você deve se identificar.
+                This is the web interface for the <i>LPS Cluster</i> project, <br>
+                if you reached here and don't know why, please return.
             </p>
             {% if not current_user.is_authenticated %}
-            <p>Caso não tenha uma conta, pode se registrar no link abaixo e, após, solicitar a um membro administrador que te forneça o nível de acesso necessário. <br><br>
-                <br>
                 <p>
-                    <a class="btn btn-primary" href="{{ url_for('security.login') }}">Login</a> <a class="btn btn-default" href="{{ url_for('security.register') }}">Registrar</a>
+                    <a class="btn btn-primary" href="{{ url_for('security.login') }}">Login</a>
                 </p>
                 {% endif %}
                 <br>
                 <p>
-                    <a class="btn btn-primary" href="/"><i class="glyphicon glyphicon-chevron-left"></i> Voltar</a>
+                    <a class="btn btn-primary" href="/"><i class="glyphicon glyphicon-chevron-left"></i> Back</a>
                 </p>
             </div>
         </section>
     </center>
 
-    <br><br><br><br><br><br><br><br><br>
-    <br><br><br><br><br><br><br><br><br><br>
+  <br><br><br><br><br><br><br><br><br>
+  <br><br><br><br><br><br><br><br><br><br>

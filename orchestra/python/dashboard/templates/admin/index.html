@@ -6,32 +6,142 @@
 
 <!-- Content Header (Page header) -->
 <section class="content-header">
-    <h1>
-      Home 
-      <small>Painel de controle</small>
-  </h1>
-  <ol class="breadcrumb">
-      <li><a href="#"><i class="fa fa-home"></i> Home</a></li>
-  </ol>
+  <h1>
+    Cluster 
+    <small>Queue and Usage</small>
+</h1>
+<ol class="breadcrumb">
+    <li><a href="/admin"><i class="fa fa-dashboard"></i> Home</a></li>
+    <li class="active"><i class="fa fa-info-circle"></i> Status</li>
+</ol>
 </section>
 
 <section class="content">
-  <!-- Small boxes (Stat box) -->
+
+  <!-- main row -->
   <div class="row">
 
-    <center>
-      <p>
-        <b>Acesse o <a href=/admin/dashboard>dashboard</a>!</b>
-      </p>
-    </center>
+    <!-- Full row section -->
+    <section class="col-lg-12">
+      <!-- Box div -->
+      <div class="box box-solid bg-black-gradient" style="height: 200px">
+
+        <!-- Box header -->
+        <div class="box-header">
+          <i class="fa fa-th"></i>
+          <h3 class="box-title">Usage</h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <!-- // Box header -->
+
+        <!-- Box content -->
+        <div class="box-body border-radius-none">
+
+          <!-- Content -->
+          <div id="servicesDiv" class="chart" style="height: 100%;">
+
+            <!-- First 1/2 of the box -->
+            <div class="col-lg-6">
+                <div style="width: 100%; height: 40px; position: absolute; top: 50%; left: 0; margin-top: -20px; line-height:19px; text-align: center; z-index: 999999999999999">
+                    <p id="cpuUsageNumber">0%</p>
+                    CPU 
+                </div>
+                <canvas id="cpuUsage" style="height: 100%;"></canvas>
+            </div>            
+            <!-- // First 1/2 of the box -->
+
+            <!-- Second 1/2 of the box -->
+            <div class="col-lg-6">
+                <div style="width: 100%; height: 40px; position: absolute; top: 50%; left: 0; margin-top: -20px; line-height:19px; text-align: center; z-index: 999999999999999">
+                    <p id="memUsageNumber">0%</p>
+                    RAM 
+                </div>
+                <canvas id="memUsage" style="height: 100%;"></canvas>
+            </div>            
+            <!-- // Second 1/2 of the box -->
+
+          </div>
+          <!-- // Content -->
+
+        </div>
+        <!-- // Box content -->
+        
+      </div>
+      <!-- // Box div -->
+  </section>
+    <!-- // Full row section -->
+
+    <!-- Half row section -->
+    <section class="col-lg-9">
+
+      <!-- Box div -->
+      <div class="box box-solid bg-black-gradient">
+
+        <!-- Box header -->
+        <div class="box-header">
+          <i class="fa fa-th"></i>
+          <h3 class="box-title">Queue</h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <!-- // Box header -->
+
+        <!-- Box content -->
+        <div class="box-body border-radius-none">
+
+          <!-- Content -->
+          <div id="queueDiv" class="chart" style="height: 100%;">
+          </div>
+          <!-- // Content -->
+
+        </div>
+        <!-- // Box content -->
+        
+      </div>
+      <!-- // Box div -->
+
+    </section>
+    <!-- // Half row section -->
+
+    <!-- Half row section -->
+    <section class="col-lg-3">
+
+      <!-- Box div -->
+      <div class="box box-solid bg-black-gradient">
+
+        <!-- Box header -->
+        <div class="box-header">
+          <i class="fa fa-th"></i>
+          <h3 class="box-title">History</h3>
+          <div class="box-tools pull-right"></div>
+        </div>
+        <!-- // Box header -->
+
+        <!-- Box content -->
+        <div class="box-body border-radius-none">
+
+          <!-- Content -->
+          <div id="historyDiv" class="chart" style="height: 100%;">
+          </div>
+          <!-- // Content -->
+
+        </div>
+        <!-- // Box content -->
+        
+      </div>
+      <!-- // Box div -->
+        
+    </section>
+    <!-- // Half row section -->
 
   </div>
+  <!-- /.row (main row) -->
+
 </section>
 <!-- /.content -->
 {% else %}
 
-  {% include "admin/logged_out.html" %}
+{% include "admin/logged_out.html" %}
 
 {% endif %}
 
-{% endblock body %}
+  {% endblock body %}
