@@ -487,6 +487,8 @@ class MaestroAPI (Logger):
                 error_code = HTTPStatus.BAD_REQUEST,
                 message = "The exec command must include '{}' on it, this shall be replaced by {} when the job starts.".format(key, secondaryDS[key])
               )
+        else:
+          secondaryDS = {}
 
         if not '%DATA' in execCommand:
           return jsonify(
