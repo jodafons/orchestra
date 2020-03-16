@@ -15,7 +15,7 @@ resources to alocate this.
 - When a task is registered into the database, the schedule will take one job and send to the cluster.
 If this job return success than the task will be swith to running state and all jobs will be assigned;
 
-### Know Bugs:
+### Known Bugs:
 
 - There is a bug into the priority calculation (LCGRule or schedule calc.);
 
@@ -26,7 +26,7 @@ If this job return success than the task will be swith to running state and all 
 - kubernetes;
 - benedict;
 - numpy
-- Gaugi
+- Gaugi (pip3 install gaugi)
 
 ### Setup:
 
@@ -39,23 +39,10 @@ source setup.sh
 
 # Usage
 
-### Registry The Dataset Into the Orchestra:
+It's possible to use the orchestra with maestro api on your local machine. To do this you must have an account (LPS).
 
-Into the `/mnt/cluster-volume/jodafons/files`, for example, you must run the follow commands to registry all uploaded filesas datasets into the orchestra database. A `dataset` is a name who point to a file or an directory path (key, value) into the storage. The dataset name must start with `user.username.*` always (i.e. `user.jodafons.my_config_files`).
-
-Registry the data file into the orchestra database as `user.jodafons.my_data_file.pic`:
-
-```bash
-# you must add this prefix in your dataset name: user.username.(...)
-orchestra_registry.py -d user.jodafons.my_data_file.pic -p my_data_file.pic --cluster LPS
-```
-
-Registry all configurations files (in the directory) into the orchestra database as `user.jodafons.my_config_files`: 
-```bash
-# you must add this prefix in your dataset name: user.username.(...)
-orchestra_registry.py -d user.jodafons.my_config_files -p my_config_files/ --cluster LPS
-```
-Here, `-d` is the dataset name and `-p` is the path of the file or directory that will be used.
+- To install the API on your local machine: pip3 install lps_maestro
+- The documentation can be found here: https://maestro-lps.readthedocs.io/en/latest/
 
 
 ### Task Creation:

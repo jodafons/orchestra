@@ -44,17 +44,9 @@ source setup_modules.sh --head
 source setup.sh
 ```
 
-To configure the orchestra user scripts just append these paths into the Linux environments.
-
-```bash
-# Add orchestra to the path for all users
-export PYTHONPATH=/opt/orchestra/build:$PYTHONPATH
-export PATH=/opt/orchestra/scripts:$PATH
-```
-
 ## Create the orchestra database:
 
-To write the database objects, create the list of users and the list of machines you must run the script in `orchestra/orchestra/python/db/models/init_rancher.py`. If you have an database installed at the postgres server, you must remove all tables using the pgadmin first otherwise you will not be able to run this script.
+To write the database objects, create the list of users and the list of machines you must run the script in `orchestra/orchestra/scripts/create_lps_db.py`. If you have an database installed at the postgres server, you must remove all tables using the pgadmin first otherwise you will not be able to run this script.
 
 
 ## Configure the nodes that will be used into the orchestra:
@@ -85,6 +77,12 @@ To run the LPS Cluster pilot you must open a screen into the adminsitrator accou
 cd /opt/orchestra/orchestra/scripts/
 python3 run_rancher.py
 ```
+
+## Create a script to initalize everything when the zeus start:
+
+
+There is an script loccated at `orchectra/orchestra/scripts/run_lps_cluster.sh`. This script must be copy to `/etc/init.d/` into the zeus machine.
+
 
 # How to Configure Rancher:
 
