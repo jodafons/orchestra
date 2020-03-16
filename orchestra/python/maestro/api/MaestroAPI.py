@@ -50,19 +50,25 @@ def verify_password (password, hash):
 
 def pickledAuth (data, db):
   try:
-    pickled = data.decode('utf-8')
+    data = data.decode('utf-8')
   except:
-    pickled = data
-  auth_data = pickle.loads(base64.b64decode(pickled.encode()))
-  user = db.getUser(auth_data['username'])
+    pass
+  finally:
+    data = data.split("$")
+  username = data[1]
+  token = data[2]
+
+  user = db.getUser(username)
   if user is None:
     return jsonify(
       error_code=HTTPStatus.UNAUTHORIZED,
       message="Authentication failed!"
     )
-  password = auth_data['password']
 
-  if (user.getUserName() == auth_data['username']) and (password == user.getPasswordHash()):
+  cmp_token = "{}-{}".format(user.getUserName(), user.getPasswordHash())
+  cmp_token = md5(encode_string(cmp_token)).hexdigest()
+
+  if (user.getUserName() == username) and (token == cmp_token):
     try:
       login_user(user, remember=False)
     except:
