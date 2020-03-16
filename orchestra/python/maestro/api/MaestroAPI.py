@@ -101,7 +101,7 @@ class MaestroAPI (Logger):
           )
         else:
           user = db.getUser(request.form['username'])
-          print (user)
+          return (user.username, user.password)
           print (user.password)
           if user is None:
             return jsonify(
