@@ -473,14 +473,20 @@ class MaestroAPI (Logger):
             message = "This config doesn't exist in the database, should be registered first."
           )
 
-        secondaryDS = eval(secondaryDS)
-
-        for key in secondaryDS.keys():
-          if db.getDataset(username, secondaryDS[key]) is None:
-            return jsonify(
-              error_code = HTTPStatus.NOT_FOUND,
-              message = "The secondary data file {} is not on the database.".format(secondaryDS[key])
-            )
+        if secondaryDS != "":
+          secondaryDS = eval(secondaryDS)
+          for key in secondaryDS.keys():
+            if db.getDataset(username, secondaryDS[key]) is None:
+              return jsonify(
+                error_code = HTTPStatus.NOT_FOUND,
+                message = "The secondary data file {} is not on the database.".format(secondaryDS[key])
+              )
+          for key in secondaryDS.keys():
+            if not key in execCommand:
+              return jsonify(
+                error_code = HTTPStatus.BAD_REQUEST,
+                message = "The exec command must include '{}' on it, this shall be replaced by {} when the job starts.".format(key, secondaryDS[key])
+              )
 
         if not '%DATA' in execCommand:
           return jsonify(
@@ -497,13 +503,6 @@ class MaestroAPI (Logger):
             error_code = HTTPStatus.BAD_REQUEST,
             message = "The exec command must include '%OUT' on it, this shall be replaced by the outputFile when the jobs starts."
           )
-
-        for key in secondaryDS.keys():
-          if not key in execCommand:
-            return jsonify(
-              error_code = HTTPStatus.BAD_REQUEST,
-              message = "The exec command must include '{}' on it, this shall be replaced by {} when the job starts.".format(key, secondaryDS[key])
-            )
 
         if db.getDataset(username, taskname):
           return jsonify(
