@@ -101,11 +101,7 @@ class MaestroAPI (Logger):
           )
         else:
           user = db.getUser(request.form['username'])
-          return jsonify(
-            error_code=HTTPStatus.UNAUTHORIZED,
-            message="Username: {}, Password: {}".format(user.username, user.password)
-          )
-          print (user.password)
+
           if user is None:
             return jsonify(
               error_code=HTTPStatus.UNAUTHORIZED,
@@ -118,6 +114,11 @@ class MaestroAPI (Logger):
               error_code=HTTPStatus.OK,
               message="Success!"
             )
+
+          return jsonify(
+            error_code=HTTPStatus.UNAUTHORIZED,
+            message="Auth: {}".format(verify_password(password, user.getPasswordHash()))
+          )
 
           if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
             try:
