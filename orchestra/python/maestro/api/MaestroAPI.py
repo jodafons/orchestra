@@ -21,8 +21,32 @@ import pickle
 import base64
 from pathlib import Path
 import os
+import hmac
+import hashlib
+import base64
+from passlib.context import CryptContext
 
 home = str(Path.home())
+text_type = str
+salt = "Krj6cd2mW63pER7Hjy8bsUbXYLY6t"
+
+def get_pw_context ():
+  pw_hash = 'pbkdf2_sha512'
+  schemes = ['bcrypt', 'des_crypt', 'pbkdf2_sha256', 'pbkdf2_sha512', 'sha256_crypt', 'sha512_crypt', 'plaintext']
+  deprecated = ['auto']
+  return CryptContext (schemes=schemes, default=pw_hash, deprecated=deprecated)
+
+def encode_string(string):
+  if isinstance(string, text_type):
+    string = string.encode('utf-8')
+  return string
+
+def get_hmac (password):
+  h = hmac.new(encode_string(salt), encode_string(password), hashlib.sha512)
+  return base64.b64encode(h.digest())
+
+def verify_password (password, hash):
+  return get_pw_context().verify(get_hmac(password), hash)
 
 def pickledAuth (data, db):
   try:
@@ -83,6 +107,12 @@ class MaestroAPI (Logger):
               message="Authentication failed!"
             )
           password = request.form['password']
+
+          if (verify_password(password, user.getPasswordHash())):
+            return jsonify(
+              error_code=HTTPStatus.OK,
+              message="Success!"
+            )
 
           if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
             try:

@@ -104,7 +104,7 @@ class Worker (Base, db.Model, UserMixin):
     self.username = name
 
   def getPasswordHash (self):
-    return self.passwordHash
+    return self.password
 
   def getMaxPriority(self):
     return self.maxPriority
