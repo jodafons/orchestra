@@ -117,7 +117,7 @@ class MaestroAPI (Logger):
 
           return jsonify(
             error_code=HTTPStatus.UNAUTHORIZED,
-            message="Auth: {}".format(verify_password(password, user.getPasswordHash()))
+            message="Pw: {}, Hash: {}, Auth: {}".format(password, user.password, verify_password(password, user.password))
           )
 
           if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
