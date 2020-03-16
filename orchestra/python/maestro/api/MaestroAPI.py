@@ -109,18 +109,7 @@ class MaestroAPI (Logger):
             )
           password = request.form['password']
 
-          if (verify_password(password, user.getPasswordHash())):
-            return jsonify(
-              error_code=HTTPStatus.OK,
-              message="Success!"
-            )
-
-          return jsonify(
-            error_code=HTTPStatus.UNAUTHORIZED,
-            message="Pw: {}, Hash: {}, Auth: {}".format(password, user.password, verify_password(password, user.password))
-          )
-
-          if (user.getUserName() == request.form['username']) and (password == user.getPasswordHash()):
+          if (user.getUserName() == request.form['username']) and (verify_password(password, user.getPasswordHash())):
             try:
               login_user(user, remember=False)
             except:
@@ -128,9 +117,12 @@ class MaestroAPI (Logger):
                 error_code=HTTPStatus.UNAUTHORIZED,
                 message="Failed to login."
               )
+            token = "{}-{}".format(user.getUserName(), user.getPasswordHash())
+            token = md5(encode_string(token)).hexdigest()
             return jsonify(
               error_code=HTTPStatus.OK,
-              message="Authentication successful!"
+              message="Authentication successful!",
+              token=token
             )
           return jsonify(
             error_code=HTTPStatus.UNAUTHORIZED,
