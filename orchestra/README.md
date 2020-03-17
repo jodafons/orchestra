@@ -1,6 +1,27 @@
 
+# Partitura:
 
-# How to install Postgres and PgAdmin4 in your local server?
+## Orchestra  
+
+This package is used to manager tasks and jobs inside the cluster. This tools uses the kubernetes as backend
+to create and remove jobs (or pods) inside of the cluster. The schedule is responsible to check the task
+status, calculate the job priority and append or remove jobs from the queue. After calculate and get the 
+queue ordered by job priority, the pilot send the jobs to the slot. If the slot is available, then one
+job will be move to inside of slot and the kubernetes will take care to launch and manager all cluster
+resources to alocate this.
+
+
+### Requirements (python packages):
+- python 3;
+- sqlalchemy;
+- kubernetes;
+- benedict;
+- numpy
+- Gaugi (pip3 install gaugi)
+
+
+
+## How to install Postgres and PgAdmin4 in your local server?
 
 
 The postgres database was set to restart always when the system reboot on the main node machine `(146.164.147.170)` at LPS lab. The files and the creation script remains in an offuscated file in `home/rancher/.postgres` where we store all persistent files (volume) created by the postgres server. You must be sudo (for security reasons) to enter or operate the docker in this machine. 
@@ -35,14 +56,17 @@ This will open an port foward and externalize the server pgadmin port to your `l
 
 ## Setup Orchestra:
 
-Into the Zeus machine using the adminstrator privilegies go to `/opt/` directory and clone the orchestra repository.
+Create the orchestra repository into the `/home/rancher/.cluster` using the follow commands:
+
 ```bash
 git clone https://github.com/jodafons/orchestra.git
-cd /opt/orchestra/
 source setup_modules.sh
 source setup_modules.sh --head
 source setup.sh
 ```
+
+You will be ask to permission to clone the `partitura` repository where we have all scripts configurations for LPS cluster.
+After that you will need to go to `external/partitura/scripts` and copy `run_cluster.sh` to `/etc/init.d`. You must be sudo. After that, just reboot the zeus machine.
 
 ## Create the orchestra database:
 

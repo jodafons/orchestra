@@ -5,7 +5,8 @@ from Gaugi import Logger, NotSet, StatusCode
 from Gaugi.messenger.macros import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from orchestra.db.models import*
+from orchestra.db.models import *
+from orchestra.constants import *
 from sqlalchemy import and_, or_
 import time
 
@@ -18,12 +19,7 @@ class OrchestraDB(Logger):
 
     Logger.__init__(self)
     self.__cluster = cluster
-    if cluster == Cluster.LPS:
-      url = DEFAULT_URL_LPS
-    elif cluster == Cluster.SDUMONT:
-      url = DEFAULT_URL_SDUMONT
-    else:
-      MSG_FATAL(self, "URL database not defined for this cluster")
+    url = CLUSTER_POSTGRES_URL
 
     try: # Get the connection and create an session
       MSG_DEBUG( self, "Connect to %s.", url )
@@ -41,9 +37,9 @@ class OrchestraDB(Logger):
   def getStoragePath(self):
 
     if self.__cluster is Cluster.LPS:
-      return BASEPATH_SG_LPS
+      return CLUSTER_VOLUME
     elif self.__cluster is Cluster.SDUMONT:
-      return BASEPATH_SG_DUMONT
+      return CLUSTER_VOLUME_SDUMONT
     else:
       MSG_WARNING( self, "Cluster path not defined.")
 

@@ -16,3 +16,6 @@ cd ..
 export PATH=`pwd`/scripts:$PATH
 
 
+# This will import all LPS credentials and DB configs from the private repository
+source external/partitura/scripts/setup_envs.sh
+

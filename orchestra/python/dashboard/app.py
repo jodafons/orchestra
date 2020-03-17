@@ -29,6 +29,8 @@ import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from orchestra.constants import *
+
 __all__ = [
   'app',
   'initial_exists'
@@ -40,8 +42,11 @@ bootstrap = Bootstrap(app)
 CORS(app)
 app.config.from_pyfile('config.py')
 db.init_app(app)
-_orchestra = Orchestrator( "../../data/job_template.yaml",  "../../data/lps_cluster.yaml" )
-_engine = create_engine('postgres://postgres:postgres@localhost:5432/postgres')
+
+_orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
+                           CLUSTER_RANCHER_CREDENTIALS )
+_engine = create_engine( CLUSTER_POSTGRES_URL )
+
 _session = sessionmaker(bind=_engine)
 
 #########################################################################
@@ -127,7 +132,7 @@ class UserView(AdminAccessModelView):
 
   # can_edit = True
   edit_modal = True
-  create_modal = True    
+  create_modal = True
   can_export = True
   can_view_details = True
   details_modal = True

@@ -1,3 +1,17 @@
+import os
+
+
+
+# The cluster job template to used
+
+CLUSTER_JOB_TEMPLATE = '../data/job_template.yaml'
+CLUSTER_RANCHER_CREDENTIALS = os.environ["CLUSTER_RANCHER_CREDENTIALS"]
+CLUSTER_POSTGRES_URL = os.environ["CLUSTER_POSTGRES_URL"]
+CLUSTER_VOLUME = '/mnt/cluster-volume' # LPS default
+
+
+
+
 
 
 # ** Orchestra constants **
@@ -18,9 +32,6 @@ MAX_FAIL=1
 # For DB configuration
 NUMBER_OF_TRIALS=3;
 
-# LPS storage and database hosted in zeus machine
-DEFAULT_URL_LPS='postgres://postgres:postgres@localhost:5432/postgres'
-BASEPATH_SG_LPS = '/mnt/cluster-volume'
 
 
 
@@ -29,8 +40,9 @@ BASEPATH_SG_LPS = '/mnt/cluster-volume'
 #
 # Flask
 #
-API_PORT = '5020'
-CLUSTER_VOLUME = '/mnt/cluster-volume'
+
+#API_PORT = '5020'
+API_PORT = os.environ["CLUSTER_API_PORT"]
 
 #
 # Error codes
@@ -44,6 +56,16 @@ ERR_NOT_FOUND       = 404
 #
 salt = b'g\xc2U\x1c\x9fx\xddxm\xf1\x85\x85w\x8dA\xa3`\x07F\xfdHP\x87Zc\xe8\xea\xcc\xcd\xd7fz'
 iterations = 100000
+
+
+
+
+
+#
+# Others
+#
+
+CLUSTER_VOLUME_SDUMONT = '/'
 
 
 
