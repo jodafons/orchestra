@@ -453,10 +453,6 @@ class MaestroAPI (Logger):
         eta = request.form['eta']
         gpu = False if request.form['gpu'] == '0' else True
 
-        return jsonify(
-          message = "{}, type is {}".format(gpu, type(gpu))
-        )
-
         import os
 
         if db.getUser(username).getTask(taskname) is not None:
