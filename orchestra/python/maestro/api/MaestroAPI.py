@@ -453,7 +453,7 @@ class MaestroAPI (Logger):
         eta = request.form['eta']
 
         return jsonify(
-          message = "{}".format(request.form['gpu'])
+          message = "{}, type is {}".format(request.form['gpu'], type(request.form['gpu']))
         )
 
         gpu = True if request.form['gpu'] == 'True' else False
