@@ -11,7 +11,8 @@ from orchestra.constants import *
 schedule      = Schedule( "Schedule", LCGRule(),  max_update_time = 0.5*MINUTE )
 db            = OrchestraDB(cluster=Cluster.LPS)
 #orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
-orchestrator  = Orchestrator( "/home/rancher/devs/orchestra/orchestra/data/job_template.yaml",  "/home/rancher/devs/orchestra/orchestra/data/lps_cluster.yaml" )
+orchestrator  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitura/data/job_template.yaml",
+                              "/home/rancher/.cluster/orchestra/external/partitura/data/lps_cluster.yaml" )
 
 # create the pilot
 pilot = Pilot(db, schedule, orchestrator,
