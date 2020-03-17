@@ -474,6 +474,7 @@ class MaestroAPI (Logger):
           )
 
         if secondaryDS != "":
+          print (secondaryDS)
           secondaryDS = eval(secondaryDS)
           for key in secondaryDS.keys():
             if db.getDataset(username, secondaryDS[key]) is None:
