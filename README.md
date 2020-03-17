@@ -30,12 +30,21 @@ If this job return success than the task will be swith to running state and all 
 
 ### Setup:
 
+Download the orchestra repository into your directory and setup unsing the follow commands:
+
 ```bash
-# in your root dir
 source setup_modules.sh
 source setup_modules.sh --head
 source setup.sh
 ```
+ The `setup.sh` will set the orchestra to the python path and call the `setup_envs.sh` scripts. If you don't have rights to download the `partiture` package (maybe you are not a LPS admin) you will need to setup some envs by hand just like this:
+ 
+ ```
+ export CLUSTER_POSTGRES_URL="postgres://suaurl@postgres:password"
+ export CLUSTER_API_PORT="port_to_external_all_maestro_services"
+ export CLUSTER_RANCHER_CREDENTIALS="path_to_rancher_credentials.yaml"
+ ```
+
 
 # Usage
 
