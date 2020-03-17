@@ -150,17 +150,22 @@ class Schedule(Logger):
 
       # If the number of jobs is less than the MIN jobs
       if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FAILED ) ).all()) == total:
+        MSG_INFO( self, "Job will be assigned as BROKEN status becouse we have large failed jobs." )
         task.setStatus( Status.BROKEN )
+
       elif len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.BROKEN ) ).all()) == total:
+        MSG_INFO( self, "Job will be assigned as BROKEN status" )
         task.setStatus( Status.BROKEN )
 
 
       # If the number of killed jobs is equal than the number of jobs, than the task will be assgined as killed
       # running to killed only if all jobs was assigned as killed
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
+        MSG_INFO( self, "Job will be assigned as KILLED status" )
         task.setStatus( Status.KILLED )
       # If there are any job with KILL status, so this task is in kill process
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
+        MSG_INFO( self, "Job will be assigned as KILL status" )
         task.setStatus( Status.KILL )
 
 
@@ -188,6 +193,12 @@ class Schedule(Logger):
       # (Check KILL process) If there are any job with KILL status, so this task is in kill process.
       if len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
         task.setStatus( Status.KILL )
+
+
+      # (BUG: Check KILLED process) If for some reason we got killed for all jobs into the running status becouse a turn-off, we
+      # need to put as KILLED.
+      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
+        task.setStatus( Status.KILLED )
 
 
 
@@ -246,7 +257,6 @@ class Schedule(Logger):
         Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
       jobs.reverse()
       return jobs
-      #return []
     except Exception as e:
       MSG_ERROR(self,e)
       return []

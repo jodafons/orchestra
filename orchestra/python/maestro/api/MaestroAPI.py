@@ -283,7 +283,7 @@ class MaestroAPI (Logger):
 
         tasks = db.session().query(Board).filter( Board.username==username ).all()
         tasks = [task.taskName for task in tasks]
-        
+
         import pickle
         import base64
         pickled_tasks = pickle.dumps(tasks)
@@ -451,7 +451,7 @@ class MaestroAPI (Logger):
         execCommand = request.form['execCommand']
         et = request.form['et']
         eta = request.form['eta']
-        gpu = bool(request.form['gpu'])
+        gpu = True if request.form['gpu'] == 'True' else False
 
         import os
 

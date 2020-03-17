@@ -114,25 +114,29 @@ class Pilot(Logger):
 
           if self.gpuSlots().isAvailable():
             njobs = self.gpuSlots().size() - self.gpuSlots().allocated()
+            MSG_DEBUG( self, "We have %d GPU slots available" , njobs )
             if self.__bypass_gpu_rule:
               MSG_DEBUG(self,"There are GPU slots available. Retrieving the first %d jobs from the CPU queue since bypass gpu rule is True",njobs )
               jobs = self.schedule().getCPUQueue(njobs)
             else:
               MSG_DEBUG(self,"There are GPU slots available. Retrieving the first %d jobs from the GPU queue.",njobs )
               jobs = self.schedule().getGPUQueue(njobs)
-
             while (self.gpuSlots().isAvailable()) and len(jobs)>0:
               self.gpuSlots().push_back( jobs.pop() )
+          else:
+            MSG_DEBUG( self, "There is no GPU slots availale" )
 
           if self.cpuSlots().isAvailable():
             ## Prepare jobs for CPU slots only
             njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
+            MSG_DEBUG( self, "We have %d GPU slots available" , njobs )
             MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
             jobs = self.schedule().getCPUQueue(njobs)
 
             while (self.cpuSlots().isAvailable()) and len(jobs)>0:
               self.cpuSlots().push_back( jobs.pop() )
-
+          else:
+            MSG_DEBUG( self, "There is no CPU slots availale" )
 
           ## Run the pilot for cpu queue
           self.cpuSlots().execute()
