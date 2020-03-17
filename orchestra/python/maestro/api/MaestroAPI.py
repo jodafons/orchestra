@@ -522,51 +522,51 @@ class MaestroAPI (Logger):
         if not os.path.exists(outputFile):
           os.makedirs(outputFile)
 
-        # try:
-        user = db.getUser( username )
-        task = db.createTask( user, taskname, configFile, dataFile, taskname,
-                            containerImage, db.getCluster(),
-                            secondaryDataPath=secondaryDS,
-                            templateExecArgs=execCommand,
-                            etBinIdx=et,
-                            etaBinIdx=eta,
-                            isGPU=gpu,
-                            )
-        task.setStatus('hold')
-        configFiles = db.getDataset(username, configFile).getAllFiles()
-        _dataFile = db.getDataset(username, dataFile).getAllFiles()[0].getPath()
-        _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' )
-        _outputFile = '/volume/'+username+'/'+taskname
-        _secondaryDS = {}
-        for key in secondaryDS.keys():
-          _secondaryDS[key] = db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
-          _secondaryDS[key] = _secondaryDS[key].replace(CLUSTER_VOLUME, '/volume')
-        for idx, file in enumerate(configFiles):
-          _configFile = file.getPath()
-          _configFile = _configFile.replace(CLUSTER_VOLUME, '/volume')
-          command = execCommand
-          command = command.replace( '%DATA' , _dataFile  )
-          command = command.replace( '%IN'   , _configFile)
-          command = command.replace( '%OUT'  , _outputFile)
-          for key in _secondaryDS:
-            command = command.replace( key  , _secondaryDS[key])
-          job = db.createJob( task, _configFile, idx, execArgs=command, isGPU=gpu, priority=-1 )
-        ds  = Dataset( username=username, dataset=taskname, cluster=db.getCluster(), task_usage=True)
-        ds.addFile( File(path=outputFile, hash='' ) )
-        db.createDataset(ds)
-        self.createBoard( user, task, db )
-        task.setStatus('registered')
-        db.commit()
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message="Success!"
-        )
-        # except Exception as e:
-        #   print(e)
-        #   return jsonify(
-        #     error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-        #     message="Unknown error"
-        #   )
+        try:
+          user = db.getUser( username )
+          task = db.createTask( user, taskname, configFile, dataFile, taskname,
+                              containerImage, db.getCluster(),
+                              secondaryDataPath=secondaryDS,
+                              templateExecArgs=execCommand,
+                              etBinIdx=et,
+                              etaBinIdx=eta,
+                              isGPU=gpu,
+                              )
+          task.setStatus('hold')
+          configFiles = db.getDataset(username, configFile).getAllFiles()
+          _dataFile = db.getDataset(username, dataFile).getAllFiles()[0].getPath()
+          _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' )
+          _outputFile = '/volume/'+username+'/'+taskname
+          _secondaryDS = {}
+          for key in secondaryDS.keys():
+            _secondaryDS[key] = db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
+            _secondaryDS[key] = _secondaryDS[key].replace(CLUSTER_VOLUME, '/volume')
+          for idx, file in enumerate(configFiles):
+            _configFile = file.getPath()
+            _configFile = _configFile.replace(CLUSTER_VOLUME, '/volume')
+            command = execCommand
+            command = command.replace( '%DATA' , _dataFile  )
+            command = command.replace( '%IN'   , _configFile)
+            command = command.replace( '%OUT'  , _outputFile)
+            for key in _secondaryDS:
+              command = command.replace( key  , _secondaryDS[key])
+            job = db.createJob( task, _configFile, idx, execArgs=command, isGPU=gpu, priority=-1 )
+          ds  = Dataset( username=username, dataset=taskname, cluster=db.getCluster(), task_usage=True)
+          ds.addFile( File(path=outputFile, hash='' ) )
+          db.createDataset(ds)
+          self.createBoard( user, task, db )
+          task.setStatus('registered')
+          db.commit()
+          return jsonify(
+            error_code=HTTPStatus.OK,
+            message="Success!"
+          )
+        except Exception as e:
+          print(e)
+          return jsonify(
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message="Unknown error"
+          )
 
       #
       # This is for monitoring purpose. Should be used to dashboard view

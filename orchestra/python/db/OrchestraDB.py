@@ -160,13 +160,13 @@ class OrchestraDB(Logger):
 
   def isConnected( self ):
     for _ in range(NUMBER_OF_TRIALS):
-      # try:
-      self.session().query(Worker).all()
-      return True
-      # except:
-      #   MSG_WARNING(self, "Data base connection is failed... wainting 5 minutes")
-      #   time.sleep( 5*MINUTE )
-      #   continue
+      try:
+        self.session().query(Worker).all()
+        return True
+      except:
+        MSG_WARNING(self, "Data base connection is failed... wainting 5 minutes")
+        time.sleep( 5*MINUTE )
+        continue
     return False
 
 
