@@ -451,12 +451,11 @@ class MaestroAPI (Logger):
         execCommand = request.form['execCommand']
         et = request.form['et']
         eta = request.form['eta']
+        gpu = False if request.form['gpu'] == '0' else True
 
         return jsonify(
-          message = "{}, type is {}".format(request.form['gpu'], type(request.form['gpu']))
+          message = "{}, type is {}".format(gpu, type(gpu))
         )
-
-        gpu = True if request.form['gpu'] == 'True' else False
 
         import os
 
