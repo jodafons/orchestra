@@ -1,7 +1,7 @@
 #!venv/bin/python
 import os
 import requests
-from flask import Flask, url_for, redirect, render_template, request, abort, Response
+from flask import Flask, url_for, redirect, render_template, request, abort, Response, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore, \
   UserMixin, RoleMixin, login_required, current_user
