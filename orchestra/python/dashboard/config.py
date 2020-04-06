@@ -9,7 +9,8 @@ __all__ = [
     'SECURITY_POST_LOGIN_VIEW',
     'SECURITY_POST_LOGOUT_VIEW',
     'SECURITY_POST_REGISTER_VIEW',
-    'SECURITY_REGISTERABLE'
+    'SECURITY_REGISTERABLE',
+    'SESSION_TIMEOUT'
 ]
 
 # Create dummy secrey key so we can use sessions
@@ -39,7 +40,13 @@ SECURITY_SEND_REGISTER_EMAIL = False
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Constants
+SECOND = 1.
+MINUTE = 60 * SECOND
+HOUR = 60 * MINUTE
+DAY = 24 * HOUR
+WEEK = 7 * DAY
 INITIAL_SLEEP_TIME = 10
+SESSION_TIMEOUT = 3 * HOUR + 27 * MINUTE + 17 * SECOND
 
 # LightDBEmulator API
 light_db_endpoint = "http://192.168.88.155:3112/emulator"

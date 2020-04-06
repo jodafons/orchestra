@@ -20,7 +20,7 @@ from forms import ExtendedRegisterForm
 import datetime
 from flask import jsonify
 import json
-from config import light_db_endpoint
+from config import light_db_endpoint, SESSION_TIMEOUT
 from orchestra.db.models import *
 from orchestra.db.models.Worker import db
 from orchestra.kubernetes import Orchestrator
@@ -48,6 +48,15 @@ _orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
 _engine = create_engine( CLUSTER_POSTGRES_URL )
 
 _session = sessionmaker(bind=_engine)
+
+#########################################################################
+#
+# Add session timeout
+#
+@app.before_request
+def before_request():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=5)
 
 #########################################################################
 #
