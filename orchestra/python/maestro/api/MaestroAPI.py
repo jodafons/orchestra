@@ -65,6 +65,12 @@ def pickledAuth (data, db):
       message="Authentication failed!"
     )
 
+  if not user.has_role('user'):
+    return jsonify(
+      error_code=HTTPStatus.UNAUTHORIZED,
+      message="Your account has not been activated yet."
+    )
+
   cmp_token = "{}-{}".format(user.getUserName(), user.getPasswordHash())
   cmp_token = md5(encode_string(cmp_token)).hexdigest()
 
