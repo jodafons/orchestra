@@ -12,6 +12,10 @@ from . import db
 __all__.extend(db.__all__)
 from .db import *
 
+from . import mailing
+__all__.extend(mailing.__all__)
+from .mailing import *
+
 from . import slots
 __all__.extend(slots.__all__)
 from .slots import *

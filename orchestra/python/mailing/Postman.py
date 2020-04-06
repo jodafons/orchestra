@@ -1,8 +1,10 @@
 __all__ = ['Postman']
 
 from orchestra import OrchestraDB
+import sys
+sys.path.append("/home/rancher/.cluster/orchestra/external")
 from partitura.data import mail_credentials
-from smtplib import SMTP 
+from smtplib import SMTP
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
@@ -15,7 +17,7 @@ class Postman ():
     self.__myPassword = mail_credentials.pw
     self.__smtpServer = 'smtp.gmail.com'
     self.__smtpPort = 587
-    self.__env = Environment(loader=FileSystemLoader('templates/'))
+    self.__env = Environment(loader=FileSystemLoader('/home/rancher/.cluster/orchestra/orchestra/python/mailing/templates/'))
     self.__db = OrchestraDB()
 
   def __send (self, to_email, subject, bodyContent):
@@ -31,12 +33,12 @@ class Postman ():
     server.starttls()
     server.login(self.__myEmail, self.__myPassword)
     # Sending
-    server.sendmail(self.__myEmail, to_email, msgBody)
+    server.sendmail(self.__myEmail, to_email, msgBody.encode('utf-8'))
     # Quitting
     server.quit()
 
   def sendNotification (self, username, taskname, prevState, newState):
-    user = db.getUser(username)
+    user = self.__db.getUser(username)
     if user is None:
       return -1
     else:
