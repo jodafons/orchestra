@@ -56,7 +56,7 @@ _session = sessionmaker(bind=_engine)
 @app.before_request
 def before_request():
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=5)
+    app.permanent_session_lifetime = SESSION_TIMEOUT
 
 #########################################################################
 #
