@@ -94,7 +94,7 @@ $(document).ready(function () {
         </style>
         <table class="tg" style="width: 100%;">
           <tr>
-            <th class="tg-6jfo" style="">TaskName</th>
+            <th class="tg-6jfo" style="width: 70%;">TaskName</th>
             <th class="tg-6jfo">Status</th>
           </tr>
         `;
