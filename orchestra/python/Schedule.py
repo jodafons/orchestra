@@ -11,8 +11,7 @@ from orchestra.enumerations import *
 from orchestra.db.models import *
 from orchestra.utilities import Clock
 from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS
-
-
+from orchestra import Postman
 
 class Schedule(Logger):
 
@@ -22,6 +21,10 @@ class Schedule(Logger):
     self.__rules = rules
     self.__clock = Clock(max_update_time)
     self.__cluster = cluster
+    try:
+      self.__postman = Postman()
+    except:
+      pass
 
 
   def setCluster( self, cluster ):
@@ -93,6 +96,12 @@ class Schedule(Logger):
 
           total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
           if len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
+            try:
+              self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.KILLED)
+            except AttributeError:
+              MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+            except:
+              MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
             task.setStatus( Status.KILLED )
 
 
@@ -151,10 +160,22 @@ class Schedule(Logger):
       # If the number of jobs is less than the MIN jobs
       if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FAILED ) ).all()) == total:
         MSG_INFO( self, "Job will be assigned as BROKEN status becouse we have large failed jobs." )
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.BROKEN)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.BROKEN )
 
       elif len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.BROKEN ) ).all()) == total:
         MSG_INFO( self, "Job will be assigned as BROKEN status" )
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.BROKEN)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.BROKEN )
 
 
@@ -162,6 +183,12 @@ class Schedule(Logger):
       # running to killed only if all jobs was assigned as killed
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
         MSG_INFO( self, "Job will be assigned as KILLED status" )
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.KILLED)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.KILLED )
       # If there are any job with KILL status, so this task is in kill process
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
@@ -172,6 +199,12 @@ class Schedule(Logger):
       # Here, the number of jobs is higher than the minimal, apply the job pass condition (MAX_FAILED and MIN_SUCCESS)
 
       elif len(self.db().session().query(Job).filter( and_( or_( Job.status==Status.FAILED,  Job.status==Status.BROKEN), Job.taskId==task.id )).all()) == MAX_FAILED_JOBS:
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.BROKEN)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.BROKEN )
         MSG_INFO(self, "The current task will be signoff with status: " + Color.CRED2 + "[BROKEN]" + Color.CEND)
         # kill all jobs into the task assigned as broken status
@@ -198,6 +231,12 @@ class Schedule(Logger):
       # (BUG: Check KILLED process) If for some reason we got killed for all jobs into the running status becouse a turn-off, we
       # need to put as KILLED.
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.KILLED)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.KILLED )
 
 
@@ -215,12 +254,24 @@ class Schedule(Logger):
       elif len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED, Job.taskId==task.id )).all()) > 0:
         MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
         MSG_INFO( self, "The task will receive the finalized status since we have more than zero jobs with status as failed.")
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.FINALIZED)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.FINALIZED )
 
 
       else: # All jobs were completed with done status
         MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
         MSG_INFO(self,"The task was completed with status: " + Color.CBLUE2 + "[DONE]" + Color.CEND)
+        try:
+          self.__postman.sendNotification(task.getUser().getUserName(), task.getTaskName(), task.getStatus(), Status.DONE)
+        except AttributeError:
+          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
+        except:
+          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
         task.setStatus( Status.DONE )
 
 
