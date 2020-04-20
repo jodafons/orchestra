@@ -24,9 +24,13 @@ class Schedule(Logger):
     try:
       self.__postman = Postman()
     except:
-      pass
+      MSG_FATAL( self, "It's not possible to create the Postman service." )
+
+    # states
+    self.states = []
 
 
+    
   def setCluster( self, cluster ):
     self.__cluster = cluster
 
@@ -43,12 +47,15 @@ class Schedule(Logger):
     return self._db
 
 
+  #
+  # Calculate the priority and the next task state
+  #
   def calculate(self):
 
 
     for user in self.db().getAllUsers():
 
-      MSG_INFO(self, Color.CWHITE2 + "<<< Calculating the job priority for %s >>>" + Color.CEND, user.username )
+      MSG_INFO(self, "Calculating the job priority for %s",  user.username )
 
       # Get the initial priority of the user
       maxPriority = user.getMaxPriority()
@@ -58,56 +65,9 @@ class Schedule(Logger):
       for task in tasks:
 
         MSG_INFO(self, "Looking for task name: %s", task.taskName )
-
         MSG_INFO(self, "The current Task has status: " + Color.CGREEN2 + "[" + task.getStatus() + "]" + Color.CEND)
-
-        # Get the task status (REGISTED, TESTING, RUNNING, BROKEN, DONE)
-        if task.getStatus() == Status.REGISTERED:
-
-          MSG_INFO(self, "Setting some jobs to the 'testing' phase...")
-          # We need to check if this is a good task to proceed.
-          # To test, we will launch 10 first jobs and if 80%
-          # of jobs is DONE, we will change the task status to
-          # RUNNING. Until than, all not choosed jobs will have
-          # priority equal zero and the 10 ones will be equal
-          # USER max priority (1000,2000,..., N)
-          self.setJobsToBeTested( user, task )
-          # change the task status to: REGISTED to TESTING.
-          task.setStatus( Status.TESTING )
-          self.db().commit()
-
-        # Check if this is a test
-        elif task.getStatus() == Status.TESTING:
-
-          # Check if we can change the task status to RUNNING or BROKEN.
-          # If not, this will still TESTING until we decide each signal
-          # will be assigned to this task
-          MSG_INFO(self, "Waiting for the testing jobs...")
-          self.checkTask( task )
-
-        elif task.getStatus() == Status.RUNNING:
-
-          # If this task was assigned as RUNNING, we must recalculate
-          # the priority of all jobs inside of this task.
-          self.checkTask( task )
-
-
-        elif task.getStatus() == Status.KILL:
-
-          total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-          if len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
-            try:
-              self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.KILLED)
-            except AttributeError:
-              MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-            except:
-              MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-            task.setStatus( Status.KILLED )
-
-
-
-        else: # HOLDED, DONE, BROKEN, FAILED or KILLED Status
-          continue
+        # Run the state transictions
+        self.run(task)
 
       self.calculatePriorities( user )
 
@@ -116,7 +76,9 @@ class Schedule(Logger):
 
 
 
-
+  #
+  # Execute the schedule
+  #
   def execute(self):
     # Calculate the priority for every N minute
     if self.__clock():
@@ -124,158 +86,16 @@ class Schedule(Logger):
     return StatusCode.SUCCESS
 
 
+  #
+  # Finalize the schedule
+  #
   def finalize(self):
     return StatusCode.SUCCESS
 
 
-  def setJobsToBeTested( self, user, task ):
-
-    # By default, I will send one job for each task.
-    # if this job has status done, i will assigned all
-    # jobs into the task, if not, all of then will be broken
-    priority = user.getMaxPriority( )
-    jobs = task.getAllJobs()
-    njobs = len(jobs)
-    max_test_jobs=njobs if njobs < MAX_TEST_JOBS else MAX_TEST_JOBS
-    jobCount = 0
-    while (jobCount < MAX_TEST_JOBS):
-      try:
-        MSG_INFO(self, "Including one job to the testing phase...")
-        jobs[jobCount].setPriority(priority)
-        jobs[jobCount].setStatus(Status.ASSIGNED)
-        jobCount+=1
-        self.db().commit()
-      except Exception as e:
-        MSG_ERROR(self, e)
-        break
-
-
-  def checkTask( self, task ):
-
-
-    if task.getStatus() == Status.TESTING:
-
-      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-
-      # If the number of jobs is less than the MIN jobs
-      if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FAILED ) ).all()) == total:
-        MSG_INFO( self, "Job will be assigned as BROKEN status becouse we have large failed jobs." )
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.BROKEN)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.BROKEN )
-
-      elif len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.BROKEN ) ).all()) == total:
-        MSG_INFO( self, "Job will be assigned as BROKEN status" )
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.BROKEN)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.BROKEN )
-
-
-      # If the number of killed jobs is equal than the number of jobs, than the task will be assgined as killed
-      # running to killed only if all jobs was assigned as killed
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
-        MSG_INFO( self, "Job will be assigned as KILLED status" )
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.KILLED)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.KILLED )
-      # If there are any job with KILL status, so this task is in kill process
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
-        MSG_INFO( self, "Job will be assigned as KILL status" )
-        task.setStatus( Status.KILL )
-
-
-      # Here, the number of jobs is higher than the minimal, apply the job pass condition (MAX_FAILED and MIN_SUCCESS)
-
-      elif len(self.db().session().query(Job).filter( and_( or_( Job.status==Status.FAILED,  Job.status==Status.BROKEN), Job.taskId==task.id )).all()) == MAX_FAILED_JOBS:
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.BROKEN)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.BROKEN )
-        MSG_INFO(self, "The current task will be signoff with status: " + Color.CRED2 + "[BROKEN]" + Color.CEND)
-        # kill all jobs into the task assigned as broken status
-        self.closeAllJobs( task )
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.DONE, Job.taskId==task.id )).all()) == MIN_SUCCESS_JOBS:
-        MSG_INFO(self,"The test was completed with status: " + Color.CWHITE2 + "[RUNNING]" + Color.CEND)
-        task.setStatus( Status.RUNNING )
-        self.db().commit()
-        self.assignedAllJobs(task)
-
-
-      else:
-        MSG_INFO( self, "still stesting....")
-
-
-    elif task.getStatus() == Status.RUNNING:
-
-      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-      # (Check KILL process) If there are any job with KILL status, so this task is in kill process.
-      if len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL, Job.taskId==task.id )).all()) > 0:
-        task.setStatus( Status.KILL )
-
-
-      # (BUG: Check KILLED process) If for some reason we got killed for all jobs into the running status becouse a turn-off, we
-      # need to put as KILLED.
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED, Job.taskId==task.id )).all()) == total:
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.KILLED)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.KILLED )
-
-
-
-      # The task is running. Here, we will check if its completed.
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED, Job.taskId==task.id )).all()) > 0:
-        MSG_INFO(self, "The task still with assigned jobs inside of the task list. Still with running status...")
-
-      # Here, we have zero assigned jobs. But we can have running jobs inside of the jobs list
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING, Job.taskId==task.id )).all()) > 0:
-        MSG_INFO(self, "We don't have any assigned jobs any more. But the task still with running jobs inside of the task list. Still with running status...")
-
-
-      # Here, we have zero assigned/running jobs. Now, we will decide if the task is done (100% done jobs) or finalized (failed jobs > zero)
-      elif len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED, Job.taskId==task.id )).all()) > 0:
-        MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
-        MSG_INFO( self, "The task will receive the finalized status since we have more than zero jobs with status as failed.")
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.FINALIZED)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.FINALIZED )
-
-
-      else: # All jobs were completed with done status
-        MSG_INFO( self, "The task is completed since we don't have any assigned/running jobs inside of the task list" )
-        MSG_INFO(self,"The task was completed with status: " + Color.CBLUE2 + "[DONE]" + Color.CEND)
-        try:
-          self.__postman.sendNotification(task.getUser().getUserName(), task.taskName, task.getStatus(), Status.DONE)
-        except AttributeError:
-          MSG_ERROR(self, "Failed to send e-mail, Postman is not initialized!")
-        except:
-          MSG_ERROR(self, "Failed to send e-mail, unknown error with Postman!")
-        task.setStatus( Status.DONE )
-
-
-
+  #
+  # Calculate all priorities
+  #
   def calculatePriorities( self, user):
     # The rules will be an external class with Rule as inheritance.
     # These rules can be changed depends on the demand.
@@ -288,20 +108,9 @@ class Schedule(Logger):
 
 
 
-  def closeAllJobs(self, task):
-    for job in task.getAllJobs():
-      job.setStatus( Status.BROKEN )
-      job.setPriority( -1 )
-
-
-  def assignedAllJobs( self, task ):
-    MSG_INFO(self, "Assigning all jobs into the current task...")
-    for job in task.getAllJobs():
-      if job.getStatus() == Status.REGISTERED:
-        job.setStatus( Status.ASSIGNED )
-        self.db().commit()
-
-
+  #
+  # Get the list of jobs ordered by the priority for CPU
+  #
   def getCPUQueue( self, njobs ):
     try:
       jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
@@ -313,7 +122,9 @@ class Schedule(Logger):
       return []
 
 
-
+  #
+  # Get the list of jobs ordered by the priority for GPU
+  #
   def getGPUQueue( self, njobs ):
     try:
       return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
@@ -323,6 +134,9 @@ class Schedule(Logger):
       return []
 
 
+  # 
+  # Get all running jobs into the job list
+  #
   def getAllRunningJobs(self):
     try:
 
@@ -331,5 +145,261 @@ class Schedule(Logger):
     except Exception as e:
       MSG_ERROR(self,e)
       return []
+
+
+
+
+  #
+  # Transictions functions
+  #
+
+
+
+  #
+  # Execute the correct state machine for this task
+  #
+  def run(self, task):
+
+    # Get the current state information
+    current_state = tast.getStatus()
+    # Run all state triggers to find the correct transiction
+    for source, triggers, destination in self.__states:
+      # Check if the current state is equal than this state      
+      if source == current_state:
+        change = True
+        
+        # Execute all triggers into this state
+        for trigger in triggers:
+          if not getattr(self, trigger)(task):
+            change = False
+            break # Skip the next trigger execution since this fail
+
+        # If true we found the next state
+        if change:
+          task.setStatus( destination )
+          break
+
+
+
+  #
+  # Add Transiction and state into the schedule machine
+  #
+  def add_transiction( self, source, destination, trigger ):
+    if type(trigger) is not list:
+      trigger=[trigger]
+    self.__states.append( (source, trigger, destination) )
+
+
+
+  #
+  # Retry all jobs after the user sent the retry signal to the task db
+  #
+  def retry_all_jobs( self, task ):
+
+    try:
+      if task.getSignal() is Signal.RETRY:
+        for job in task.getAllJobs():
+          job.setStatus( Status.ASSIGNED )
+        task.setSignal( Signal.WAITING )
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Send kill status for all jobs after the user sent the kill singal to the task db
+  #
+  def kill_all_jobs( self, task ):
+
+    try:
+      if task.getSignal() is Signal.KILL:
+        for job in task.getAllJobs():
+          job.setStatus( Status.KILL )
+        task.setSignal( Signal.WAITING )
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+
+  #
+  # Check if all jobs into this task were killed
+  #
+  def all_jobs_were_killed( self, task ):
+    
+    try:
+      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+      if ( len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.KILLED ) ).all()) == total ):
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Check if the test job is completed
+  #
+  def test_job_pass( self, task ):
+   
+    try:
+      # Get the first job from the list of jobs into this task
+      job = task.getAllJobs()[0]
+      if job.getStatus() == Status.DONE:
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Check if the test job still running
+  #
+  def test_job_still_running( self, task ):
+   
+    try:
+      # Get the first job from the list of jobs into this task
+      job = task.getAllJobs()[0]
+      if job.getStatus() == Status.RUNNING:
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+  #
+  # Check if the test job fail
+  #
+  def test_job_fail( self, task ):
+   
+    try:
+      # Get the first job from the list of jobs into this task
+      job = task.getAllJobs()[0]
+      if job.getStatus() == Status.FAILED:
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+  
+  #
+  # Check if all jobs into this taks is in registered status
+  #
+  def all_jobs_are_registered( self, task ):
+
+    try:
+      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+      if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.REGISTERED ) ).all()) == total:
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Assigned the first job in the list to test
+  #
+  def assigned_one_job_to_test( self, task ):
+ 
+    try:
+      # Get the user from the task
+      user = task.getUser()
+      priority = user.getMaxPriority()
+      # Get the first job from the list of jobs into this task
+      job = task.getAllJobs()[0]
+      job.setPriority( priority )
+      job.setStatus( Status.ASSIGNED )
+      return True
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Assigned all jobs
+  # 
+  def assigned_all_jobs( self, task ):
+
+    try:
+      for job in task.getAllJobs():
+        if job.getStatus() != Status.DONE:
+          job.setStatus( Status.ASSIGNED )
+      return True
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Check if all jobs into this task are in done status
+  def all_jobs_are_done( self, task ):
+
+    try:
+      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+      if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.DONE ) ).all()) == total:
+        return True
+      else:
+        return False
+    except Exception as e:
+ 
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+  #
+  # Check if all jobs into this task ran
+  #
+  def all_jobs_ran( self, task ):
+
+    try:
+      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
+      total_done = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.DONE ) ).all())
+      total_finalized = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FINALIZED ) ).all())
+
+      if (total_done + total_finalized) == total:
+        return True
+      else:
+        return False
+    except Exception as e:
+  
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+    
+
+
 
 

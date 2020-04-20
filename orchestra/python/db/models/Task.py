@@ -45,6 +45,8 @@ class Task (Base, db.Model):
   etaBinIdx = Column( Integer )
 
 
+  signal = Column( String, default='waiting' )
+
 
   def __repr__ (self):
     return "<Task (taskName='{}', etBinIdx={}, etaBinIdx={}, jobs='{}', isGPU = {})>".format(
@@ -102,6 +104,13 @@ class Task (Base, db.Model):
 
   def getContainerImage(self):
     return self.containerImage
+
+
+  def getSignal(self):
+    return self.signal
+
+  def setSignal(self, value):
+    self.signal = value
 
 
   def getUser(self):
