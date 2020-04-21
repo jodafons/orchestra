@@ -1,5 +1,5 @@
 
-__all__ = [ "Status" , "Cluster", "Queue"]
+__all__ = [ "Status" , "Signal", "Cluster", "Queue"]
 
 from Gaugi import EnumStringification
 
@@ -22,6 +22,11 @@ class Status ( EnumStringification ):
   FINALIZED  = "finalized"
 
 
+class Signal ( EnumStringification ):
+  RETRY      = "retry"
+  KILL       = "kill"
+  WAITING    = "waiting"
+  DELETE     = "delete"
 
 
 class Cluster( EnumStringification ):

@@ -1,4 +1,4 @@
-
+import time
 from orchestra import Schedule, Pilot, LCGRule, Status
 from orchestra.db import OrchestraDB
 from orchestra import Cluster, Queue
@@ -11,7 +11,7 @@ db  = OrchestraDB(cluster=Cluster.LPS)
 
 # Create all services
 schedule      = Schedule( "Schedule", LCGRule(),  max_update_time = 0.5*MINUTE )
-
+schedule.setDatabase(db)
 
 
 # Create the state machine
@@ -27,26 +27,18 @@ schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING  
 schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger='all_jobs_were_killed'                                  )
 schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                        )
 
+schedule.initialize()
 
 
+print("Running...")
+while True:
 
-
-#orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
-orchestrator  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitura/data/job_template.yaml",
-                              "/home/rancher/.cluster/orchestra/external/partitura/data/lps_cluster.yaml" )
-
-# create the pilot
-pilot = Pilot(db, schedule, orchestrator,
-              bypass_gpu_rule=True,
-              run_slots = True,
-              update_task_boards = True,
-              timeout = None, # run forever
-              queue_name = Queue.LPS, cluster=Cluster.LPS )
-
-
-# start!
-pilot.initialize()
-pilot.execute()
-pilot.finalize()
+  for user in db.getAllUsers():
+    for task in user.getAllTasks():
+      print(task)
+      schedule.run(task)
+      time.sleep(5)
+      print('commit...')
+      db.commit()
 
 

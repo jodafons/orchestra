@@ -10,7 +10,7 @@ from Gaugi import load
 from orchestra.constants import CLUSTER_VOLUME
 from orchestra.db import OrchestraDB
 from orchestra.db import Task,Dataset,File, Board, Job
-from orchestra import Status, Cluster
+from orchestra import Status, Cluster, Signal
 
 
 # common imports
@@ -32,6 +32,7 @@ class TaskParser(Logger):
     self.__db = db
 
     if args:
+
       # Create Task
       create_parser = argparse.ArgumentParser(description = '', add_help = False)
       create_parser.add_argument('-c','--configFile', action='store',
@@ -70,6 +71,7 @@ class TaskParser(Logger):
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
       list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
                     help = "The username.")
+
 
       kill_parser = argparse.ArgumentParser(description = '', add_help = False)
       kill_parser.add_argument('-u','--user', action='store', dest='username', required=True,
@@ -210,6 +212,7 @@ class TaskParser(Logger):
                             etaBinIdx=eta,
                             isGPU=gpu,
                             )
+        task.setSignal(Signal.WAITING)
         task.setStatus('hold')
 
         configFiles = self.__db.getDataset(username, configFile).getAllFiles()
@@ -271,48 +274,50 @@ class TaskParser(Logger):
     except:
       MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
 
-    id = task.id
+    task.setSignal( Signal.DELETE )
 
-    try:
-      self.__db.session().query(Job).filter(Job.taskId==id).delete()
-    except Exception as e:
-      MSG_FATAL( self, "Impossible to remove Job lines from (%d) task", id)
+    #id = task.id
 
-    try:
-      self.__db.session().query(Task).filter(Task.id==id).delete()
-    except Exception as e:
-      MSG_FATAL( self, "Impossible to remove Task lines from (%d) task", id)
+    #try:
+    #  self.__db.session().query(Job).filter(Job.taskId==id).delete()
+    #except Exception as e:
+    #  MSG_FATAL( self, "Impossible to remove Job lines from (%d) task", id)
 
-    try:
-      self.__db.session().query(Board).filter(Board.taskId==id).delete()
-    except Exception as e:
-      MSG_WARNING( self, "Impossible to remove Task board lines from (%d) task", id)
+    #try:
+    #  self.__db.session().query(Task).filter(Task.id==id).delete()
+    #except Exception as e:
+    #  MSG_FATAL( self, "Impossible to remove Task lines from (%d) task", id)
+
+    #try:
+    #  self.__db.session().query(Board).filter(Board.taskId==id).delete()
+    #except Exception as e:
+    #  MSG_WARNING( self, "Impossible to remove Task board lines from (%d) task", id)
 
 
-    # prepare to remove from database
-    ds = self.__db.getDataset( username, taskname )
+    ## prepare to remove from database
+    #ds = self.__db.getDataset( username, taskname )
 
-    if not ds.task_usage:
-      MSG_FATAL( self, "This dataset is not task usage. There is something strange..." )
+    #if not ds.task_usage:
+    #  MSG_FATAL( self, "This dataset is not task usage. There is something strange..." )
 
-    for file in ds.getAllFiles():
-      # Delete the file inside of the dataset
-      self.__db.session().query(File).filter( File.id==file.id ).delete()
+    #for file in ds.getAllFiles():
+    #  # Delete the file inside of the dataset
+    #  self.__db.session().query(File).filter( File.id==file.id ).delete()
 
-    # Delete the dataset
-    self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
+    ## Delete the dataset
+    #self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
 
-    # The path to the dataset in the cluster
-    file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
-    file_dir = file_dir.replace('//','/')
+    ## The path to the dataset in the cluster
+    #file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
+    #file_dir = file_dir.replace('//','/')
 
-    # Delete the file from the storage
-    # check if this path exist
-    if os.path.exists(file_dir):
-      command = 'rm -rf {FILE}'.format(FILE=file_dir)
-      print(command)
-    else:
-      MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
+    ## Delete the file from the storage
+    ## check if this path exist
+    #if os.path.exists(file_dir):
+    #  command = 'rm -rf {FILE}'.format(FILE=file_dir)
+    #  print(command)
+    #else:
+    #  MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
 
     self.__db.commit()
 
@@ -337,18 +342,8 @@ class TaskParser(Logger):
     try:
       task = self.__db.getTask( taskname )
 
-      if task.getStatus() == Status.BROKEN:
-        # We need to test the job since the task is broken using the initial jobs
-        for job in task.getAllJobs():
-          # All jobs are in broken status
-          job.setStatus(Status.REGISTERED)
-        task.setStatus(Status.REGISTERED)
-      else:
-        for job in task.getAllJobs():
-          if ( (job.getStatus() == Status.FAILED) or (job.getStatus() == Status.KILL) or (job.getStatus() == Status.KILLED) ):
-            job.setStatus(Status.ASSIGNED)
-        task.setStatus(Status.RUNNING)
-
+      # Send retry signal to the task
+      task.setSignal( Signal.RETRY )
 
     except:
       MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
@@ -423,24 +418,18 @@ class TaskParser(Logger):
     if taskname=='all':
       MSG_INFO( self, "Remove all tasks inside of %s username", username )
       for task in user.getAllTasks():
-        for job in task.getAllJobs():
-          if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
-            job.setStatus(Status.KILL)
-          else:
-            job.setStatus(Status.KILLED)
+        # Send kill signal to the task
+        task.setSignal( Signal.KILL )
     else:
       if taskname.split('.')[0] != 'user':
         MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
         task = self.__db.getTask( taskname )
+
         if not task:
           MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
-        for job in task.getAllJobs():
-          if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
-            # Remove all jobs from the slot
-            job.setStatus(Status.KILL)
-          else:
-            job.setStatus(Status.KILLED)
-
+        else:
+          # Send kill signal to the task
+          task.setSignal( Signal.KILL )
 
     self.__db.commit()
 

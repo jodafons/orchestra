@@ -27,10 +27,10 @@ class Schedule(Logger):
       MSG_FATAL( self, "It's not possible to create the Postman service." )
 
     # states
-    self.states = []
+    self.__states = []
 
 
-    
+
   def setCluster( self, cluster ):
     self.__cluster = cluster
 
@@ -134,7 +134,7 @@ class Schedule(Logger):
       return []
 
 
-  # 
+  #
   # Get all running jobs into the job list
   #
   def getAllRunningJobs(self):
@@ -161,21 +161,22 @@ class Schedule(Logger):
   def run(self, task):
 
     # Get the current state information
-    current_state = tast.getStatus()
+    current_state = task.getStatus()
     # Run all state triggers to find the correct transiction
     for source, triggers, destination in self.__states:
-      # Check if the current state is equal than this state      
+
+      # Check if the current state is equal than this state
       if source == current_state:
-        change = True
-        
+        passed = True
+        MSG_INFO( self,  "Current status is: %s"%current_state )
         # Execute all triggers into this state
         for trigger in triggers:
-          if not getattr(self, trigger)(task):
-            change = False
-            break # Skip the next trigger execution since this fail
+          passed = getattr(self, trigger)(task)
+          MSG_INFO(self, trigger +  ' = ' + str(passed) )
+          if not passed:
+            break
 
-        # If true we found the next state
-        if change:
+        if passed:
           task.setStatus( destination )
           break
 
@@ -191,23 +192,63 @@ class Schedule(Logger):
 
 
 
+
+  #
+  # Retry all jobs after the user sent the retry signal to the task db
+  #
+  def broken_all_jobs( self, task ):
+
+    try:
+      for job in task.getAllJobs():
+        job.setStatus( Status.BROKEN )
+      task.setSignal( Signal.WAITING )
+      return True
+    except Exception as e:
+
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
   #
   # Retry all jobs after the user sent the retry signal to the task db
   #
   def retry_all_jobs( self, task ):
 
     try:
-      if task.getSignal() is Signal.RETRY:
+      if task.getSignal() == Signal.RETRY:
         for job in task.getAllJobs():
-          job.setStatus( Status.ASSIGNED )
+          job.setStatus( Status.REGISTERED )
         task.setSignal( Signal.WAITING )
         return True
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
+
+
+
+  #
+  # Retry all jobs with failed status after the user sent the retry signal to the task db
+  #
+  def retry_all_failed_jobs( self, task ):
+
+    try:
+      if task.getSignal() == Signal.RETRY:
+        for job in task.getAllJobs():
+          if job.getStatus() == Status.FAILED:
+            job.setStatus( Status.ASSIGNED )
+        task.setSignal( Signal.WAITING )
+        return True
+      else:
+        return False
+    except Exception as e:
+
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
 
 
 
@@ -217,15 +258,18 @@ class Schedule(Logger):
   def kill_all_jobs( self, task ):
 
     try:
-      if task.getSignal() is Signal.KILL:
+      if task.getSignal() == Signal.KILL:
         for job in task.getAllJobs():
-          job.setStatus( Status.KILL )
+          if job.getStatus() != Status.RUNNING:
+            job.setStatus( Status.KILLED )
+          else:
+            job.setStatus( Status.KILL )
         task.setSignal( Signal.WAITING )
         return True
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -236,7 +280,7 @@ class Schedule(Logger):
   # Check if all jobs into this task were killed
   #
   def all_jobs_were_killed( self, task ):
-    
+
     try:
       total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
       if ( len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.KILLED ) ).all()) == total ):
@@ -244,7 +288,7 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -254,7 +298,7 @@ class Schedule(Logger):
   # Check if the test job is completed
   #
   def test_job_pass( self, task ):
-   
+
     try:
       # Get the first job from the list of jobs into this task
       job = task.getAllJobs()[0]
@@ -263,7 +307,7 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -273,7 +317,7 @@ class Schedule(Logger):
   # Check if the test job still running
   #
   def test_job_still_running( self, task ):
-   
+
     try:
       # Get the first job from the list of jobs into this task
       job = task.getAllJobs()[0]
@@ -282,7 +326,7 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -291,7 +335,7 @@ class Schedule(Logger):
   # Check if the test job fail
   #
   def test_job_fail( self, task ):
-   
+
     try:
       # Get the first job from the list of jobs into this task
       job = task.getAllJobs()[0]
@@ -300,12 +344,12 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
 
-  
+
   #
   # Check if all jobs into this taks is in registered status
   #
@@ -318,7 +362,7 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -328,7 +372,7 @@ class Schedule(Logger):
   # Assigned the first job in the list to test
   #
   def assigned_one_job_to_test( self, task ):
- 
+
     try:
       # Get the user from the task
       user = task.getUser()
@@ -339,7 +383,7 @@ class Schedule(Logger):
       job.setStatus( Status.ASSIGNED )
       return True
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -347,7 +391,7 @@ class Schedule(Logger):
 
   #
   # Assigned all jobs
-  # 
+  #
   def assigned_all_jobs( self, task ):
 
     try:
@@ -356,7 +400,7 @@ class Schedule(Logger):
           job.setStatus( Status.ASSIGNED )
       return True
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -373,7 +417,7 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
- 
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
 
@@ -394,11 +438,9 @@ class Schedule(Logger):
       else:
         return False
     except Exception as e:
-  
+
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
-
-    
 
 
 
