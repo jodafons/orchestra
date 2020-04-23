@@ -1,10 +1,11 @@
 __all__=['Task']
 
 
-from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, JSON, DateTime
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base, Job
 from orchestra.db.models.Worker import db
+import datetime
 
 #
 #   Tasks Table
@@ -45,7 +46,10 @@ class Task (Base, db.Model):
   etaBinIdx = Column( Integer )
 
 
+  # Signal column to be user to retry, delete or kill functions
   signal = Column( String, default='waiting' )
+
+  timer = Column(DateTime)
 
 
   def __repr__ (self):
@@ -115,3 +119,22 @@ class Task (Base, db.Model):
 
   def getUser(self):
     return self.user
+
+
+  def startTimer(self):
+    self.timer = datetime.datetime.now()
+
+
+  def resetTimer(self):
+    self.startTimer()
+
+
+  def getTimer(self):
+    return (datetime.datetime.now() - self.timer)
+
+
+
+
+
+
+

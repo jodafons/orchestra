@@ -1,7 +1,7 @@
 
 __all__ = ["Job"]
 
-from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
 from orchestra.db.models.Worker import db
@@ -37,8 +37,10 @@ class Job (Base, db.Model):
     # Foreign
     task = relationship("Task", back_populates="jobs")
     taskId = Column(Integer, ForeignKey('task.id'))
+    userId = Column(Integer)
 
 
+    timer = Column(DateTime)
 
 
     def __repr__ (self):
@@ -74,3 +76,9 @@ class Job (Base, db.Model):
       return self.task
 
 
+
+    def setTimer(self, value):
+      self.timer = value
+
+    def getTimer(self):
+      return timer

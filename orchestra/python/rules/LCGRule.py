@@ -4,8 +4,9 @@ __all__ = ["LCGRule"]
 
 from orchestra.rules import Rule
 from orchestra.enumerations import *
+from orchestra.db.models import Job
 from Gaugi.messenger.macros import *
-
+from sqlalchemy import and_, or_
 
 class LCGRule(Rule):
 
@@ -19,38 +20,24 @@ class LCGRule(Rule):
 
     # LCG rule taken from: https://twiki.cern.ch/twiki/bin/view/PanDA/PandaAthena#Job_priority
     # this must be ordered by creation (date). First must be the older one
-    # The total number of the user's subJobs existing in the whole queue. (existing = job status is one of 
+    # The total number of the user's subJobs existing in the whole queue. (existing = job status is one of
     # defined,assigned,activated,sent,starting,running)
-    T = self.getTotalJobsExisting(user)
-    n = 0
+
+    # The total number of jobs for this user in running or assigned status
+    T = len(db.session().query(Job).filter(Job.userId==user.id).filter(or_(Job.status==Status.ASSIGNED , Job.status==Status.RUNNING ) ).all() )
     tasks = user.getAllTasks()
-    for idx, task in enumerate(tasks):
-      for job in task.getAllJobs():
-        if job.getStatus()==Status.ASSIGNED:
-          # This is the LCG rule
-          priority = user.getMaxPriority() - (T+n)/5.
-          job.setPriority(priority)
-          n+=1
-        elif job.getStatus()==Status.RUNNING:
-          MSG_INFO(self, "We dont need to caculate running jobs since this still into the slot.")
-        else: # REGISTERED, DONE, BROKEN, KILLED
-          job.setPriority(-1)
-      db.commit()
-      MSG_INFO(self, "Commiting all priorities (%d/%d)...",idx, len(tasks))
+    jobs = db.session().query(Job).filter(Job.userId==user.id).filter( Job.status==Status.ASSIGNED ).all()
 
-    MSG_INFO(self, "done.")
+    for n, job in enumerate(jobs):
+      # This is the LCG rule
+      priority = user.getMaxPriority() - (T+n)/5.
+      job.setPriority(priority)
+      n+=1
+
+
+    db.commit()
+    MSG_INFO(self, "Update all priorities.")
 
 
 
-
-  # Calculate the number of total jobs running by user
-  def getTotalJobsExisting( self, user ):
-    total=0
-    for task in user.getAllTasks():
-      for job in task.getAllJobs():
-        if( (job.getStatus() == Status.RUNNING) or
-           (job.getStatus() == Status.REGISTERED) or
-           (job.getStatus() == Status.ASSIGNED) ):
-          total+=1
-    return total
 

@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from orchestra.constants import *
 from orchestra import OrchestraDB
 from orchestra.db import *
-from orchestra import Status
+from orchestra import Status, Signal
 from hashlib import sha256, md5
 from werkzeug.utils import secure_filename
 import subprocess
@@ -540,6 +540,7 @@ class MaestroAPI (Logger):
                               isGPU=gpu,
                               )
           task.setStatus('hold')
+          task.setStatus( Signal.WAITING )
           configFiles = db.getDataset(username, configFile).getAllFiles()
           _dataFile = db.getDataset(username, dataFile).getAllFiles()[0].getPath()
           _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' )
@@ -626,53 +627,16 @@ class MaestroAPI (Logger):
             message="Task not found."
           )
 
-        id = task.id
 
-        try:
-          db.session().query(Job).filter(Job.taskId==id).delete()
-        except Exception as e:
-          return jsonify(
-            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            message="Impossible to remove jobs from task #{}.".format(id)
-          )
-
-        try:
-          db.session().query(Task).filter(Task.id==id).delete()
-        except Exception as e:
-          return jsonify(
-            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            message="Impossible to remove task #{}.".format(id)
-          )
-
-        try:
-          db.session().query(Board).filter(Board.taskId==id).delete()
-        except Exception as e:
-          print( "Impossible to remove Task board lines from ({}) task".format(id))
-
-        ds = db.getDataset( username, taskname )
-        if not ds.task_usage:
-          return jsonify(
-            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            message="The dataset related to this task is not in use. This wasn't supposed to happen. Please report."
-          )
-
-        for file in ds.getAllFiles():
-          db.session().query(File).filter( File.id==file.id ).delete()
-
-        db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
-
-        file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
-        file_dir = file_dir.replace('//','/')
-        if os.path.exists(file_dir):
-          command = 'rm -rf {FILE}'.format(FILE=file_dir)
-        else:
-          print (self, "This dataset is not in the database: {}.".format(file_dir))
-        db.commit()
-
+        # Return always this error message since this feature is not supported yet
         return jsonify(
-          error_code = HTTPStatus.OK,
-          message = "Success!"
+            error_code=HTTPStatus.BAD_REQUEST,
+            message="The cluster users are not allow to delete tasks. Please contact the cluster administrator to remove it."
         )
+
+
+
+
     ###
 
     ###
@@ -701,15 +665,7 @@ class MaestroAPI (Logger):
 
         try:
           task = db.getTask( taskname )
-          if task.getStatus() == Status.BROKEN:
-            for job in task.getAllJobs():
-              job.setStatus(Status.REGISTERED)
-            task.setStatus(Status.REGISTERED)
-          else:
-            for job in task.getAllJobs():
-              if ( (job.getStatus() == Status.FAILED) or (job.getStatus() == Status.KILL) or (job.getStatus() == Status.KILLED) ):
-                job.setStatus(Status.ASSIGNED)
-            task.setStatus(Status.RUNNING)
+          task.setSignal( Signal.RETRY )
         except:
           return jsonify(
             error_code = HTTPStatus.NOT_FOUND,
@@ -746,35 +702,15 @@ class MaestroAPI (Logger):
             message="User not found."
           )
 
-        if taskname == 'all':
-          for task in user.getAllTasks():
-            for job in task.getAllJobs():
-              if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
-                job.setStatus(Status.KILL)
-              else:
-                job.setStatus(Status.KILLED)
-        else:
-          try:
-            task = db.getTask( taskname )
-            if task.getStatus() == Status.BROKEN:
-              for job in task.getAllJobs():
-                job.setStatus(Status.REGISTERED)
-              task.setStatus(Status.REGISTERED)
-            else:
-              for job in task.getAllJobs():
-                if ( (job.getStatus() == Status.FAILED) or (job.getStatus() == Status.KILL) or (job.getStatus() == Status.KILLED) ):
-                  job.setStatus(Status.ASSIGNED)
-              task.setStatus(Status.RUNNING)
-          except:
-            return jsonify(
-              error_code = HTTPStatus.NOT_FOUND,
-              message = "Task is not in the database."
-            )
-          for job in task.getAllJobs():
-            if job.getStatus()==Status.RUNNING or job.getStatus()==Status.TESTING:
-              job.setStatus(Status.KILL)
-            else:
-              job.setStatus(Status.KILLED)
+        try:
+          task = db.getTask( taskname )
+          task.setSignal( Signal.KILL )
+        except:
+          return jsonify(
+            error_code = HTTPStatus.NOT_FOUND,
+            message = "Task is not in the database."
+          )
+
         db.commit()
         return jsonify(
           error_code = HTTPStatus.OK,

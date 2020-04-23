@@ -37,17 +37,14 @@ class Postman ():
     # Quitting
     server.quit()
 
-  def sendNotification (self, username, taskname, prevState, newState):
+  def sendNotification (self, username, subject, message):
     user = self.__db.getUser(username)
     if user is None:
       return -1
     else:
       to_email = user.email
-    subject = "[LPS Cluster] Task notification - task status has changed to {}".format(newState)
     template = self.__env.get_template('templates/task_notification.html')
     data = {}
-    data['taskname'] = taskname
-    data['prevState'] = prevState
-    data['newState'] = newState
+    data['message'] = message
     output = template.render(data=data)
     self.__send(to_email, subject, output)

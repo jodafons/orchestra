@@ -11,6 +11,8 @@ from orchestra.slots import *
 from orchestra.constants import *
 from orchestra.utilities import *
 from orchestra.enumerations import *
+from orchestra import Postman
+
 
 class Pilot(Logger):
 
@@ -20,21 +22,27 @@ class Pilot(Logger):
                update_task_boards=True,
                timeout=None,
                run_slots = True,
-               queue_name = Queue.LPS):
+               queue_name = Queue.LPS,
+               max_update_time=MAX_UPDATE_TIME):
+
     Logger.__init__(self)
     self.__cpu_slots = Slots("CPU", cluster, queue_name)
     self.__gpu_slots = Slots("GPU", cluster, queue_name, gpu=True)
     self.__db = db
     self.__schedule = schedule
     self.__orchestrator = orchestrator
-
     self.__bypass_gpu_rule = bypass_gpu_rule
     self.__cluster = cluster
     self.__queue_name = queue_name
     self.__update_task_boards = update_task_boards
     self.__timeout_clock = Clock( timeout )
     self.__run_slots = run_slots
+    self.__clock = Clock(max_update_time)
 
+    try:
+      self.__postman = Postman()
+    except:
+      MSG_FATAL( self, "It's not possible to create the Postman service." )
 
 
   def checkTimeout(self):
@@ -43,6 +51,10 @@ class Pilot(Logger):
 
   def db(self):
     return self.__db
+
+
+  def postman(self):
+    return self.__postman
 
 
   def schedule(self):
@@ -61,8 +73,6 @@ class Pilot(Logger):
     return self.__gpu_slots
 
 
-
-
   def initialize(self):
 
     # connect to the sql database (service)
@@ -70,9 +80,7 @@ class Pilot(Logger):
     # link db to schedule
     self.schedule().setCluster( self.__cluster )
     self.schedule().setDatabase( self.db() )
-
-    # Update the priority for each N minutes
-    self.schedule().setUpdateTime( 5 )
+    self.schedule().setPostman( self.postman() )
 
     if self.schedule().initialize().isFailure():
       MSG_FATAL( self, "Not possible to initialize the Schedule tool. abort" )
@@ -99,12 +107,12 @@ class Pilot(Logger):
     if self.__run_slots:
       self.treatRunningJobsBeforeStart()
 
-
-
     # Infinite loop
     while True:
 
-      if not self.checkTimeout():
+      if self.__clock():
+
+        self.checkNodesHealthy()
 
         # Calculate all priorities for all REGISTERED jobs for each 5 minutes
         self.schedule().execute()
@@ -143,18 +151,11 @@ class Pilot(Logger):
           ## Run the pilot for gpu queue
           self.gpuSlots().execute()
 
-
         # If in standalone mode, this can be calculated or note. Depend on demand.
         if self.__update_task_boards:
           MSG_DEBUG(self, "Calculate all task boards...")
           self.updateAllBoards()
 
-
-
-      else:
-        # Stop the main loop obly when all jobs are finished
-        if self.cpuSlots().empty() and self.gpuSlots().empty():
-          break
 
 
 
@@ -167,9 +168,15 @@ class Pilot(Logger):
     self.schedule().finalize()
     self.cpuSlots().finalize()
     self.gpuSlots().finalize()
-    self.orchestator().finalize()
+    self.orchestrator().finalize()
     return StatusCode.SUCCESS
 
+
+  def run(self):
+    self.initialize()
+    self.execute()
+    self.finalize()
+    return StatusCode.SUCCESS
 
 
   def treatRunningJobsBeforeStart(self):
@@ -185,7 +192,6 @@ class Pilot(Logger):
         i+=1
       self.db().commit()
       self.cpuSlots().execute()
-
 
 
   #
@@ -211,6 +217,68 @@ class Pilot(Logger):
         board.killed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
         board.status        = task.status
         self.db().commit()
+
+
+  def checkNodesHealthy(self):
+
+    nodes = self.orchestrator().getNodeStatus()
+
+    for node in nodes:
+
+      MSG_INFO(self, "Checking %s healthy...", node['name'])
+      # Get the node database
+      machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
+
+      if (not node['Ready']) or node["MemoryPressure"] or node["DiskPressure"] :
+
+        MSG_WARNING( self, "The node %s it is not healthy.", node['name']                   )
+        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        #MSG_WARNING( self, "    NetworkUnavailable  : %s", str(node['NetworkUnavailable'])  )
+
+
+        # Disable the node
+        machine.CPUJobs = 0
+        machine.GPUJobs = 0
+        self.db().commit()
+
+        # Send the email to the admin
+
+        for user in self.db().getAllUsers():
+          if user.isAdmin():
+            try:
+              subject = ("[LPS Cluster] (ALARM) %s stop.")%(machine.getName())
+              message = ("Node with name %s stop. MemoryPressure=%s, DiskPressure=%s")%(machine.getName(),
+                                                                                        str(node['MemoryPressure']),
+                                                                                        str(node['DiskPressure']),
+                                                                                        #str(node['NetworkUnavailable'])
+                                                                                        )
+
+
+              self.__postman.sendNotification(user.getUserName(), subject, message)
+            except Exception as e:
+              MSG_ERROR(self, e)
+              MSG_ERROR(self, "It's not possible to send the email to the admin.")
+
+      else:
+        MSG_INFO(self, "Node with name %s is healthy.", machine.getName())
+        #MSG_INFO( self, "The node %s it is not healthy.", node['name']                   )
+        #MSG_INFO( self, "    Ready               : %s", str(node['Ready'])               )
+        #MSG_INFO( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        #MSG_INFO( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        #MSG_INFO( self, "    NetworkUnavailable  : %s", str(node['NetworkUnavailable'])  )
+
+
+
+
+
+
+
+
+
+
+
 
 
 

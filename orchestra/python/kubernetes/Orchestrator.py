@@ -1,7 +1,7 @@
 
 __all__ = ["Orchestrator"]
 
-from Gaugi import Logger, NotSet, Color
+from Gaugi import StatusCode, Logger, NotSet, Color
 from Gaugi.messenger.macros import *
 from kubernetes import *
 from pprint import pprint
@@ -180,6 +180,27 @@ class Orchestrator(Logger):
              status_job_toString(self.status(item.metadata.name))
              ))
 
+
+
+
+
+  def getNodeStatus(self):
+
+    node_list = []
+    for node in self.core().list_node().items:
+      d = {'name' : node.metadata.name}
+      for status in node.status.conditions:
+        if status.type == "Ready":
+          d["Ready"] = eval(status.status)
+        elif status.type == "MemoryPressure":
+          d["MemoryPressure"] = eval(status.status)
+        elif status.type == "DiskPressure":
+          d["DiskPressure"] = eval(status.status)
+        #elif status.type == "NetworkUnavailable":
+        #  d["NetworkUnavailable"] = status.status
+
+      node_list.append(d)
+    return node_list
 
 
   #

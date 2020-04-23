@@ -1,6 +1,6 @@
 {% extends "templates/base.html" %}
 {% block content %}
 
-    <p>Your task <b>{{ data['taskname'] }}</b> <br>has changed its state from <em>{{ data['prevState'] }}</em> to <em>{{ data['newState'] }}</em></p>
+    <p>{{ data['message'] }}</p>
 
 {% endblock %}

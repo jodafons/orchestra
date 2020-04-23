@@ -11,24 +11,16 @@ from orchestra.enumerations import *
 from orchestra.db.models import *
 from orchestra.utilities import Clock
 from orchestra.constants import MAX_UPDATE_TIME, MAX_TEST_JOBS, MAX_FAILED_JOBS, MIN_SUCCESS_JOBS
-from orchestra import Postman
+
 
 class Schedule(Logger):
 
-  def __init__(self, name, rules, cluster=Cluster.LPS, max_update_time=MAX_UPDATE_TIME):
+  def __init__(self, name, rules, cluster=Cluster.LPS):
 
     Logger.__init__(self, name=name)
     self.__rules = rules
-    self.__clock = Clock(max_update_time)
     self.__cluster = cluster
-    try:
-      self.__postman = Postman()
-    except:
-      MSG_FATAL( self, "It's not possible to create the Postman service." )
-
-    # states
     self.__states = []
-
 
 
   def setCluster( self, cluster ):
@@ -43,8 +35,16 @@ class Schedule(Logger):
     self._db = db
 
 
+  def setPostman(self, postman):
+    self.__postman = postman
+
+
   def db(self):
     return self._db
+
+
+  def postman(self):
+    return self.__postman
 
 
   #
@@ -52,10 +52,12 @@ class Schedule(Logger):
   #
   def calculate(self):
 
+    start = time.time()
 
+    MSG_INFO(self, "===============================================")
     for user in self.db().getAllUsers():
 
-      MSG_INFO(self, "Calculating the job priority for %s",  user.username )
+      MSG_INFO(self, "Calculate the job priority for %s",  user.username )
 
       # Get the initial priority of the user
       maxPriority = user.getMaxPriority()
@@ -63,26 +65,24 @@ class Schedule(Logger):
       tasks = user.getAllTasks( self.__cluster  )
 
       for task in tasks:
-
-        MSG_INFO(self, "Looking for task name: %s", task.taskName )
-        MSG_INFO(self, "The current Task has status: " + Color.CGREEN2 + "[" + task.getStatus() + "]" + Color.CEND)
+        MSG_INFO(self, "TaskID %d with current status: " + Color.CGREEN2 + task.getStatus() + Color.CEND, task.id)
         # Run the state transictions
         self.run(task)
 
       self.calculatePriorities( user )
+    MSG_INFO(self, "===============================================")
+
+    end = time.time()
+    MSG_INFO( self, "Schedule loop calculated in %1.2fs", end-start )
 
     return StatusCode.SUCCESS
-
-
 
 
   #
   # Execute the schedule
   #
   def execute(self):
-    # Calculate the priority for every N minute
-    if self.__clock():
-      self.calculate()
+    self.calculate()
     return StatusCode.SUCCESS
 
 
@@ -100,11 +100,6 @@ class Schedule(Logger):
     # The rules will be an external class with Rule as inheritance.
     # These rules can be changed depends on the demand.
     return self.__rules( self.db(), user)
-
-
-
-  def setUpdateTime( self, t ):
-    self.__maxUpdateTime = t
 
 
 
@@ -236,9 +231,13 @@ class Schedule(Logger):
   def retry_all_failed_jobs( self, task ):
 
     try:
+      user = task.getUser()
+      priority = user.getMaxPriority()
+
       if task.getSignal() == Signal.RETRY:
         for job in task.getAllJobs():
           if job.getStatus() == Status.FAILED:
+            job.setPriority(priority)
             job.setStatus( Status.ASSIGNED )
         task.setSignal( Signal.WAITING )
         return True
@@ -397,6 +396,7 @@ class Schedule(Logger):
     try:
       for job in task.getAllJobs():
         if job.getStatus() != Status.DONE:
+          job.setPriority(-1)
           job.setStatus( Status.ASSIGNED )
       return True
     except Exception as e:
@@ -441,6 +441,216 @@ class Schedule(Logger):
 
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
+
+
+
+  #
+  # Notify the user
+  #
+  def send_email_task_done( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with DONE status and will be removed in ten days. Please download all outputs using maestro.")%(task.taskName)
+      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      return True
+    except Exception as e:
+      MSG_ERROR(self, e)
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+
+  #
+  # Notify the user
+  #
+  def send_email_task_broken( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with BROKEN status and will be removed in ten days if you not ping it or retry.")%(task.taskName)
+      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      return True
+    except:
+
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+  #
+  # Notify the user
+  #
+  def send_email_task_finalized( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with FINALIZED status and will be removed in ten days if you not ping it or retry.")%(task.taskName)
+      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      return True
+    except:
+
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+  #
+  # Notify the user
+  #
+  def send_email_task_killed( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with KILLED status and will be removed in ten days if you not ping it or retry.")%(task.taskName)
+      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      return True
+    except:
+
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+
+  #
+  # Set the timer
+  #
+  def start_timer(self, task):
+
+    task.startTimer()
+    return True
+
+
+
+  #
+  # Check if task is 5 days old when start the timer
+  #
+  def passed_five_days(self, task):
+
+    import datetime
+    five_days = datetime.timedelta(days=5)
+    #five_days = datetime.timedelta(seconds=30)
+    if task.getTimer() > five_days:
+      return True
+    else:
+      return False
+
+
+
+  #
+  # Check if task is 10 days old when start the timer
+  #
+  def passed_nine_days(self, task):
+
+    import datetime
+    nine_days = datetime.timedelta(days=9)
+    #nine_days = datetime.timedelta(seconds=60)
+    if task.getTimer() > nine_days:
+      return True
+    else:
+      return False
+
+
+
+  #
+  # Check if task is 10 days old when start the timer
+  #
+  def passed_ten_days(self, task):
+
+    import datetime
+    ten_days = datetime.timedelta(days=10)
+    #ten_days = datetime.timedelta(seconds=90)
+    if task.getTimer() > ten_days:
+      return True
+    else:
+      return False
+
+
+  #
+  # Set delete signal
+  #
+  def send_delete_signal(self, task):
+
+    task.setSignal(Signal.DELETE)
+    return True
+
+
+  #
+  # Notify the user about the delete procedure: 5 days remain
+  #
+  def send_email_this_task_will_be_removed_in_five_days( self, task ):
+    try:
+      subject = ("[LPS Cluster] (WARNING) Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with %s status and will be removed in five days if you not ping it.")%(task.getStatus(),task.taskName)
+      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+
+      return True
+    except:
+
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+  #
+  # Assigned this task to be removed state
+  #
+  def assigned_task_to_be_removed( self, task ):
+
+    task.setStatus(Status.TO_BE_REMOVED)
+    return True
+
+
+  #
+  # Notify the user about the delete procedure: 1 day remain
+  #
+  def send_email_this_task_will_be_removed_tomorrow( self, task ):
+    try:
+      subject = ("[LPS Cluster] (WARNING) Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with %s status and will be removed in 24 hours if you not ping it")%(task.getStatus(),task.taskName)
+      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+
+      task.setStatus(Status.TO_BE_REMOVED_SOON)
+      return True
+    except:
+
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+  #
+  # Assigned this task to be removed soon state
+  #
+  def assigned_task_to_be_removed_soon(self , task):
+
+    task.setStatus(Status.TO_BE_REMOVED_SOON)
+    return True
+
+
+  #
+  # Assigned task to removed state and remove all objects from the database and store
+  #
+  def remove_this_task(self, task):
+
+    if task.getSignal() == Signal.DELETE:
+      try:
+        from orchestra.maestro.parsers import TaskParser
+        helper = TaskParser(self.db())
+        helper.delete(task.taskName,False)
+        return True
+      except Exception as e:
+        task.setSignal(Signal.WAITING)
+        task.setStatus(Status.REMOVED)
+        MSG_ERROR(self, e)
+        MSG_ERROR(self, "It's not possible to delete this task with name %s", task.taskName)
+        return False
+    else:
+      return False
+
+
+
+
+
+
+
+
 
 
 

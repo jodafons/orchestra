@@ -88,7 +88,8 @@ class OrchestraDB(Logger):
                  retry=0,
                  status="registered",
                  priority=priority,
-                 isGPU=isGPU
+                 isGPU=isGPU,
+                 userId = task.userId,
                  )
       task.addJob(job)
       return job

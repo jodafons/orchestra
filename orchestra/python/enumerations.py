@@ -21,6 +21,10 @@ class Status ( EnumStringification ):
   RUNNING    = "running"
   FINALIZED  = "finalized"
 
+  TO_BE_REMOVED = "to_be_removed"
+  TO_BE_REMOVED_SOON = "to_be_removed_soon"
+  REMOVED = "removed"
+
 
 class Signal ( EnumStringification ):
   RETRY      = "retry"

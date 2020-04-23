@@ -47,14 +47,16 @@ class Worker (Base, db.Model, UserMixin):
   email = Column (String)
   active = Column(Boolean)
 
+  isAdministrator= Column(Boolean, default=False)
+
   # Foreign
   tasks = relationship("Task", order_by="Task.id", back_populates="user")
   roles = relationship("Role", secondary='roles_workers',
               backref=backref('workers', lazy='dynamic'))
 
   def __repr__ (self):
-    return "<User {}, priority {}>".format(self.username, self.maxPriority)
-  
+    return "<User {}, priority {}, IsAdmin {}>".format(self.username, self.maxPriority, self.isAdmin())
+
   # Check user permissions
   def has_roles(self, *args):
     return set(args).issubset({role.name for role in self.roles})
@@ -111,5 +113,9 @@ class Worker (Base, db.Model, UserMixin):
 
   def setMaxPriority(self, value):
     self.maxPriority = value
+
+
+  def isAdmin(self):
+    return self.isAdmin
 
 

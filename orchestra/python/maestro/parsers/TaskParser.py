@@ -11,7 +11,7 @@ from orchestra.constants import CLUSTER_VOLUME
 from orchestra.db import OrchestraDB
 from orchestra.db import Task,Dataset,File, Board, Job
 from orchestra import Status, Cluster, Signal
-
+from sqlalchemy import and_, or_
 
 # common imports
 import glob
@@ -68,6 +68,10 @@ class TaskParser(Logger):
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
       delete_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
                     help = "The task name to be remove")
+      delete_parser.add_argument('--remove_files', action='store_true', dest='remove_files', required=False,
+                    help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
+
+
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
       list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
                     help = "The username.")
@@ -108,7 +112,7 @@ class TaskParser(Logger):
       elif args.option == 'retry':
         self.retry(args.taskname)
       elif args.option == 'delete':
-        self.delete(args.taskname)
+        self.delete(args.taskname, args.remove_files)
       elif args.option == 'list':
         self.list(args.username)
       elif args.option == 'kill':
@@ -161,8 +165,6 @@ class TaskParser(Logger):
         MSG_FATAL( self, "The secondary data file (%s) does not exist into the database. Should be registry first.", secondaryDS[key])
 
 
-
-
     # check exec command policy
     if not '%DATA' in execCommand:
       MSG_FATAL( self,  "The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
@@ -181,7 +183,7 @@ class TaskParser(Logger):
 
     # check if the output exist into the dataset base
     if self.__db.getDataset(username, taskname ):
-      MSG_FATAL( self, "The output dataset exist. Please, remove than or choose another name for this task", taskname )
+      MSG_FATAL( self, "The output dataset exist. Please, remove than or choose another name for this task")
 
 
     # Check if the board monitoring for this task exist into the database
@@ -256,7 +258,7 @@ class TaskParser(Logger):
 
 
 
-  def delete( self, taskname ):
+  def delete( self, taskname, remove_files=False ):
 
     if taskname.split('.')[0] != 'user':
       MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
@@ -274,54 +276,55 @@ class TaskParser(Logger):
     except:
       MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
 
-    task.setSignal( Signal.DELETE )
 
-    #id = task.id
+    # Check possible status before continue
+    if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE, Status.TO_BE_REMOVED, Status.TO_BE_REMOVED_SOON]:
+      MSG_FATAL(self, "The task with current status %s can not be deleted. The task must be in done, finalized or broken status.", task.getStatus())
 
-    #try:
-    #  self.__db.session().query(Job).filter(Job.taskId==id).delete()
-    #except Exception as e:
-    #  MSG_FATAL( self, "Impossible to remove Job lines from (%d) task", id)
+    id = task.id
 
-    #try:
-    #  self.__db.session().query(Task).filter(Task.id==id).delete()
-    #except Exception as e:
-    #  MSG_FATAL( self, "Impossible to remove Task lines from (%d) task", id)
+    try:
+      self.__db.session().query(Job).filter(Job.taskId==id).delete()
+    except Exception as e:
+      MSG_FATAL( self, "Impossible to remove Job lines from (%d) task", id)
 
-    #try:
-    #  self.__db.session().query(Board).filter(Board.taskId==id).delete()
-    #except Exception as e:
-    #  MSG_WARNING( self, "Impossible to remove Task board lines from (%d) task", id)
+    try:
+      self.__db.session().query(Task).filter(Task.id==id).delete()
+    except Exception as e:
+      MSG_FATAL( self, "Impossible to remove Task lines from (%d) task", id)
+
+    try:
+      self.__db.session().query(Board).filter(Board.taskId==id).delete()
+    except Exception as e:
+      MSG_WARNING( self, "Impossible to remove Task board lines from (%d) task", id)
 
 
-    ## prepare to remove from database
-    #ds = self.__db.getDataset( username, taskname )
+    # prepare to remove from database
+    ds = self.__db.getDataset( username, taskname )
 
-    #if not ds.task_usage:
-    #  MSG_FATAL( self, "This dataset is not task usage. There is something strange..." )
+    if not ds.task_usage:
+      MSG_FATAL( self, "This dataset is not task usage. There is something strange..." )
 
-    #for file in ds.getAllFiles():
-    #  # Delete the file inside of the dataset
-    #  self.__db.session().query(File).filter( File.id==file.id ).delete()
+    for file in ds.getAllFiles():
+      # Delete the file inside of the dataset
+      self.__db.session().query(File).filter( File.id==file.id ).delete()
 
-    ## Delete the dataset
-    #self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
+    # Delete the dataset
+    self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
 
-    ## The path to the dataset in the cluster
-    #file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
-    #file_dir = file_dir.replace('//','/')
-
-    ## Delete the file from the storage
-    ## check if this path exist
-    #if os.path.exists(file_dir):
-    #  command = 'rm -rf {FILE}'.format(FILE=file_dir)
-    #  print(command)
-    #else:
-    #  MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
+    if remove_files:
+      # The path to the dataset in the cluster
+      file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
+      file_dir = file_dir.replace('//','/')
+      # Delete the file from the storage
+      # check if this path exist
+      if os.path.exists(file_dir):
+        command = 'rm -rf {FILE}'.format(FILE=file_dir)
+        print(command)
+      else:
+        MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
 
     self.__db.commit()
-
-
 
 
 
@@ -380,6 +383,12 @@ class TaskParser(Logger):
         return Color.CRED2+"BROKEN"+Color.CEND
       elif status == 'hold':
         return Color.CRED2+"HOLD"+Color.CEND
+      elif status == 'removed':
+        return Color.CRED2+"REMOVED"+Color.CEND
+      elif status == 'to_be_removed':
+        return Color.CRED2+"REMOVING"+Color.CEND
+      elif status == 'to_be_removed_soon':
+        return Color.CRED2+"REMOVING"+Color.CEND
 
 
     from prettytable import PrettyTable
@@ -397,13 +406,21 @@ class TaskParser(Logger):
                       ])
 
     tasks = self.__db.session().query(Board).filter( Board.username==username ).all()
-    # Loop over all datasets inside of the username
-    for b in tasks:
-      if len(b.taskName)>80:
-        taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
-      else:
-        taskname = b.taskName
-      t.add_row(  [username, taskname, b.registered,  b.assigned, b.testing, b.running, b.failed,  b.done, b.kill, b.killed, getStatus(b.status)] )
+
+    for task in tasks:
+      print(task.status)
+      taskName      = task.taskName
+      registered    = len(self.__db.session().query(Job).filter( and_( Job.status==Status.REGISTERED, Job.taskId==task.id )).all())
+      assigned      = len(self.__db.session().query(Job).filter( and_( Job.status==Status.ASSIGNED  , Job.taskId==task.id )).all())
+      testing       = len(self.__db.session().query(Job).filter( and_( Job.status==Status.TESTING   , Job.taskId==task.id )).all())
+      running       = len(self.__db.session().query(Job).filter( and_( Job.status==Status.RUNNING   , Job.taskId==task.id )).all())
+      done          = len(self.__db.session().query(Job).filter( and_( Job.status==Status.DONE      , Job.taskId==task.id )).all())
+      failed        = len(self.__db.session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all())
+      kill          = len(self.__db.session().query(Job).filter( and_( Job.status==Status.KILL      , Job.taskId==task.id )).all())
+      killed        = len(self.__db.session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
+      status        = task.status
+      t.add_row(  [taskName, registered,  assigned, testing, running, failed,  done, kill, killed, getStatus(status)] )
+
     print(t)
 
 
