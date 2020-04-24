@@ -443,6 +443,26 @@ class Schedule(Logger):
       return False
 
 
+  #
+  # Check if all jobs into this task ran
+  #
+  def check_for_registered_jobs_in_running_state( self, task ):
+
+    try:
+      exist_registered_jobs = False
+      for job in task.getAllJobs():
+        if job.getStatus()==Status.REGISTERED:
+          job.setStatus(Status.ASSIGNED)
+          exist_registered_jobs=True
+      return exist_registered_jobs
+    except Exception as e:
+
+      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      return False
+
+
+
+
 
   #
   # Notify the user

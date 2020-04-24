@@ -21,6 +21,10 @@ schedule.add_transiction( source=Status.TESTING   , destination=Status.RUNNING  
 schedule.add_transiction( source=Status.RUNNING   , destination=Status.DONE       , trigger=['all_jobs_are_done', 'send_email_task_done','start_timer']     )
 schedule.add_transiction( source=Status.RUNNING   , destination=Status.FINALIZED  , trigger=['all_jobs_ran','send_email_task_finalized','start_timer']      )
 schedule.add_transiction( source=Status.RUNNING   , destination=Status.KILL       , trigger='kill_all_jobs'                                                 )
+
+# Machine state hack for now
+schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_for_registered_jobs_in_running_state'                    )
+
 schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING    , trigger='retry_all_failed_jobs'                                         )
 schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed','start_timer'] )
 schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
