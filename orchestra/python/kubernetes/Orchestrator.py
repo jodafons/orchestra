@@ -191,11 +191,11 @@ class Orchestrator(Logger):
       d = {'name' : node.metadata.name}
       for status in node.status.conditions:
         if status.type == "Ready":
-          d["Ready"] = eval(status.status)
+          d["Ready"] = eval(status.status) if status.status != "Unknown" else False
         elif status.type == "MemoryPressure":
-          d["MemoryPressure"] = eval(status.status)
+          d["MemoryPressure"] = eval(status.status) if status.status != "Unknown" else True
         elif status.type == "DiskPressure":
-          d["DiskPressure"] = eval(status.status)
+          d["DiskPressure"] = eval(status.status) if status.status != "Unknown" else True
         #elif status.type == "NetworkUnavailable":
         #  d["NetworkUnavailable"] = status.status
 
