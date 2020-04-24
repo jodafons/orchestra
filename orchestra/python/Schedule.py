@@ -446,7 +446,7 @@ class Schedule(Logger):
   #
   # Check if all jobs into this task ran
   #
-  def check_for_registered_jobs_in_running_state( self, task ):
+  def check_not_allow_job_status_in_running_state( self, task ):
 
     try:
       exist_registered_jobs = False

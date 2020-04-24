@@ -10,10 +10,7 @@ db            = OrchestraDB(cluster=Cluster.LPS)
 
 for user in db.getAllUsers():
   for task in user.getAllTasks():
-    task.setStatus('registered')
-    task.isGPU=False
-    for job in task.getAllJobs():
-      job.isGPU = False
-      job.setStatus('registered')
+    if task.id==8:
+      for job in task.getAllJobs():
+        print('id = %d, status = %s'%(job.id,job.getStatus()) )
 
-db.commit()

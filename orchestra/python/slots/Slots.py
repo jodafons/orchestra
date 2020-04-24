@@ -280,7 +280,7 @@ class Slots( Logger ):
       obj.setOrchestrator( self.orchestrator() )
       # TODO: the job must set the internal status to ACTIVATED mode
       obj.initialize()
-      obj.job().setStatus( Status.ACTIVATED )
+      #obj.job().setStatus( Status.ACTIVATED )
       self.__slots.append( obj )
       node.lock()
     else:

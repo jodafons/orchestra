@@ -392,7 +392,8 @@ class TaskParser(Logger):
 
 
     from prettytable import PrettyTable
-    t = PrettyTable([ Color.CGREEN2 + 'Username'    + Color.CEND,
+    t = PrettyTable([
+                      #Color.CGREEN2 + 'Username'    + Color.CEND,
                       Color.CGREEN2 + 'Taskname'    + Color.CEND,
                       Color.CGREEN2 + 'Registered'  + Color.CEND,
                       Color.CGREEN2 + 'Assigned'    + Color.CEND,

@@ -229,7 +229,7 @@ class Pilot(Logger):
       # Get the node database
       machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
 
-      if (not node['Ready']) or node["MemoryPressure"] or node["DiskPressure"] :
+      if ((not node['Ready']) or node["MemoryPressure"] or node["DiskPressure"]) and (machine.CPUJobs + machine.GPUJobs) > 0:
 
         MSG_WARNING( self, "The node %s it is not healthy.", node['name']                   )
         MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
@@ -244,7 +244,6 @@ class Pilot(Logger):
         self.db().commit()
 
         # Send the email to the admin
-
         for user in self.db().getAllUsers():
           if user.isAdmin():
             try:

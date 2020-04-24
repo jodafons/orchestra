@@ -23,7 +23,7 @@ schedule.add_transiction( source=Status.RUNNING   , destination=Status.FINALIZED
 schedule.add_transiction( source=Status.RUNNING   , destination=Status.KILL       , trigger='kill_all_jobs'                                                 )
 
 # Machine state hack for now
-schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_for_registered_jobs_in_running_state'                    )
+schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_not_allow_job_status_in_running_state'                       )
 
 schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING    , trigger='retry_all_failed_jobs'                                         )
 schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed','start_timer'] )
