@@ -16,6 +16,7 @@ from hashlib import sha256, md5
 from werkzeug.utils import secure_filename
 import subprocess
 from Gaugi import Logger, StringLogger, expandFolders
+from Gaugi.messenger.macros import *
 from http import HTTPStatus
 import pickle
 import base64
@@ -91,10 +92,17 @@ def pickledAuth (data, db):
     message="Authentication failed!"
   )
 
+
+
+def get_username_by_name(name):
+  return name.split('.')[1]
+
+
+
 class MaestroAPI (Logger):
 
   def __init__ (self):
-
+    Logger.__init__(self)
     self.__app = Flask (__name__)
     self.__app.secret_key = "pxgTWHQEaA28qz95"
     self.__db = OrchestraDB()
@@ -461,19 +469,23 @@ class MaestroAPI (Logger):
 
         import os
 
+
         if db.getUser(username).getTask(taskname) is not None:
           return jsonify(
             error_code = HTTPStatus.CONFLICT,
-            message = "The task already exists."
+            message = "The task name already exists."
           )
 
-        if db.getDataset(username, dataFile) is None:
+
+        if db.getDataset(get_username_by_name(dataFile), dataFile) is None:
           return jsonify(
             error_code = HTTPStatus.NOT_FOUND,
             message = "This dataset doesn't exist in the database, should be registered first."
           )
 
-        if db.getDataset(username, configFile) is None:
+
+
+        if db.getDataset(get_username_by_name(configFile), configFile) is None:
           return jsonify(
             error_code = HTTPStatus.NOT_FOUND,
             message = "This config doesn't exist in the database, should be registered first."
@@ -483,7 +495,8 @@ class MaestroAPI (Logger):
           print (secondaryDS)
           secondaryDS = eval(secondaryDS)
           for key in secondaryDS.keys():
-            if db.getDataset(username, secondaryDS[key]) is None:
+            print('------> '+get_username_by_name(secondaryDS[key]))
+            if db.getDataset(get_username_by_name(secondaryDS[key]), secondaryDS[key]) is None:
               return jsonify(
                 error_code = HTTPStatus.NOT_FOUND,
                 message = "The secondary data file {} is not on the database.".format(secondaryDS[key])
@@ -541,13 +554,13 @@ class MaestroAPI (Logger):
                               )
           task.setStatus('hold')
           task.setStatus( Signal.WAITING )
-          configFiles = db.getDataset(username, configFile).getAllFiles()
-          _dataFile = db.getDataset(username, dataFile).getAllFiles()[0].getPath()
+          configFiles = db.getDataset(get_username_by_name(configFile), configFile).getAllFiles()
+          _dataFile = db.getDataset(get_username_by_name(dataFile), dataFile).getAllFiles()[0].getPath()
           _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' )
           _outputFile = '/volume/'+username+'/'+taskname
           _secondaryDS = {}
           for key in secondaryDS.keys():
-            _secondaryDS[key] = db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
+            _secondaryDS[key] = db.getDataset(get_username_by_name(secondaryDS[key]), secondaryDS[key]).getAllFiles()[0].getPath()
             _secondaryDS[key] = _secondaryDS[key].replace(CLUSTER_VOLUME, '/volume')
           for idx, file in enumerate(configFiles):
             _configFile = file.getPath()
