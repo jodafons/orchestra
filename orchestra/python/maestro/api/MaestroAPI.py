@@ -6,7 +6,7 @@ __all__ = [
 # Imports
 from flask import Flask, request, jsonify, send_file, Response
 from flask_restful import Resource, Api
-from flask_login import LoginManager, current_user, login_user
+from flask_login import LoginManager, login_user
 from sqlalchemy import create_engine
 from orchestra.constants import *
 from orchestra import OrchestraDB
@@ -114,49 +114,42 @@ class MaestroAPI (Logger):
     ###
     class Authenticate (Resource):
       def post(self):
-        if current_user.is_authenticated:
-          return jsonify(
-            error_code=HTTPStatus.UNAUTHORIZED,
-            message="User is already authenticated!"
-          )
-        else:
-          user = db.getUser(request.form['username'])
+        user = db.getUser(request.form['username'])
 
-          if user is None:
-            return jsonify(
-              error_code=HTTPStatus.UNAUTHORIZED,
-              message="Authentication failed!"
-            )
-          password = request.form['password']
-
-          if (user.getUserName() == request.form['username']) and (verify_password(password, user.getPasswordHash())):
-            try:
-              login_user(user, remember=False)
-            except:
-              return jsonify(
-                error_code=HTTPStatus.UNAUTHORIZED,
-                message="Failed to login."
-              )
-            token = "{}-{}".format(user.getUserName(), user.getPasswordHash())
-            token = md5(encode_string(token)).hexdigest()
-            return jsonify(
-              error_code=HTTPStatus.OK,
-              message="Authentication successful!",
-              token=token
-            )
+        if user is None:
           return jsonify(
             error_code=HTTPStatus.UNAUTHORIZED,
             message="Authentication failed!"
           )
+        password = request.form['password']
+
+        if (user.getUserName() == request.form['username']) and (verify_password(password, user.getPasswordHash())):
+          try:
+            login_user(user, remember=False)
+          except:
+            return jsonify(
+              error_code=HTTPStatus.UNAUTHORIZED,
+              message="Failed to login."
+            )
+          token = "{}-{}".format(user.getUserName(), user.getPasswordHash())
+          token = md5(encode_string(token)).hexdigest()
+          return jsonify(
+            error_code=HTTPStatus.OK,
+            message="Authentication successful!",
+            token=token
+          )
+        return jsonify(
+          error_code=HTTPStatus.UNAUTHORIZED,
+          message="Authentication failed!"
+        )
     ###
 
     ###
     class ListDatasets (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         from Gaugi import Color
         from prettytable import PrettyTable
@@ -184,10 +177,9 @@ class MaestroAPI (Logger):
     ###
     class ListDatasetsPy (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         username = request.form['username']
 
@@ -212,10 +204,9 @@ class MaestroAPI (Logger):
     ###
     class ListTasks (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         from Gaugi import Color
         from prettytable import PrettyTable
@@ -280,10 +271,9 @@ class MaestroAPI (Logger):
     ###
     class ListTasksPy (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
 
         username = request.form['username']
@@ -309,10 +299,9 @@ class MaestroAPI (Logger):
     ###
     class DeleteDataset (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         import os
 
@@ -355,10 +344,9 @@ class MaestroAPI (Logger):
     ###
     class DownloadDataset (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         import os
 
@@ -401,10 +389,9 @@ class MaestroAPI (Logger):
     ###
     class UploadDataset (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         import os
 
@@ -451,10 +438,9 @@ class MaestroAPI (Logger):
     ###
     class CreateTask (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         username = request.form['username']
         taskname = request.form['taskname']
@@ -606,10 +592,9 @@ class MaestroAPI (Logger):
     ###
     class DeleteTask (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         username = request.form['username']
         taskname = request.form['taskname']
@@ -655,10 +640,9 @@ class MaestroAPI (Logger):
     ###
     class RetryTask (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         username = request.form['username']
         taskname = request.form['taskname']
@@ -694,10 +678,9 @@ class MaestroAPI (Logger):
     ###
     class KillTask (Resource):
       def post (self):
-        if not current_user.is_authenticated:
-          auth = pickledAuth(request.form['credentials'], db)
-          if auth.json['error_code'] != 200:
-            return auth
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
 
         username = request.form['username']
         taskname = request.form['taskname']
