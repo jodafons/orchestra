@@ -27,7 +27,6 @@ class LCGRule(Rule):
     T = len(db.session().query(Job).filter(Job.userId==user.id).filter(or_(Job.status==Status.ASSIGNED , Job.status==Status.RUNNING ) ).all() )
     tasks = user.getAllTasks()
     jobs = db.session().query(Job).filter(Job.userId==user.id).filter( Job.status==Status.ASSIGNED ).all()
-
     for n, job in enumerate(jobs):
       # This is the LCG rule
       priority = user.getMaxPriority() - (T+n)/5.
