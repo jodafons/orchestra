@@ -156,7 +156,7 @@ class UserAccessModelView(BaseView):
         return redirect(url_for('security.login', next=request.url))
 
 class UserView(AdminAccessModelView):
-  column_editable_list = ['email', 'username', 'maxPriority']
+  column_editable_list = ['email', 'username', 'maxPriority', 'active', 'isAdministrator']
   column_searchable_list = column_editable_list
   column_exclude_list = ['password']
   # form_excluded_columns = column_exclude_list
@@ -228,7 +228,7 @@ admin = flask_admin.Admin(
 # admin.add_view(AuthenticatedView(MainTableData, db.session, menu_icon_type='fa', menu_icon_value='fa-table', name="Tabela de dados"))
 admin.add_view(AdminAccessModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-tags', name="Níveis de acesso"))
 admin.add_view(UserView(Worker, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Usuários"))
-admin.add_view(QeA_Page(name="Q&A", endpoint='qea', menu_icon_type='fa', menu_icon_value='fa-question'))
+admin.add_view(QeA_Page(name="FAQ", endpoint='faq', menu_icon_type='fa', menu_icon_value='fa-question'))
 
 # Views not in the menu
 # admin.add_view(DetailsPage(name="Details", endpoint='details'))
