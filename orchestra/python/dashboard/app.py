@@ -131,6 +131,30 @@ class AdminAccessModelView(sqla.ModelView):
         # login
         return redirect(url_for('security.login', next=request.url))
 
+# Create customized model view class
+class UserAccessModelView(BaseView):
+
+  def is_accessible(self):
+    if not current_user.is_active or not current_user.is_authenticated:
+      return False
+
+    if current_user.has_role('superuser') or current_user.has_role('user'):
+      return True
+
+    return False
+
+  def _handle_view(self, name, **kwargs):
+    """
+    Override builtin _handle_view in order to redirect users when a view is not accessible.
+    """
+    if not self.is_accessible():
+      if current_user.is_authenticated:
+        # permission denied
+        abort(403)
+      else:
+        # login
+        return redirect(url_for('security.login', next=request.url))
+
 class UserView(AdminAccessModelView):
   column_editable_list = ['email', 'username', 'maxPriority']
   column_searchable_list = column_editable_list
@@ -145,6 +169,12 @@ class UserView(AdminAccessModelView):
   can_export = True
   can_view_details = True
   details_modal = True
+
+class QeA_Page (UserAccessModelView):
+  @expose('/', methods=['GET'])
+  def index(self):
+    return self.render('admin/qea.html')
+
 #########################################################################
 #
 # Flask views
@@ -198,6 +228,7 @@ admin = flask_admin.Admin(
 # admin.add_view(AuthenticatedView(MainTableData, db.session, menu_icon_type='fa', menu_icon_value='fa-table', name="Tabela de dados"))
 admin.add_view(AdminAccessModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-tags', name="Níveis de acesso"))
 admin.add_view(UserView(Worker, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Usuários"))
+admin.add_view(QeA_Page(name="Q&A", endpoint='qea', menu_icon_type='fa', menu_icon_value='fa-question'))
 
 # Views not in the menu
 # admin.add_view(DetailsPage(name="Details", endpoint='details'))
