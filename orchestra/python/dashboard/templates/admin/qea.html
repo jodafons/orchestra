@@ -1,0 +1,91 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+{{ super() }}
+
+{% if current_user.is_authenticated %}
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    Cluster 
+    <small>Q&A</small>
+</h1>
+<ol class="breadcrumb">
+    <li><a href="/admin"><i class="fa fa-dashboard"></i> Home</a></li>
+    <li class="active"><i class="fa fa-info-circle"></i> Q&A</li>
+</ol>
+</section>
+
+<section class="content">
+
+  <!-- main row -->
+  <div class="row">
+
+  <!-- Single question section -->
+  <section class="col-lg-12">
+    <!-- Box div -->
+    <div class="box box-solid bg-black-gradient" style="height: 100%">
+      <!-- Box content -->
+      <div class="box-body border-radius-none">
+        <p><b>
+          Pergunta
+        </b></p>
+        <p>
+          Resposta
+        </p>
+      </div>
+      <!-- // Box content -->
+    </div>
+    <!-- // Box div -->
+  </section>
+  <!-- // Single question section -->
+
+  <!-- Single question section -->
+  <section class="col-lg-12">
+    <!-- Box div -->
+    <div class="box box-solid bg-black-gradient" style="height: 100%">
+      <!-- Box content -->
+      <div class="box-body border-radius-none">
+        <p><b>
+          Pergunta 2
+        </b></p>
+        <p>
+          Resposta 2
+        </p>
+      </div>
+      <!-- // Box content -->
+    </div>
+    <!-- // Box div -->
+  </section>
+  <!-- // Single question section -->
+
+  <!-- Single question section -->
+  <section class="col-lg-12">
+    <!-- Box div -->
+    <div class="box box-solid bg-black-gradient" style="height: 100%">
+      <!-- Box content -->
+      <div class="box-body border-radius-none">
+        <p><b>
+          Pergunta 3
+        </b></p>
+        <p>
+          Resposta 3
+        </p>
+      </div>
+      <!-- // Box content -->
+    </div>
+    <!-- // Box div -->
+  </section>
+  <!-- // Single question section -->
+
+  </div>
+  <!-- /.row (main row) -->
+</section>
+<!-- /.content -->
+{% else %}
+
+{% include "admin/logged_out.html" %}
+
+{% endif %}
+
+  {% endblock body %}

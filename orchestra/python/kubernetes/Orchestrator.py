@@ -12,7 +12,7 @@ import time
 import re
 import json
 import ast
-
+from kubernetes.client.rest import ApiException
 
 
 
@@ -187,19 +187,24 @@ class Orchestrator(Logger):
   def getNodeStatus(self):
 
     node_list = []
-    for node in self.core().list_node().items:
-      d = {'name' : node.metadata.name}
-      for status in node.status.conditions:
-        if status.type == "Ready":
-          d["Ready"] = eval(status.status) if status.status != "Unknown" else False
-        elif status.type == "MemoryPressure":
-          d["MemoryPressure"] = eval(status.status) if status.status != "Unknown" else True
-        elif status.type == "DiskPressure":
-          d["DiskPressure"] = eval(status.status) if status.status != "Unknown" else True
-        #elif status.type == "NetworkUnavailable":
-        #  d["NetworkUnavailable"] = status.status
+    try:
+      for node in self.core().list_node().items:
+        d = {'name' : node.metadata.name}
+        for status in node.status.conditions:
+          if status.type == "Ready":
+            d["Ready"] = eval(status.status) if status.status != "Unknown" else False
+          elif status.type == "MemoryPressure":
+            d["MemoryPressure"] = eval(status.status) if status.status != "Unknown" else True
+          elif status.type == "DiskPressure":
+            d["DiskPressure"] = eval(status.status) if status.status != "Unknown" else True
+          #elif status.type == "NetworkUnavailable":
+          #  d["NetworkUnavailable"] = status.status
 
-      node_list.append(d)
+        node_list.append(d)
+    except ApiException:
+      MSG_ERROR (self, "Failed to get node status. Kubernetes API Exception")
+    except:
+      MSG_ERROR (self, "Failed to get node status. Unknown Exception")
     return node_list
 
 
