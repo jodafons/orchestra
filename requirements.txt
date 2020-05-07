@@ -20,3 +20,4 @@ Gaugi
 prettytable
 sqlalchemy_utils
 kubernetes
+psycopg2-binary
