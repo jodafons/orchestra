@@ -65,11 +65,18 @@ class TaskParser(Logger):
       retry_parser = argparse.ArgumentParser(description = '', add_help = False)
       retry_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
                     help = "The task name to be retry")
+
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
-      delete_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
+      delete_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
                     help = "The task name to be remove")
       delete_parser.add_argument('--remove_files', action='store_true', dest='remove_files', required=False,
                     help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
+      delete_parser.add_argument('--all', action='store_true', dest='all', required=False,
+                    help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
+      delete_parser.add_argument('-u','--user', action='store', dest='username', required=True,
+                    help = "The username.")
+
+
 
 
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -112,7 +119,16 @@ class TaskParser(Logger):
       elif args.option == 'retry':
         self.retry(args.taskname)
       elif args.option == 'delete':
-        self.delete(args.taskname, args.remove_files)
+
+        if args.all:
+          if args.username in self.__db.getAllUsers():
+            MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+          user = self.__db.getUser( args.username )
+          for task in user.getAllTasks():
+            self.delete(task.taskName, args.remove_files)
+        else:
+          self.delete(args.taskname, args.remove_files)
+
       elif args.option == 'list':
         self.list(args.username)
       elif args.option == 'kill':
@@ -279,7 +295,7 @@ class TaskParser(Logger):
 
     # Check possible status before continue
     if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE, Status.TO_BE_REMOVED, Status.TO_BE_REMOVED_SOON]:
-      MSG_FATAL(self, "The task with current status %s can not be deleted. The task must be in done, finalized or broken status.", task.getStatus())
+      MSG_FATAL(self, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status.", task.getStatus())
 
     id = task.id
 

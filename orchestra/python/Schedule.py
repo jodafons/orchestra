@@ -122,8 +122,10 @@ class Schedule(Logger):
   #
   def getGPUQueue( self, njobs ):
     try:
-      return self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-        Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
+      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
+             Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
+      jobs.reverse()
+      return jobs
     except Exception as e:
       MSG_ERROR(self,e)
       return []
@@ -431,10 +433,9 @@ class Schedule(Logger):
     try:
       total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
       total_done = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.DONE ) ).all())
-      total_finalized = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FINALIZED ) ).all())
       total_failed = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FAILED ) ).all())
 
-      if (total_done + total_finalized + total_failed) == total:
+      if (total_done + total_failed) == total:
         return True
       else:
         return False
