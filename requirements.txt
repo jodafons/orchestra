@@ -19,3 +19,4 @@ flask_restful
 Gaugi
 prettytable
 sqlalchemy_utils
+kubernetes
