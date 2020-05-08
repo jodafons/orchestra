@@ -170,6 +170,21 @@ class UserView(AdminAccessModelView):
   can_view_details = True
   details_modal = True
 
+class NodeView(AdminAccessModelView):
+  column_editable_list = ['maxCPUJobs', 'maxGPUJobs']
+  column_searchable_list = ['name', 'maxCPUJobs', 'maxGPUJobs', 'cluster']
+  column_exclude_list = ['queueName']
+  # form_excluded_columns = column_exclude_list
+  column_details_exclude_list = column_exclude_list
+  column_filters = column_searchable_list
+
+  # can_edit = True
+  edit_modal = True
+  create_modal = True
+  can_export = True
+  can_view_details = True
+  details_modal = True
+
 class QeA_Page (UserAccessModelView):
   @expose('/', methods=['GET'])
   def index(self):
@@ -228,6 +243,7 @@ admin = flask_admin.Admin(
 # admin.add_view(AuthenticatedView(MainTableData, db.session, menu_icon_type='fa', menu_icon_value='fa-table', name="Tabela de dados"))
 admin.add_view(AdminAccessModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-tags', name="Níveis de acesso"))
 admin.add_view(UserView(Worker, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Usuários"))
+admin.add_view(NodeView(Node, db.session, menu_icon_type='fa', menu_icon_value='fa-desktop', name="Nodes"))
 admin.add_view(QeA_Page(name="FAQ", endpoint='faq', menu_icon_type='fa', menu_icon_value='fa-question'))
 
 # Views not in the menu
