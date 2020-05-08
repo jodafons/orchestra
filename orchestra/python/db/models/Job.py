@@ -44,8 +44,8 @@ class Job (Base, db.Model):
 
 
     def __repr__ (self):
-        return "<Job (configFilePath='{}', status='{}, taskId = {}, configId = {}')>".format(
-            self.configFilePath, self.status, self.taskId, self.configId
+        return "<Job (configFilePath='{}', status='{}, taskId = {}, configId = {}', Priority = {})>".format(
+            self.configFilePath, self.status, self.taskId, self.configId, self.priority
         )
 
     def getStatus(self):
