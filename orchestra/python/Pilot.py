@@ -228,7 +228,7 @@ class Pilot(Logger):
       MSG_INFO(self, "Checking %s healthy...", node['name'])
       # Get the node database
       machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
-      machineIsRunning = (machine.CPUJobs + machine.GPUJobs) > 0
+      machineIsRunning = machine.CPUJobs > 0
       machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
       machineIsReady = (node['Ready'] and (machine.maxCPUJobs > 0))
 
