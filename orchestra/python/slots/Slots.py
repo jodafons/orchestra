@@ -116,7 +116,10 @@ class Slots( Logger ):
 
       # enable each machine node
       for idx in range( machine.getGPUJobs() if self.__gpu else machine.getCPUJobs() ):
-        self.__machines[machine.getName()][idx].enable()
+        try:
+          self.__machines[machine.getName()][idx].enable()
+        except:
+          MSG_ERROR(self, "Failed to enable {}'s node {}".format(machine.getName(), idx))
 
       if self.__gpu:
         for node in self.__machines[machine.getName()]:
