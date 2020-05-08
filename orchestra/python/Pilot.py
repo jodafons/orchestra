@@ -252,7 +252,7 @@ class Pilot(Logger):
                 str(node['Ready']),
                 str(node['MemoryPressure']),
                 str(node['DiskPressure']),
-              )
+              ))
               self.__postman.sendNotification(user.getUserName(), subject, message)
             except Exception as e:
               MSG_ERROR(self, e)
@@ -281,7 +281,7 @@ class Pilot(Logger):
                 str(node['DiskPressure']),
                 machine.CPUJobs,
                 machine.GPUJobs
-              )
+              ))
               self.__postman.sendNotification(user.getUserName(), subject, message)
             except Exception as e:
               MSG_ERROR(self, e)
