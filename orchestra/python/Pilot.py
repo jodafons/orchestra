@@ -230,11 +230,12 @@ class Pilot(Logger):
       machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
       machineIsRunning = (machine.CPUJobs + machine.GPUJobs) > 0
       machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
+      machineIsReady = (node['Ready'] and (machine.maxCPUJobs > 0))
 
       # Node is probably down (not ready and is running)
-      if ((not node['Ready']) and (machineIsRunning)):
+      if ((not machineIsReady) and (machineIsRunning)):
         MSG_WARNING( self, "The node %s is not healthy.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Shutting it down..."                   )
@@ -249,7 +250,7 @@ class Pilot(Logger):
               subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
               message = ("Node with name {} in unhealthy. Further information below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
                 machine.getName(),
-                str(node['Ready']),
+                str(machineIsReady),
                 str(node['MemoryPressure']),
                 str(node['DiskPressure']),
               ))
@@ -259,9 +260,9 @@ class Pilot(Logger):
               MSG_ERROR(self, "Couldn't send warning mail.")
 
       # Should restart adding load to the node (it's ready but not running)
-      elif (not(machineIsRunning) and node['Ready']):
+      elif (not(machineIsRunning) and machineIsReady):
         MSG_WARNING( self, "The node %s has recovered health.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Restablishing workloads..."                   )
@@ -276,7 +277,7 @@ class Pilot(Logger):
               subject = ("[LPS Cluster] INFO - %s restablished")%(machine.getName())
               message = ("Node with name {} has recovered health. Further information below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> Setting CPUJobs to {} and GPUJobs to {}".format(
                 machine.getName(),
-                str(node['Ready']),
+                str(machineIsReady),
                 str(node['MemoryPressure']),
                 str(node['DiskPressure']),
                 machine.CPUJobs,
@@ -288,9 +289,9 @@ class Pilot(Logger):
               MSG_ERROR(self, "Couldn't send warning mail.")
 
       # Node is up and running but suffering with pressure
-      elif (node['Ready'] and (machineIsUnderPressure) and (machineIsRunning)):
+      elif (machineIsReady and (machineIsUnderPressure) and (machineIsRunning)):
         MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Reducing load..."                   )
@@ -300,9 +301,9 @@ class Pilot(Logger):
         self.db().commit()
 
       # Node is up and running without any health issues
-      elif (node['Ready'] and (not(machineIsUnderPressure)) and (machineIsRunning)):
+      elif (machineIsReady and (not(machineIsUnderPressure)) and (machineIsRunning)):
         MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Increasing load..."                   )
@@ -318,7 +319,7 @@ class Pilot(Logger):
       # Node is not running nor ready, do nothing
       else:
         MSG_WARNING( self, "The node %s is not running nor ready.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
 
