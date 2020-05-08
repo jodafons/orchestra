@@ -228,46 +228,99 @@ class Pilot(Logger):
       MSG_INFO(self, "Checking %s healthy...", node['name'])
       # Get the node database
       machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
+      machineIsRunning = (machine.CPUJobs + machine.GPUJobs) > 0)
+      machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
 
-      if ((not node['Ready']) or node["MemoryPressure"] or node["DiskPressure"]) and (machine.CPUJobs + machine.GPUJobs) > 0:
-
-        MSG_WARNING( self, "The node %s it is not healthy.", node['name']                   )
+      # Node is probably down (not ready and is running)
+      if ((not node['Ready']) and (machineIsRunning):
+        MSG_WARNING( self, "The node %s is not healthy.", node['name']                   )
         MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
-        #MSG_WARNING( self, "    NetworkUnavailable  : %s", str(node['NetworkUnavailable'])  )
-
-
+        MSG_WARNING( self, "Shutting it down..."                   )
         # Disable the node
         machine.CPUJobs = 0
         machine.GPUJobs = 0
         self.db().commit()
-
         # Send the email to the admin
         for user in self.db().getAllUsers():
           if user.isAdmin():
             try:
-              subject = ("[LPS Cluster] (ALARM) %s stop.")%(machine.getName())
-              message = ("Node with name %s stop. MemoryPressure=%s, DiskPressure=%s")%(machine.getName(),
-                                                                                        str(node['MemoryPressure']),
-                                                                                        str(node['DiskPressure']),
-                                                                                        #str(node['NetworkUnavailable'])
-                                                                                        )
-
-
+              subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
+              message = ("Node with name {} in unhealthy. Further information below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
+                machine.getName(),
+                str(node['Ready']),
+                str(node['MemoryPressure']),
+                str(node['DiskPressure']),
+              )
               self.__postman.sendNotification(user.getUserName(), subject, message)
             except Exception as e:
               MSG_ERROR(self, e)
-              MSG_ERROR(self, "It's not possible to send the email to the admin.")
+              MSG_ERROR(self, "Couldn't send warning mail.")
 
+      # Should restart adding load to the node (it's ready but not running)
+      elif (not(machineIsRunning) and node['Ready']):
+        MSG_WARNING( self, "The node %s has recovered health.", node['name']                   )
+        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        MSG_WARNING( self, "Restablishing workloads..."                   )
+        # Starting workload
+        machine.CPUJobs = int(machine.maxCPUJobs / 2)
+        machine.GPUJobs = machine.maxGPUJobs
+        self.db().commit()
+        # Send the email to the admin
+        for user in self.db().getAllUsers():
+          if user.isAdmin():
+            try:
+              subject = ("[LPS Cluster] INFO - %s restablished")%(machine.getName())
+              message = ("Node with name {} has recovered health. Further information below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> Setting CPUJobs to {} and GPUJobs to {}".format(
+                machine.getName(),
+                str(node['Ready']),
+                str(node['MemoryPressure']),
+                str(node['DiskPressure']),
+                machine.CPUJobs,
+                machine.GPUJobs
+              )
+              self.__postman.sendNotification(user.getUserName(), subject, message)
+            except Exception as e:
+              MSG_ERROR(self, e)
+              MSG_ERROR(self, "Couldn't send warning mail.")
+
+      # Node is up and running but suffering with pressure
+      elif (node['Ready'] and (machineIsUnderPressure) and (machineIsRunning)):
+        MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
+        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        MSG_WARNING( self, "Reducing load..."                   )
+        # Reduce load on node
+        machine.CPUJobs = int(machine.CPUJobs / 2)
+        machine.GPUJobs = int(machine.GPUJobs / 2)
+        self.db().commit()
+
+      # Node is up and running without any health issues
+      elif (node['Ready'] and (not(machineIsUnderPressure)) and (machineIsRunning)):
+        MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
+        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        MSG_WARNING( self, "Increasing load..."                   )
+        # Increase load on node
+        if (2 * machine.CPUJobs) > machine.maxCPUJobs:
+          new_cpu_jobs_val = machine.maxCPUJobs
+        else:
+          new_cpu_jobs_val = 2 * machine.CPUJobs
+        machine.CPUJobs = new_cpu_jobs_val
+        machine.GPUJobs = machine.maxGPUJobs
+        self.db().commit()
+
+      # Node is not running nor ready, do nothing
       else:
-        MSG_INFO(self, "Node with name %s is healthy.", machine.getName())
-        #MSG_INFO( self, "The node %s it is not healthy.", node['name']                   )
-        #MSG_INFO( self, "    Ready               : %s", str(node['Ready'])               )
-        #MSG_INFO( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        #MSG_INFO( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
-        #MSG_INFO( self, "    NetworkUnavailable  : %s", str(node['NetworkUnavailable'])  )
-
+        MSG_WARNING( self, "The node %s is not running nor ready.", node['name']                   )
+        MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
 
 
 
