@@ -1,6 +1,7 @@
 
 __all__ = ["Orchestrator"]
 
+from kubernetes.client.rest import ApiException
 from Gaugi import StatusCode, Logger, NotSet, Color
 from Gaugi.messenger.macros import *
 from kubernetes import *
@@ -8,12 +9,12 @@ from pprint import pprint
 from orchestra import Status
 from orchestra.constants import MAX_FAIL
 from orchestra.utilities import Convert
+import datetime
 import time
 import re
 import json
 import ast
-from kubernetes.client.rest import ApiException
-
+import pprint
 
 
 class Orchestrator(Logger):
@@ -75,12 +76,21 @@ class Orchestrator(Logger):
   #
   def status( self, name, namespace, max_fail=MAX_FAIL ):
     if self.exist( name, namespace ):
-      resp = self.batch().read_namespaced_job_status( name=name, namespace=namespace )
-      if resp.status.failed and resp.status.failed > max_fail:
+      resp = {}
+      try:
+        resp = self.batch().read_namespaced_job_status( name=name, namespace=namespace )
+      except Exception as e:
+        MSG_ERROR(self, e)
+        return Status.FAILED
+      timeout = datetime.timedelta(days=1)
+      if (datetime.datetime.now()-resp.status.start_time.replace(tzinfo=None))>timeout:
+        return Status.FAILED
+      elif (resp.status.failed is not None) and resp.status.failed > 0:
         return Status.FAILED
       elif resp.status.succeeded:
         return Status.DONE
-      return Status.RUNNING
+      else:
+        return Status.RUNNING
     else:
       return Status.DONE
 

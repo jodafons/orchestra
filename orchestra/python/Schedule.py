@@ -7,6 +7,7 @@ from Gaugi.messenger.macros import *
 from Gaugi import StatusCode
 import time
 from sqlalchemy import and_, or_
+from sqlalchemy import desc
 from orchestra.enumerations import *
 from orchestra.db.models import *
 from orchestra.utilities import Clock
@@ -109,8 +110,12 @@ class Schedule(Logger):
   def getCPUQueue( self, njobs ):
     try:
       jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-        Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
+        Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
       jobs.reverse()
+      print(jobs)
+      #for j in jobs:
+      #  print(j.getPriority() )
+
       return jobs
     except Exception as e:
       MSG_ERROR(self,e)
@@ -123,8 +128,8 @@ class Schedule(Logger):
   def getGPUQueue( self, njobs ):
     try:
       jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-             Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(Job.priority).limit(njobs).with_for_update().all()
-      jobs.reverse()
+             Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
+      #jobs.reverse()
       return jobs
     except Exception as e:
       MSG_ERROR(self,e)
