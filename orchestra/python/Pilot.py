@@ -232,7 +232,7 @@ class Pilot(Logger):
       machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
 
       # Node is probably down (not ready and is running)
-      if ((not node['Ready']) and (machineIsRunning):
+      if ((not node['Ready']) and (machineIsRunning)):
         MSG_WARNING( self, "The node %s is not healthy.", node['name']                   )
         MSG_WARNING( self, "    Ready               : %s", str(node['Ready'])               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
