@@ -302,13 +302,16 @@ class Pilot(Logger):
 
       # Node is up and running without any health issues
       elif (machineIsReady and (not(machineIsUnderPressure)) and (machineIsRunning)):
-        MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
+        MSG_WARNING( self, "The node %s is running and healthy.", node['name']                   )
         MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
-        MSG_WARNING( self, "Increasing load..."                   )
         # Increase load on node
-        if (2 * machine.CPUJobs) > machine.maxCPUJobs:
+        if machine.CPUJobs == machine.maxCPUJobs:
+          MSG_WARNING( self, "Load already at full capacity."                   )
+          new_cpu_jobs_val = machine.maxCPUJobs
+        elif (2 * machine.CPUJobs) > machine.maxCPUJobs:
+          MSG_WARNING( self, "Increasing load..."                   )
           new_cpu_jobs_val = machine.maxCPUJobs
         else:
           new_cpu_jobs_val = 2 * machine.CPUJobs
