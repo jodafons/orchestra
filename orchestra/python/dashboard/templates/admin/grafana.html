@@ -1,0 +1,36 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+{{ super() }}
+
+{% if current_user.is_authenticated %}
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+  <h1>
+    Cluster 
+    <small>Grafana</small>
+</h1>
+<ol class="breadcrumb">
+    <li><a href="/admin"><i class="fa fa-dashboard"></i> Home</a></li>
+    <li class="active"><i class="fa fa-line-chart"></i> Grafana</li>
+</ol>
+</section>
+
+<section class="content">
+
+  <!-- main row -->
+  <div class="row">
+
+    <iframe src="https://146.164.147.170/k8s/clusters/c-vjfvs/api/v1/namespaces/cattle-prometheus/services/http:access-grafana:80/proxy/d/icjpCppik/cluster?orgId=1&refresh=5s&theme=dark&panelId=6" width="100%" height="100%" frameborder="0"></iframe>
+
+  </div>
+  <!-- /.row (main row) -->
+</section>
+<!-- /.content -->
+{% else %}
+
+{% include "admin/logged_out.html" %}
+
+{% endif %}
+
+  {% endblock body %}
