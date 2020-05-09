@@ -141,7 +141,31 @@ class AdminAccessModelView(sqla.ModelView):
         return redirect(url_for('security.login', next=request.url))
 
 # Create customized model view class
-class UserAccessModelView(BaseView):
+class AdminAccessView(BaseView):
+
+  def is_accessible(self):
+    if not current_user.is_active or not current_user.is_authenticated:
+      return False
+
+    if current_user.has_role('superuser'):
+      return True
+
+    return False
+
+  def _handle_view(self, name, **kwargs):
+    """
+    Override builtin _handle_view in order to redirect users when a view is not accessible.
+    """
+    if not self.is_accessible():
+      if current_user.is_authenticated:
+        # permission denied
+        abort(403)
+      else:
+        # login
+        return redirect(url_for('security.login', next=request.url))
+
+# Create customized model view class
+class UserAccessView(BaseView):
 
   def is_accessible(self):
     if not current_user.is_active or not current_user.is_authenticated:
@@ -194,10 +218,15 @@ class NodeView(AdminAccessModelView):
   can_view_details = True
   details_modal = True
 
-class QeA_Page (UserAccessModelView):
+class QeA_Page (UserAccessView):
   @expose('/', methods=['GET'])
   def index(self):
     return self.render('admin/qea.html')
+
+class Grafana_Page (AdminAccessView):
+  @expose('/', methods=['GET'])
+  def index(self):
+    return self.render('admin/grafana.html')
 
 #########################################################################
 #
@@ -253,6 +282,7 @@ admin = flask_admin.Admin(
 admin.add_view(AdminAccessModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-tags', name="Níveis de acesso"))
 admin.add_view(UserView(Worker, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Usuários"))
 admin.add_view(NodeView(Node, db.session, menu_icon_type='fa', menu_icon_value='fa-desktop', name="Nodes"))
+admin.add_view(Grafana_Page(name="Grafana", endpoint='grafana', menu_icon_type='fa', menu_icon_value='fa-line-chart'))
 admin.add_view(QeA_Page(name="FAQ", endpoint='faq', menu_icon_type='fa', menu_icon_value='fa-question'))
 
 # Views not in the menu
