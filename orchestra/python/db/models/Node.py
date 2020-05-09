@@ -29,10 +29,9 @@ class Node (Base, db.Model):
   CPUFailedJobs = Column( Integer, default=0 )
   GPUFailedJobs = Column( Integer, default=0 )
 
+  ip = Column( String )
 
   queueName = Column( String )
-
-
   cluster = Column( String )
 
   def getName(self):

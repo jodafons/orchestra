@@ -216,6 +216,7 @@ class Pilot(Logger):
         board.kill          = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL      , Job.taskId==task.id )).all())
         board.killed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
         board.status        = task.status
+        board.priority      = self.db().session().query(Job).filter( Job.taskId==task.id ).order_by(Job.priority.desc()).first().priority
         self.db().commit()
 
 

@@ -189,7 +189,7 @@ class UserAccessView(BaseView):
         return redirect(url_for('security.login', next=request.url))
 
 class UserView(AdminAccessModelView):
-  column_editable_list = ['email', 'username', 'maxPriority', 'active', 'isAdministrator']
+  column_editable_list = ['email', 'username', 'maxPriority', 'active']
   column_searchable_list = column_editable_list
   column_exclude_list = ['password']
   # form_excluded_columns = column_exclude_list

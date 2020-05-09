@@ -29,9 +29,7 @@ class Board (Base, db.Model):
   failed        = Column( Integer )
   kill          = Column( Integer )
   killed        = Column( Integer )
-
-
-
+  priority      = Column( Integer )
 
   def __repr__ (self):
     return "<Board (taskName='{}')>".format(self.taskName)
