@@ -415,7 +415,7 @@ class MaestroAPI (Logger):
           path = os.path.join(destination_dir, filename)
           hash_object = md5(str.encode(path))
           desired_id = db.session().query(File).order_by(File.id.desc()).first().id + 1
-          file_obj = File(path=path, hash=hash_object.hexdigest())
+          file_obj = File(id=desired_id, path=path, hash=hash_object.hexdigest())
           for ds_file in ds.getAllFiles():
             if ds_file.hash == file_obj.hash:
               return jsonify (
@@ -560,8 +560,10 @@ class MaestroAPI (Logger):
             for key in _secondaryDS:
               command = command.replace( key  , _secondaryDS[key])
             job = db.createJob( task, _configFile, idx, execArgs=command, isGPU=gpu, priority=-1 )
-          ds  = Dataset( username=username, dataset=taskname, cluster=db.getCluster(), task_usage=True)
-          ds.addFile( File(path=outputFile, hash='' ) )
+          desired_id = db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
+          ds  = Dataset( id=desired_id, username=username, dataset=taskname, cluster=db.getCluster(), task_usage=True)
+          desired_id = db.session().query(File).order_by(File.id.desc()).first().id + 1
+          ds.addFile( File(id=desired_id, path=outputFile, hash='' ) )
           db.createDataset(ds)
           self.createBoard( user, task, db )
           task.setStatus('registered')
