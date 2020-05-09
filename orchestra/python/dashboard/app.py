@@ -79,7 +79,7 @@ def _getDbData ():
     'history' : []
   }
 
-  for task in _session().query(Board).all():
+  for task in _session().query(Board).order_by(Board.priority.desc()).all():
     if (task.status == 'done') or (task.status == 'failed') or (task.status == 'to_be_removed') or (task.status == 'to_be_removed_soon') or (task.status == 'removed'):
       data['history'].append({
         'name' : task.taskName,
