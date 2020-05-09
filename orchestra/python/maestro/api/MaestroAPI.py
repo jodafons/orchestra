@@ -402,7 +402,8 @@ class MaestroAPI (Logger):
           ds_exists = True
           ds = db.getDataset(username, datasetname)
           if ds is None:
-            ds  = Dataset( username=username, dataset=datasetname, cluster=db.getCluster())
+            desired_id = db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
+            ds  = Dataset( id=desired_id, username=username, dataset=datasetname, cluster=db.getCluster())
             ds_exists = False
           receivedFile = request.files['file']
           filename = secure_filename(receivedFile.filename)
@@ -413,6 +414,7 @@ class MaestroAPI (Logger):
           receivedFile.save(os.path.join(destination_dir, filename))
           path = os.path.join(destination_dir, filename)
           hash_object = md5(str.encode(path))
+          desired_id = db.session().query(File).order_by(File.id.desc()).first().id + 1
           file_obj = File(path=path, hash=hash_object.hexdigest())
           for ds_file in ds.getAllFiles():
             if ds_file.hash == file_obj.hash:
