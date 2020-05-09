@@ -60,6 +60,15 @@ def before_request():
 
 #########################################################################
 #
+# Add X-Frame-Options
+#
+@app.after_request
+def apply_caching(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    return response
+
+#########################################################################
+#
 # Utils
 #
 # Method that gets data from the database
