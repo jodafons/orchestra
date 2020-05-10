@@ -228,6 +228,11 @@ class Grafana_Page (AdminAccessView):
   def index(self):
     return self.render('admin/grafana.html')
 
+class Rancher_Page (AdminAccessView):
+  @expose('/', methods=['GET'])
+  def index(self):
+    return self.render('admin/rancher.html')
+
 #########################################################################
 #
 # Flask views
@@ -282,6 +287,7 @@ admin = flask_admin.Admin(
 admin.add_view(AdminAccessModelView(Role, db.session, menu_icon_type='fa', menu_icon_value='fa-tags', name="Níveis de acesso"))
 admin.add_view(UserView(Worker, db.session, menu_icon_type='fa', menu_icon_value='fa-users', name="Usuários"))
 admin.add_view(NodeView(Node, db.session, menu_icon_type='fa', menu_icon_value='fa-desktop', name="Nodes"))
+admin.add_view(Rancher_Page(name="Rancher", endpoint='rancher', menu_icon_type='fa', menu_icon_value='fa-hat-cowboy'))
 admin.add_view(Grafana_Page(name="Grafana", endpoint='grafana', menu_icon_type='fa', menu_icon_value='fa-line-chart'))
 admin.add_view(QeA_Page(name="FAQ", endpoint='faq', menu_icon_type='fa', menu_icon_value='fa-question'))
 
