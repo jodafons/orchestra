@@ -268,7 +268,10 @@ class Pilot(Logger):
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Restablishing workloads..."                   )
         # Starting workload
-        machine.CPUJobs = int(machine.maxCPUJobs / 2)
+        newCPUJobs = int(machine.maxCPUJobs / 2)
+        if newCPUJobs == 0:
+          newCPUJobs += 1
+        machine.CPUJobs = newCPUJobs
         machine.GPUJobs = machine.maxGPUJobs
         self.db().commit()
         # Send the email to the admin
