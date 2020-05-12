@@ -28,6 +28,7 @@ from flask_mail import Mail
 import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import docker
 
 from orchestra.constants import *
 
@@ -42,6 +43,8 @@ bootstrap = Bootstrap(app)
 CORS(app)
 app.config.from_pyfile('config.py')
 db.init_app(app)
+
+docker_client = docker.from_env()
 
 _orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
                            CLUSTER_RANCHER_CREDENTIALS )
@@ -71,6 +74,24 @@ def apply_caching(response):
 #
 # Utils
 #
+# Method that checks for modules health
+def checkHealth ():
+  health_dict = {
+    'api' : False,
+    'web' : False,
+    'main': False,
+  }
+  for container in docker_client.containers.list():
+    cname = container.attrs['Name']
+    if 'orchestra-docker' in cname:
+      if 'api' in cname:
+        health_dict['api'] = True
+      elif 'main' in cname:
+        health_dict['main'] = True
+      elif 'web' in cname:
+        health_dict['web'] = True
+  return health_dict
+
 # Method that gets data from the database
 def _getDbData ():
 
@@ -264,6 +285,20 @@ def get_usage():
     def get_data():
       while True:
         json_data = json.dumps(_getUsage()) # Data goes here
+        yield "data: {}\n\n".format(json_data)
+        time.sleep(1)
+    return Response(get_data(), mimetype='text/event-stream')
+  else:
+    abort(404)
+
+# Get modules health
+@app.route('/health')
+def get_health():
+  if current_user.is_authenticated:
+    import json
+    def get_data():
+      while True:
+        json_data = json.dumps(checkHealth()) # Data goes here
         yield "data: {}\n\n".format(json_data)
         time.sleep(1)
     return Response(get_data(), mimetype='text/event-stream')
