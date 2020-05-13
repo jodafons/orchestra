@@ -92,6 +92,15 @@ def checkHealth ():
         health_dict['web'] = True
   return health_dict
 
+# Method that gets the log stream for a single module
+def getLogStream (moduleName):
+  for container in docker_client.containers.list():
+    cname = container.attrs['Name']
+    if 'orchestra-docker' in cname:
+      if moduleName in cname:
+        return container.logs(stream=True, stdout=True, stderr=True, tail=20)
+  return False
+
 # Method that gets data from the database
 def _getDbData ():
 
@@ -300,6 +309,24 @@ def get_health():
       while True:
         json_data = json.dumps(checkHealth()) # Data goes here
         yield "data: {}\n\n".format(json_data)
+        time.sleep(1)
+    return Response(get_data(), mimetype='text/event-stream')
+  else:
+    abort(404)
+
+# Get modules health
+@app.route('/logs/<name>')
+def get_logs(name):
+  if current_user.is_authenticated:
+    msg_dict = {}
+    msg_dict['message'] = ''
+    import json
+    def get_data():
+      while True:
+        for log in getLogStream(name):
+          msg_dict['message'] = log.decode()
+          json_data = json.dumps(msg_dict)
+          yield "data: {}\n\n".format(json_data)
         time.sleep(1)
     return Response(get_data(), mimetype='text/event-stream')
   else:
