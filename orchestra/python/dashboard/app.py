@@ -29,6 +29,7 @@ import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import docker
+from ansi2html import Ansi2HTMLConverter
 
 from orchestra.constants import *
 
@@ -45,6 +46,7 @@ app.config.from_pyfile('config.py')
 db.init_app(app)
 
 docker_client = docker.from_env()
+ansi_converter = Ansi2HTMLConverter()
 
 _orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
                            CLUSTER_RANCHER_CREDENTIALS )
@@ -330,7 +332,9 @@ def get_logs(name):
       try:
         while True:
           for log in getLogStream(name):
-            msg_dict['message'] = log.decode()
+            msg_ansi = log.decode()
+            msg_html = ansi_converter.convert(msg_ansi)
+            msg_dict['message'] = msg_html
             json_data = json.dumps(msg_dict)
             yield "data: {}\n\n".format(json_data)
           time.sleep(1)
