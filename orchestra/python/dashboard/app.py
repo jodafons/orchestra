@@ -334,7 +334,7 @@ def get_logs(name):
           for log in getLogStream(name):
             msg_ansi = log.decode()
             msg_html = ansi_converter.convert(msg_ansi)
-            msg_dict['message'] = msg_html
+            msg_dict['message'] = msg_ansi
             json_data = json.dumps(msg_dict)
             yield "data: {}\n\n".format(json_data)
           time.sleep(1)
