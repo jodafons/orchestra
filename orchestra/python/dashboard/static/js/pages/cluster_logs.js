@@ -15,7 +15,7 @@ $(document).ready(function () {
             // Getting old data
             var text = mainLog.innerHTML;
             // Appending messages
-            text = data + text;
+            text = data + "<br>" + text;
             // Setting text
             mainLog.innerHTML = text;
         }
@@ -26,7 +26,7 @@ $(document).ready(function () {
             // Getting old data
             var text = apiLog.innerHTML;
             // Appending messages
-            text = data + text;
+            text = data + "<br>" + text;
             // Setting text
             apiLog.innerHTML = text;
         }
@@ -37,7 +37,7 @@ $(document).ready(function () {
             // Getting old data
             var text = webLog.innerHTML;
             // Appending messages
-            text = data + text;
+            text = data + "<br>" + text;
             // Setting text
             webLog.innerHTML = text;
         }

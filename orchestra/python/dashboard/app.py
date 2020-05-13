@@ -29,7 +29,7 @@ import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import docker
-from ansi2html import Ansi2HTMLConverter
+import re
 
 from orchestra.constants import *
 
@@ -46,7 +46,6 @@ app.config.from_pyfile('config.py')
 db.init_app(app)
 
 docker_client = docker.from_env()
-ansi_converter = Ansi2HTMLConverter(dark_bg=False)
 
 _orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
                            CLUSTER_RANCHER_CREDENTIALS )
@@ -76,6 +75,34 @@ def apply_caching(response):
 #
 # Utils
 #
+# ANSI to HTML stuff
+COLOR_DICT = {
+  '31': [(255, 0, 0), (128, 0, 0)],
+  '32': [(0, 255, 0), (0, 128, 0)],
+  '33': [(255, 255, 0), (128, 128, 0)],
+  '34': [(0, 0, 255), (0, 0, 128)],
+  '35': [(255, 0, 255), (128, 0, 128)],
+  '36': [(0, 255, 255), (0, 128, 128)],
+}
+COLOR_REGEX = re.compile(r'\[(?P<arg_1>\d+)(;(?P<arg_2>\d+)(;(?P<arg_3>\d+))?)?m')
+BOLD_TEMPLATE = '<span style="color: rgb{}; font-weight: bolder">'
+LIGHT_TEMPLATE = '<span style="color: rgb{}">'
+def ansi_to_html(text):
+  text = text.replace('[m', '</span>')
+  def single_sub(match):
+    argsdict = match.groupdict()
+    if argsdict['arg_3'] is None:
+      if argsdict['arg_2'] is None:
+        color, bold = argsdict['arg_1'], 0
+      else:
+        color, bold = argsdict['arg_1'], int(argsdict['arg_2'])
+    else:
+      color, bold = argsdict['arg_2'], int(argsdict['arg_3'])
+    if bold:
+      return BOLD_TEMPLATE.format(COLOR_DICT[color][1])
+    return LIGHT_TEMPLATE.format(COLOR_DICT[color][0])
+  return COLOR_REGEX.sub(single_sub, text)
+
 # Method that checks for modules health
 def checkHealth ():
   health_dict = {
@@ -333,7 +360,7 @@ def get_logs(name):
         while True:
           for log in getLogStream(name):
             msg_ansi = log.decode()
-            msg_html = ansi_converter.convert(msg_ansi)
+            msg_html = ansi_to_html(msg_ansi)
             msg_dict['message'] = msg_html
             json_data = json.dumps(msg_dict)
             yield "data: {}\n\n".format(json_data)
