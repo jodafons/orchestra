@@ -263,6 +263,11 @@ class Rancher_Page (AdminAccessView):
   def index(self):
     return self.render('admin/rancher.html')
 
+class Logs_Page (AdminAccessView):
+  @expose('/', methods=['GET'])
+  def index(self):
+    return self.render('admin/logs.html')
+
 #########################################################################
 #
 # Flask views
@@ -322,12 +327,15 @@ def get_logs(name):
     msg_dict['message'] = ''
     import json
     def get_data():
-      while True:
-        for log in getLogStream(name):
-          msg_dict['message'] = log.decode()
-          json_data = json.dumps(msg_dict)
-          yield "data: {}\n\n".format(json_data)
-        time.sleep(1)
+      try:
+        while True:
+          for log in getLogStream(name):
+            msg_dict['message'] = log.decode()
+            json_data = json.dumps(msg_dict)
+            yield "data: {}\n\n".format(json_data)
+          time.sleep(1)
+      except:
+        abort(404)
     return Response(get_data(), mimetype='text/event-stream')
   else:
     abort(404)
@@ -351,6 +359,7 @@ admin.add_view(UserView(Worker, db.session, menu_icon_type='fa', menu_icon_value
 admin.add_view(NodeView(Node, db.session, menu_icon_type='fa', menu_icon_value='fa-desktop', name="Nodes"))
 admin.add_view(Rancher_Page(name="Rancher", endpoint='rancher', menu_icon_type='fa', menu_icon_value='fa-cog'))
 admin.add_view(Grafana_Page(name="Grafana", endpoint='grafana', menu_icon_type='fa', menu_icon_value='fa-line-chart'))
+admin.add_view(Logs_Page(name="Logs", endpoint='logs', menu_icon_type='fa', menu_icon_value='fa-file-text'))
 admin.add_view(QeA_Page(name="FAQ", endpoint='faq', menu_icon_type='fa', menu_icon_value='fa-question'))
 
 # Views not in the menu
