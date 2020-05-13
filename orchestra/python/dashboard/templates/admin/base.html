@@ -212,11 +212,16 @@
 <script src="{{url_for('static',filename='js/demo.js')}}"></script>
 
 <!-- CLUSTER CUSTOM STUFF -->
-<script src="{{url_for('static',filename='js/Chart.min.js')}}"></script>
-<script src="{{url_for('static',filename='js/pages/cluster_logs.js')}}"></script>
-<script src="{{url_for('static',filename='js/pages/cluster_usage.js')}}"></script>
-<script src="{{url_for('static',filename='js/pages/cluster_queue.js')}}"></script>
-<script src="{{url_for('static',filename='js/pages/cluster_health.js')}}"></script>
+{% if admin_view.name=="Home" %}
+  <script src="{{url_for('static',filename='js/Chart.min.js')}}"></script>
+  <script src="{{url_for('static',filename='js/pages/cluster_usage.js')}}"></script>
+  <script src="{{url_for('static',filename='js/pages/cluster_queue.js')}}"></script>
+  <script src="{{url_for('static',filename='js/pages/cluster_health.js')}}"></script>
+{% endif %}
+
+{% if admin_view.name=="Logs" %}
+  <script src="{{url_for('static',filename='js/pages/cluster_logs.js')}}"></script>
+{% endif %}
 
 {% endblock tail_js%}
 
