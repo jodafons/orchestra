@@ -363,8 +363,11 @@ def get_logs(name):
         while True:
           for log in getLogStream(name):
             msg_ansi = log.decode()
-            msg_html = ansi_to_html(msg_ansi)
-            msg_dict['message'] = msg_html
+            try:
+              msg_html = ansi_to_html(msg_ansi)
+              msg_dict['message'] = msg_html
+            except:
+              msg_dict['message'] = msg_ansi
             json_data = json.dumps(msg_dict)
             yield "data: {}\n\n".format(json_data)
           time.sleep(1)
