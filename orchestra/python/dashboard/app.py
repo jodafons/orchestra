@@ -46,7 +46,7 @@ app.config.from_pyfile('config.py')
 db.init_app(app)
 
 docker_client = docker.from_env()
-ansi_converter = Ansi2HTMLConverter()
+ansi_converter = Ansi2HTMLConverter(dark_bg=True)
 
 _orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
                            CLUSTER_RANCHER_CREDENTIALS )
@@ -334,7 +334,7 @@ def get_logs(name):
           for log in getLogStream(name):
             msg_ansi = log.decode()
             msg_html = ansi_converter.convert(msg_ansi)
-            msg_dict['message'] = msg_ansi
+            msg_dict['message'] = msg_html
             json_data = json.dumps(msg_dict)
             yield "data: {}\n\n".format(json_data)
           time.sleep(1)
