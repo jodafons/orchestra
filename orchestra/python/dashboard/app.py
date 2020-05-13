@@ -46,7 +46,7 @@ app.config.from_pyfile('config.py')
 db.init_app(app)
 
 docker_client = docker.from_env()
-ansi_converter = Ansi2HTMLConverter(dark_bg=True)
+ansi_converter = Ansi2HTMLConverter(dark_bg=False)
 
 _orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
                            CLUSTER_RANCHER_CREDENTIALS )
