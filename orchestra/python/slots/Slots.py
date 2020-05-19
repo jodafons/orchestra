@@ -146,7 +146,7 @@ class Slots( Logger ):
   #
   def sendJobLogs (self, consumer):
 
-    self.postman.sendLogs('gabriel-milan', "[LPS Cluster][Experimental] Job #{} failed".format(consumer.job().id), "Bla bla bla", logs=[consumer.logs])
+    self.postman.sendLogs('gabriel-milan', "[LPS Cluster][Experimental] Job #{} failed".format(consumer.job().id), "Bla bla bla", logs=consumer.logs)
 
   def execute(self):
     self.update()

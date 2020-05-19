@@ -96,17 +96,22 @@ class Orchestrator(Logger):
 
 
   #
-  # Get LOGS for a given pod
+  # Get LOGS for a given job
   #
   def logs (self, name, namespace):
+    log = []
     try:
-      log = self.client().read_namespaced_pod_log(name=name, namespace=namespace)
+      ret = self.core().list_pod_for_all_namespaces(watch=False)
+      for i in ret.items:
+        print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name)) 
+        if name in i.metadata.name:
+          log.append(self.client().read_namespaced_pod_log(name=i.metadata.name, namespace=namespace))
       return log
     except ApiException:
       MSG_ERROR(self, "[ApiException] Failed to get logs for pod {}".format(name))
     except:
       MSG_ERROR(self, "[Unknown Error] Failed to get logs for pod {}".format(name))
-    return ""
+    return []
 
   #
   # Create the job using a template
