@@ -2,7 +2,7 @@
 __all__ = ["GPUNode","CPUNode", "Slots"]
 
 
-from Gaugi import Logger, NotSet
+from Gaugi import Logger, NotSet, Color
 from Gaugi.messenger.macros import *
 from Gaugi import retrieve_kw
 from Gaugi import StatusCode
@@ -185,7 +185,7 @@ class Slots( Logger ):
       elif consumer.status() is Status.FAILED:
         # Tell to db that this job was failed
         consumer.job().setStatus( Status.FAILED )
-        MSG_WARNING(self, "=====> JOB #{} FAILED. SENDING EXPERIMENTAL LOGS THROUGH E-MAIL TO GABRIEL".format(consumer.job().id))
+        MSG_WARNING(self, Color.CGREEN2 + "=====> JOB #{} FAILED. SENDING EXPERIMENTAL LOGS THROUGH E-MAIL TO GABRIEL".format(consumer.job().id) + Color.CEND)
         self.sendJobLogs(consumer)
         consumer.finalize()
         # Remove this job into the stack
