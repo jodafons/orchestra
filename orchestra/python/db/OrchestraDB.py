@@ -54,21 +54,24 @@ class OrchestraDB(Logger):
 
     try:
       # Create the task and append into the user area
-      task = Task(taskName=taskName,
-                  inputFilePath=inputFilePath,
-                  outputFilePath=outputFilePath,
-                  configFilePath=configFilePath,
-                  containerImage=containerImage,
-                  # The task always start as registered status
-                  status='registered',
-                  cluster=cluster,
-                  # Extra args
-                  templateExecArgs=templateExecArgs,
-                  secondaryDataPath=secondaryDataPath,
-                  etBinIdx=etBinIdx,
-                  etaBinIdx=etaBinIdx,
-                  isGPU=isGPU
-                  )
+      desired_id = self.__session.query(Task).order_by(Task.id.desc()).first().id + 1
+      task = Task(
+        id=desired_id,
+        taskName=taskName,
+        inputFilePath=inputFilePath,
+        outputFilePath=outputFilePath,
+        configFilePath=configFilePath,
+        containerImage=containerImage,
+        # The task always start as registered status
+        status='registered',
+        cluster=cluster,
+        # Extra args
+        templateExecArgs=templateExecArgs,
+        secondaryDataPath=secondaryDataPath,
+        etBinIdx=etBinIdx,
+        etaBinIdx=etaBinIdx,
+        isGPU=isGPU
+      )
       user.addTask(task)
       return task
     except Exception as e:
@@ -80,17 +83,20 @@ class OrchestraDB(Logger):
   def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}", isGPU=False ):
 
     try:
-      job = Job( configFilePath=configFilePath,
-                 containerImage=task.containerImage,
-                 configId=configId,
-                 execArgs=execArgs,
-                 cluster=task.getCluster(),
-                 retry=0,
-                 status="registered",
-                 priority=priority,
-                 isGPU=isGPU,
-                 userId = task.userId,
-                 )
+      desired_id = self.__session.query(Job).order_by(Job.id.desc()).first().id + 1
+      job = Job(
+        id=desired_id,
+        configFilePath=configFilePath,
+        containerImage=task.containerImage,
+        configId=configId,
+        execArgs=execArgs,
+        cluster=task.getCluster(),
+        retry=0,
+        status="registered",
+        priority=priority,
+        isGPU=isGPU,
+        userId = task.userId,
+      )
       task.addJob(job)
       return job
     except Exception as e:
