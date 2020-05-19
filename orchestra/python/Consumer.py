@@ -25,6 +25,7 @@ class Consumer( Logger ):
     self.__pending=True
     self.__broken=False
     self.__killed=False
+    self.__logs=""
     hash_object = hashlib.md5(str.encode(job.execArgs))
     self.__hash = hash_object.hexdigest()
     # the namespace is the username
@@ -123,6 +124,15 @@ class Consumer( Logger ):
         # default case with max fail equal three
         return self.orchestrator().status(self.name(), self.namespace(), 1)
 
+  @property
   def logs(self):
-    return self.orchestrator().logs(self.name(), self.namespace())
+    self.updateLogs()
+    return self.__logs
 
+  def updateLogs(self):
+    if self.__logs == "":
+      self.__logs = self.orchestrator().logs(self.name(), self.namespace())
+    else:
+      logs = self.orchestrator().logs(self.name(), self.namespace())
+      if logs != ""
+        self.__logs = logs

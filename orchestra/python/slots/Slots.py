@@ -9,7 +9,7 @@ from Gaugi import StatusCode
 from collections import deque
 from orchestra import Status
 from orchestra.Consumer import Consumer
-
+from orchestra import Postman
 
 class Node( object ):
   def __init__(self, name, device=None):
@@ -73,11 +73,15 @@ class Slots( Logger ):
     self.__machines = {}
     self.__gpu = gpu
     self.__total = 0
+    self.__postman = Postman()
 
     # necessary infos to retrieve the node from the correct cluster/queue
     self.__queue_name = queue_name
     self.__cluster = cluster
 
+  @property
+  def postman (self):
+    return self.__postman
 
   def setDatabase( self, db ):
     self.__db = db
@@ -137,15 +141,20 @@ class Slots( Logger ):
     return StatusCode.SUCCESS
 
 
+  #
+  # EXPERIMENTAL
+  #
+  def sendJobLogs (self, consumer):
 
-
+    self.postman.sendLogs('gabriel-milan', "[LPS Cluster][Experimental] Job #{} failed".format(consumer.job().id), "Bla bla bla", logs=[consumer.logs])
 
   def execute(self):
     self.update()
-    MSG_INFO(self, "===========> SLOTS LOOP <===========")
 
     for idx, consumer in enumerate(self.__slots):
 
+      # Update consumer logs
+      consumer.updateLogs()
 
       # Check if we have the kill signed
       if consumer.job().getStatus() == Status.KILL:
@@ -176,6 +185,8 @@ class Slots( Logger ):
       elif consumer.status() is Status.FAILED:
         # Tell to db that this job was failed
         consumer.job().setStatus( Status.FAILED )
+        MSG_WARNING(self, "=====> JOB #{} FAILED. SENDING EXPERIMENTAL LOGS THROUGH E-MAIL TO GABRIEL".format(consumer.job().id))
+        self.sendJobLogs(consumer)
         consumer.finalize()
         # Remove this job into the stack
         consumer.node().unlock()
