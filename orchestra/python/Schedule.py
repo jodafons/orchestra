@@ -495,7 +495,7 @@ class Schedule(Logger):
 
     try:
       subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("The task with name %s was assigned with BROKEN status and will be removed in ten days if you not ping it or retry.")%(task.taskName)
+      message = ("Your task with name %s was set to BROKEN and will be removed in ten days if you don't reach it or retry it.")%(task.taskName)
       self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
       return True
     except:

@@ -142,7 +142,7 @@ class Slots( Logger ):
 
   def execute(self):
     self.update()
-
+    MSG_INFO(self, "===========> SLOTS LOOP <===========")
 
     for idx, consumer in enumerate(self.__slots):
 

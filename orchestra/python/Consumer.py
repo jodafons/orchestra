@@ -123,5 +123,6 @@ class Consumer( Logger ):
         # default case with max fail equal three
         return self.orchestrator().status(self.name(), self.namespace(), 1)
 
-
+  def logs(self):
+    return self.orchestrator().logs(self.name(), self.namespace())
 
