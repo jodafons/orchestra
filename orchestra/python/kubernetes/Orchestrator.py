@@ -82,7 +82,7 @@ class Orchestrator(Logger):
       except Exception as e:
         MSG_ERROR(self, e)
         return Status.FAILED
-      timeout = datetime.timedelta(days=1)
+      timeout = datetime.timedelta(days=5)
       if (datetime.datetime.now()-resp.status.start_time.replace(tzinfo=None))>timeout:
         return Status.FAILED
       elif (resp.status.failed is not None) and resp.status.failed > 0:

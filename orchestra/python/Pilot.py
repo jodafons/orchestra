@@ -113,6 +113,7 @@ class Pilot(Logger):
       if self.__clock():
 
         self.checkNodesHealthy()
+        #self.checkNodesHealthyWithLoadBalancer()
 
         # Calculate all priorities for all REGISTERED jobs for each 5 minutes
         self.schedule().execute()
@@ -212,12 +213,14 @@ class Pilot(Logger):
         board.testing       = len(self.db().session().query(Job).filter( and_( Job.status==Status.TESTING   , Job.taskId==task.id )).all())
         board.running       = len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING   , Job.taskId==task.id )).all())
         board.done          = len(self.db().session().query(Job).filter( and_( Job.status==Status.DONE      , Job.taskId==task.id )).all())
-        board.failed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all()) + len(self.db().session().query(Job).filter( and_( Job.status==Status.BROKEN    , Job.taskId==task.id )).all())
+        board.failed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all()) + \
+                              len(self.db().session().query(Job).filter( and_( Job.status==Status.BROKEN    , Job.taskId==task.id )).all())
         board.kill          = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL      , Job.taskId==task.id )).all())
         board.killed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
         board.status        = task.status
         board.priority      = self.db().session().query(Job).filter( Job.taskId==task.id ).order_by(Job.priority.desc()).first().priority
         self.db().commit()
+
 
 
   def checkNodesHealthy(self):
@@ -229,9 +232,75 @@ class Pilot(Logger):
       MSG_INFO(self, "Checking %s healthy...", node['name'])
       # Get the node database
       machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
-      machineIsRunning = machine.CPUJobs > 0
+
       machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
-      machineIsReady = (node['Ready'] and (machine.maxCPUJobs > 0))
+      machineIsReady = (node['Ready'] and ( (machine.maxCPUJobs > 0) or (machine.maxGPUJobs > 0) ) )
+      machineIsRunning = ( machine.CPUJobs > 0 ) or ( machine.GPUJobs > 0 )
+
+
+      # Node is up and running but suffering with pressure
+      if machineIsRunning and (not machineIsReady  or machineIsUnderPressure  ):
+
+        MSG_WARNING( self, "The node %s is not healthy.", node['name']                   )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        MSG_WARNING( self, "Shutting it down..."                   )
+
+        machine.CPUJobs = 0
+        machine.GPUJobs = 0
+
+        self.db().commit()
+
+        # Send the email to the admin
+        for user in self.db().getAllUsers():
+          if user.isAdmin():
+            try:
+              subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
+              message = ("Node with name {} in unhealthy. Further information below:<br><br>* "+\
+                  "Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
+                machine.getName(),
+                str(machineIsReady),
+                str(node['MemoryPressure']),
+                str(node['DiskPressure']),
+              ))
+              self.__postman.sendNotification(user.getUserName(), subject, message)
+            except Exception as e:
+              MSG_ERROR(self, e)
+              MSG_ERROR(self, "Couldn't send warning mail.")
+
+
+
+      # Node is not running nor ready, do nothing
+      else:
+        MSG_WARNING( self, "The node %s is healthy.", node['name']            )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
+        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+
+
+
+
+
+
+  # Test version
+  def checkNodesHealthyWithLoadBalancer(self):
+
+    nodes = self.orchestrator().getNodeStatus()
+
+    for node in nodes:
+
+      MSG_INFO(self, "Checking %s healthy...", node['name'])
+      # Get the node database
+      machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
+
+      machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
+
+      machineIsRunning = ( machine.CPUJobs > 0 ) or ( machine.GPUJobs > 0 )
+
+
+      # If max(GPU/CPU)Jobs is zero than the node will be shut donw
+      machineIsReady = (node['Ready'] and ( (machine.maxCPUJobs > 0) or (machine.maxGPUJobs > 0) ) )
 
       # Node is probably down (not ready and is running)
       if ((not machineIsReady) and (machineIsRunning)):
@@ -249,7 +318,8 @@ class Pilot(Logger):
           if user.isAdmin():
             try:
               subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
-              message = ("Node with name {} in unhealthy. Further information below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
+              message = ("Node with name {} in unhealthy. Further information below:<br><br>* "+\
+                  "Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
                 machine.getName(),
                 str(machineIsReady),
                 str(node['MemoryPressure']),
@@ -267,19 +337,23 @@ class Pilot(Logger):
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Restablishing workloads..."                   )
-        # Starting workload
-        newCPUJobs = int(machine.maxCPUJobs / 2)
-        if newCPUJobs == 0:
-          newCPUJobs += 1
-        machine.CPUJobs = newCPUJobs
+
+
+        if machine.maxCPUJobs>0:
+          machine.CPUJobs = 1
+
+        # GPU slots should be always maximum
         machine.GPUJobs = machine.maxGPUJobs
         self.db().commit()
+
+
         # Send the email to the admin
         for user in self.db().getAllUsers():
           if user.isAdmin():
             try:
               subject = ("[LPS Cluster] INFO - %s restablished")%(machine.getName())
-              message = ("Node with name {} has recovered health. Further information below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> Setting CPUJobs to {} and GPUJobs to {}".format(
+              message = ("Node with name {} has recovered health. Further information "+\
+                  "below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> Setting CPUJobs to {} and GPUJobs to {}".format(
                 machine.getName(),
                 str(machineIsReady),
                 str(node['MemoryPressure']),
@@ -295,32 +369,30 @@ class Pilot(Logger):
       # Node is up and running but suffering with pressure
       elif (machineIsReady and (machineIsUnderPressure) and (machineIsRunning)):
         MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Reducing load..."                   )
-        # Reduce load on node
-        machine.CPUJobs = int(machine.CPUJobs / 2)
-        machine.GPUJobs = int(machine.GPUJobs / 2)
+        # Reduce CPU load on node
+        if machine.CPUJobs > 0:
+          machine.CPUJobs -= 1
+
         self.db().commit()
 
       # Node is up and running without any health issues
       elif (machineIsReady and (not(machineIsUnderPressure)) and (machineIsRunning)):
-        MSG_WARNING( self, "The node %s is running and healthy.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
+        MSG_WARNING( self, "The node %s is running and healthy.", node['name']              )
+        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+
         # Increase load on node
         if machine.CPUJobs == machine.maxCPUJobs:
-          MSG_WARNING( self, "Load already at full capacity."                   )
-          new_cpu_jobs_val = machine.maxCPUJobs
-        elif (2 * machine.CPUJobs) > machine.maxCPUJobs:
-          MSG_WARNING( self, "Increasing load..."                   )
-          new_cpu_jobs_val = machine.maxCPUJobs
-        else:
-          new_cpu_jobs_val = 2 * machine.CPUJobs
-        machine.CPUJobs = new_cpu_jobs_val
-        machine.GPUJobs = machine.maxGPUJobs
+          MSG_WARNING( self, "Load already at full capacity.")
+        elif machine.CPUJobs <  machine.maxCPUJobs:
+          MSG_WARNING( self, "Increasing load...")
+          machine.CPUJobs += 1
+
         self.db().commit()
 
       # Node is not running nor ready, do nothing
@@ -329,6 +401,17 @@ class Pilot(Logger):
         MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
         MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+
+
+
+
+
+
+
+
+
+
+
 
 
 
