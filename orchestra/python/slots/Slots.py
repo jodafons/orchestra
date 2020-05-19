@@ -115,7 +115,7 @@ class Slots( Logger ):
       self.__available_nodes.extend( self.__machines[machine.getName()] )
 
       # enable each machine node
-      for idx in range( machine.getGPUJobs() if self.__gpu else machine.getCPUJobs() ):
+      for idx in range( machine.getMaxGPUJobs() if self.__gpu else machine.getMaxCPUJobs() ):
         try:
           self.__machines[machine.getName()][idx].enable()
         except:
@@ -125,7 +125,7 @@ class Slots( Logger ):
         for node in self.__machines[machine.getName()]:
           MSG_INFO( self, "Creating a GPU Node(%s) with device %d. This node is enable? %s", node.name(), node.device(), node.isEnable() )
       else:
-        MSG_INFO( self, "Creating a CPU Node(%s) with %d/%d", machine.getName(), machine.getCPUJobs(), machine.getMaxCPUJobs() )
+        MSG_INFO( self, "Creating a CPU Node(%s) with %d/%d", machine.getName(), machine.getMaxCPUJobs(), machine.getMaxCPUJobs() )
 
 
     # Count the number of enable slots
@@ -250,7 +250,7 @@ class Slots( Logger ):
     for machine in self.db().getAllMachines(self.__cluster, self.__queue_name):
       # enable each machine node
       for idx in range( len(self.__machines[machine.getName()]) ):
-        if idx < (machine.getGPUJobs() if self.__gpu else machine.getCPUJobs()):
+        if idx < (machine.getMaxGPUJobs() if self.__gpu else machine.getMaxCPUJobs()):
           self.__machines[machine.getName()][idx].enable(); total+=1
         else:
           self.__machines[machine.getName()][idx].disable()
@@ -264,7 +264,7 @@ class Slots( Logger ):
           for node in self.__machines[machine.getName()]:
             MSG_INFO( self, "Updating a GPU Node(%s) with device %d. This node is enable? %s", node.name(), node.device(), node.isEnable() )
         else:
-          MSG_INFO( self, "Updating a CPU Node(%s) with %d/%d", machine.getName(), machine.getCPUJobs(), machine.getMaxCPUJobs() )
+          MSG_INFO( self, "Updating a CPU Node(%s) with %d/%d", machine.getName(), machine.getMaxCPUJobs(), machine.getMaxCPUJobs() )
 
 
 
