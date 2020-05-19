@@ -104,7 +104,10 @@ class Orchestrator(Logger):
       ret = self.core().list_pod_for_all_namespaces(watch=False)
       for i in ret.items:
         if name in i.metadata.name:
-          log.append(self.core().read_namespaced_pod_log(name=i.metadata.name, namespace=namespace))
+          try:
+            log.append(self.core().read_namespaced_pod_log(name=i.metadata.name, namespace=namespace))
+          except:
+            pass
       return log
     except ApiException:
       MSG_ERROR(self, "[ApiException] Failed to get logs for pod {}".format(name))
