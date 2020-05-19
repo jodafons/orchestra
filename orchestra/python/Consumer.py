@@ -134,5 +134,5 @@ class Consumer( Logger ):
       self.__logs = self.orchestrator().logs(self.name(), self.namespace())
     else:
       logs = self.orchestrator().logs(self.name(), self.namespace())
-      if logs != ""
+      if logs != "":
         self.__logs = logs
