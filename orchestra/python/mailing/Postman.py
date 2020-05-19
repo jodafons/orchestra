@@ -35,7 +35,7 @@ class Postman ():
         Name="LogFile_{}".format(i)
       )
       part['Content-Disposition'] = 'attachment; filename="%s"' % "LogFile_{}".format(i)
-      msg.attach(part)
+      message.attach(part)
     # Authenticating
     server = SMTP(self.__smtpServer, self.__smtpPort)
     server.starttls()
