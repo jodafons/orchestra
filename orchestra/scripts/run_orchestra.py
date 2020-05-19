@@ -65,7 +65,7 @@ orchestrator  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitu
 
 # create the pilot
 pilot = Pilot(db, schedule, orchestrator,
-              bypass_gpu_rule=True,
+              bypass_gpu_rule=False,
               run_slots = True,
               update_task_boards = True,
               timeout = None, # run forever
