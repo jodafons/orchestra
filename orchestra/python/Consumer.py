@@ -130,9 +130,9 @@ class Consumer( Logger ):
     return self.__logs
 
   def updateLogs(self):
-    if self.__logs == "":
+    if self.__logs == []:
       self.__logs = self.orchestrator().logs(self.name(), self.namespace())
     else:
       logs = self.orchestrator().logs(self.name(), self.namespace())
-      if logs != "":
+      if logs != []:
         self.__logs = logs
