@@ -103,7 +103,6 @@ class Orchestrator(Logger):
     try:
       ret = self.core().list_pod_for_all_namespaces(watch=False)
       for i in ret.items:
-        print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name)) 
         if name in i.metadata.name:
           log.append(self.client().read_namespaced_pod_log(name=i.metadata.name, namespace=namespace))
       return log
