@@ -53,9 +53,9 @@ class OrchestraDB(Logger):
 
     try:
       # Create the task and append into the user area
-      #desired_id = self.__session.query(Task).order_by(Task.id.desc()).first().id + 1
+      desired_id = self.__session.query(Task).order_by(Task.id.desc()).first().id + 1
       task = Task(
-        #id=desired_id,
+        id=desired_id,
         taskName=taskName,
         inputFilePath=inputFilePath,
         outputFilePath=outputFilePath,
@@ -82,9 +82,9 @@ class OrchestraDB(Logger):
   def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}" ):
 
     try:
-      #desired_id = self.__session.query(Job).order_by(Job.id.desc()).first().id + 1
+      desired_id = self.__session.query(Job).order_by(Job.id.desc()).first().id + 1
       job = Job(
-        #id=desired_id,
+        id=desired_id,
         configFilePath=configFilePath,
         containerImage=task.containerImage,
         configId=configId,
