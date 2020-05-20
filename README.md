@@ -60,6 +60,7 @@ It's possible to use the orchestra with maestro api on your local machine. To do
 After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. This command must run inside of your user directory (here, into the `/mnt/cluster-volume/jodafons/`).
 The task name must follow the same rule defined in the dataset policy name.
 
+
 ```bash
 maestro.py task create \
     -c user.jodafons.my_configs_files \
@@ -68,6 +69,7 @@ maestro.py task create \
     --containerImage $USER/my_orchestra_tutorial \
     --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \
     --bypass \
+    --queue nvidia
 ```
 
 The `--exec` command contruction must follow some rules to work:
@@ -82,6 +84,10 @@ The `--exec` command contruction must follow some rules to work:
 - `--exec " . /setup_envs.sh && python3 /job_tuning.py -d %DATA -c %IN -o %OUT"`, run the `setup_envs.sh` script if you need to do some other things before start;
 - `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
+**NOTE**: The cluster support multiple queues. The queue name can be:
+- nvidia: For GPU only;
+- cpu_small: Jobs with low CPU cost. One node can run more the one cpu slot;
+- cpu_large: Dedicated jobs with higher cpu consume. Usually one node is allocated to run the job.
 
 
 ### Print All Tasks:
