@@ -157,6 +157,15 @@ class TaskParser(Logger):
       MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
 
 
+    from orchestra.constants import allow_queue_names
+    if not queue in allow_queue_names:
+      MSG_FATAL(  self, "The queue with name %s does not exist. Please check the name of all available queues", queue )
+
+
+    if not queue in self.__db.getUser(username).getAllAllowedQueues():
+      MSG_FATAL( self, "You not allowed to create tasks using this queue: %s. Please contact the administrator.", queue )
+
+
     # Check if the task exist into the databse
     if self.__db.getUser(username).getTask(taskname) is not None:
       MSG_FATAL( self, "The task exist into the database. Abort.")
@@ -411,7 +420,7 @@ class TaskParser(Logger):
 
     from prettytable import PrettyTable
     t = PrettyTable([
-                      #Color.CGREEN2 + 'Username'    + Color.CEND,
+                      Color.CGREEN2 + 'Queue'       + Color.CEND,
                       Color.CGREEN2 + 'Taskname'    + Color.CEND,
                       Color.CGREEN2 + 'Registered'  + Color.CEND,
                       Color.CGREEN2 + 'Assigned'    + Color.CEND,
@@ -421,24 +430,35 @@ class TaskParser(Logger):
                       Color.CGREEN2 + 'Done'        + Color.CEND,
                       Color.CRED2   + 'kill'        + Color.CEND,
                       Color.CRED2   + 'killed'      + Color.CEND,
+                      Color.CRED2   + 'broken'      + Color.CEND,
                       Color.CGREEN2 + 'Status'      + Color.CEND,
                       ])
 
-    tasks = self.__db.session().query(Board).filter( Board.username==username ).all()
+    user = self.__db.getUser(username)
+    tasks = user.getAllTasks()
+
+    def count( jobs, status ):
+      total=0
+      for job in jobs:
+        if job.status==status:  total+=1
+      return total
+
 
     for task in tasks:
-      print(task.status)
+      jobs = task.getAllJobs()
+      queue         = task.queueName
       taskName      = task.taskName
-      registered    = len(self.__db.session().query(Job).filter( and_( Job.status==Status.REGISTERED, Job.taskId==task.id )).all())
-      assigned      = len(self.__db.session().query(Job).filter( and_( Job.status==Status.ASSIGNED  , Job.taskId==task.id )).all())
-      testing       = len(self.__db.session().query(Job).filter( and_( Job.status==Status.TESTING   , Job.taskId==task.id )).all())
-      running       = len(self.__db.session().query(Job).filter( and_( Job.status==Status.RUNNING   , Job.taskId==task.id )).all())
-      done          = len(self.__db.session().query(Job).filter( and_( Job.status==Status.DONE      , Job.taskId==task.id )).all())
-      failed        = len(self.__db.session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all())
-      kill          = len(self.__db.session().query(Job).filter( and_( Job.status==Status.KILL      , Job.taskId==task.id )).all())
-      killed        = len(self.__db.session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
+      registered    = count( jobs, Status.REGISTERED)
+      assigned      = count( jobs, Status.ASSIGNED  )
+      testing       = count( jobs, Status.TESTING   )
+      running       = count( jobs, Status.RUNNING   )
+      done          = count( jobs, Status.DONE      )
+      failed        = count( jobs, Status.FAILED    )
+      kill          = count( jobs, Status.KILL      )
+      killed        = count( jobs, Status.KILLED    )
+      broken        = count( jobs, Status.BROKEN    )
       status        = task.status
-      t.add_row(  [taskName, registered,  assigned, testing, running, failed,  done, kill, killed, getStatus(status)] )
+      t.add_row(  [queue, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
 
     print(t)
 

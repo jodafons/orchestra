@@ -297,17 +297,24 @@ class Slots( Logger ):
   # Job is an db object
   #
   def push_back( self, job ):
+
+    # Check if we have available slots
     if self.isAvailable():
-      node = self.getAvailableNode()
-      # Create the job object
-      obj = Consumer( job, node )
-      # Tell to database that this job will be activated
-      obj.setOrchestrator( self.orchestrator() )
-      # TODO: the job must set the internal status to ACTIVATED mode
-      obj.initialize()
-      #obj.job().setStatus( Status.ACTIVATED )
-      self.__slots.append( obj )
-      node.lock()
+
+      # check with the queue job is the same as the queue slot name
+      if job.queueName != self.__queue_name:
+        MSG_WARNING(self, "This job with queue name (%s) does not allow to this slot with queue name (%s)", job.queueName, self.__queue_name)
+      else:
+        node = self.getAvailableNode()
+        # Create the job object
+        obj = Consumer( job, node )
+        # Tell to database that this job will be activated
+        obj.setOrchestrator( self.orchestrator() )
+        # TODO: the job must set the internal status to ACTIVATED mode
+        obj.initialize()
+        #obj.job().setStatus( Status.ACTIVATED )
+        self.__slots.append( obj )
+        node.lock()
     else:
       MSG_WARNING( self, "You asked to add one job into the stack but there is no available slots yet." )
 

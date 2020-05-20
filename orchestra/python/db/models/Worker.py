@@ -52,6 +52,10 @@ class Worker (Base, db.Model, UserMixin):
   roles = relationship("Role", secondary='roles_workers',
               backref=backref('workers', lazy='dynamic'))
 
+
+  allowedQueues = Column(String)
+
+
   def __repr__ (self):
     return "<User={}, priority={}, roles=\"{}\">".format(self.username, self.maxPriority, self.getRolesText())
 
@@ -115,5 +119,9 @@ class Worker (Base, db.Model, UserMixin):
 
   def isAdmin(self):
     return self.has_role('superuser')
+
+
+  def getAllAllowedQueues(self):
+    return self.allowedQueues.split(',')
 
 

@@ -204,22 +204,16 @@ class MaestroAPI (Logger):
     ###
     class ListTasks (Resource):
       def post (self):
+
         auth = pickledAuth(request.form['credentials'], db)
         if auth.json['error_code'] != 200:
           return auth
 
-        from Gaugi import Color
         from prettytable import PrettyTable
 
         username = request.form['username']
 
-        user = db.getUser(request.form['username'])
-        if user is None:
-          return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="User not found."
-          )
-
+        from Gaugi import Color
         def getStatus(status):
           if status == 'registered':
             return Color.CWHITE2+"REGISTERED"+Color.CEND
@@ -241,8 +235,17 @@ class MaestroAPI (Logger):
             return Color.CRED2+"BROKEN"+Color.CEND
           elif status == 'hold':
             return Color.CRED2+"HOLD"+Color.CEND
+          elif status == 'removed':
+            return Color.CRED2+"REMOVED"+Color.CEND
+          elif status == 'to_be_removed':
+            return Color.CRED2+"REMOVING"+Color.CEND
+          elif status == 'to_be_removed_soon':
+            return Color.CRED2+"REMOVING"+Color.CEND
 
-        t = PrettyTable([ Color.CGREEN2 + 'Username'    + Color.CEND,
+
+        from prettytable import PrettyTable
+        t = PrettyTable([
+                          Color.CGREEN2 + 'Queue'       + Color.CEND,
                           Color.CGREEN2 + 'Taskname'    + Color.CEND,
                           Color.CGREEN2 + 'Registered'  + Color.CEND,
                           Color.CGREEN2 + 'Assigned'    + Color.CEND,
@@ -252,16 +255,43 @@ class MaestroAPI (Logger):
                           Color.CGREEN2 + 'Done'        + Color.CEND,
                           Color.CRED2   + 'kill'        + Color.CEND,
                           Color.CRED2   + 'killed'      + Color.CEND,
+                          Color.CRED2   + 'broken'      + Color.CEND,
                           Color.CGREEN2 + 'Status'      + Color.CEND,
                           ])
 
-        tasks = db.session().query(Board).filter( Board.username==username ).all()
-        for b in tasks:
-          if len(b.taskName)>80:
-            taskname = b.taskName[0:55]+' ... '+ b.taskName[-20:]
-          else:
-            taskname = b.taskName
-          t.add_row(  [username, taskname, b.registered,  b.assigned, b.testing, b.running, b.failed,  b.done, b.kill, b.killed, getStatus(b.status)] )
+        user = db.getUser(username)
+        if user is None:
+          return jsonify(
+            error_code=HTTPStatus.NOT_FOUND,
+            message="User not found."
+          )
+
+        tasks = user.getAllTasks()
+
+        def count( jobs, status ):
+          total=0
+          for job in jobs:
+            if job.status==status:  total+=1
+          return total
+
+
+        for task in tasks:
+          jobs = task.getAllJobs()
+          queue         = task.queueName
+          taskName      = task.taskName
+          registered    = count( jobs, Status.REGISTERED)
+          assigned      = count( jobs, Status.ASSIGNED  )
+          testing       = count( jobs, Status.TESTING   )
+          running       = count( jobs, Status.RUNNING   )
+          done          = count( jobs, Status.DONE      )
+          failed        = count( jobs, Status.FAILED    )
+          kill          = count( jobs, Status.KILL      )
+          killed        = count( jobs, Status.KILLED    )
+          broken        = count( jobs, Status.BROKEN    )
+          status        = task.status
+          t.add_row(  [queue, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
+
+
         return jsonify(
           error_code=HTTPStatus.OK,
           message=t.get_string()
@@ -463,6 +493,13 @@ class MaestroAPI (Logger):
           return jsonify(
             error_code = HTTPStatus.CONFLICT,
             message = "The queue with name %s does not exist. Please check the name of all available queues" % queue
+          )
+
+
+        if not queue in db.getUser(username).getAllAllowedQueues():
+          return jsonify(
+            error_code = HTTPStatus.CONFLICT,
+            message = "You not allowed to create tasks using this queue: %s. Please contact the administrator." % queue
           )
 
 
