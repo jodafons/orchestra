@@ -85,9 +85,9 @@ The `--exec` command contruction must follow some rules to work:
 - `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
 **NOTE**: The cluster support multiple queues. The queue name can be:
-- nvidia: For GPU only;
-- cpu_small: Jobs with low CPU cost. One node can run more the one cpu slot;
-- cpu_large: Dedicated jobs with higher cpu consume. Usually one node is allocated to run the job.
+- `nvidia`: For GPU only;
+- `cpu_small`: Jobs with low CPU cost. One node can run more the one cpu slot;
+- `cpu_large`: Dedicated jobs with higher cpu consume. Usually one node is allocated to run the job.
 
 
 ### Print All Tasks:
