@@ -115,6 +115,7 @@ class Orchestrator(Logger):
       MSG_ERROR(self, "[Unknown Error] Failed to get logs for pod {}".format(name))
     return []
 
+
   #
   # Create the job using a template
   #
@@ -236,6 +237,7 @@ class Orchestrator(Logger):
     except:
       MSG_ERROR (self, "Failed to get node status. Unknown Exception")
     return node_list
+
 
 
   #

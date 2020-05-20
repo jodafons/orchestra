@@ -4,10 +4,12 @@ from orchestra.db import OrchestraDB
 from orchestra import Cluster, Queue
 from orchestra.kubernetes import Orchestrator
 from orchestra.constants import *
+from orchestra.slots import *
 
+url = "postgres://postgres:postgres@localhost:5432/lps_dev"
 
 # Create DB API
-db  = OrchestraDB(cluster=Cluster.LPS)
+db  = OrchestraDB( cluster=Cluster.LPS, url=url)
 
 # Create all services
 schedule      = Schedule( "Schedule", LCGRule() )
@@ -23,8 +25,7 @@ schedule.add_transiction( source=Status.RUNNING   , destination=Status.FINALIZED
 schedule.add_transiction( source=Status.RUNNING   , destination=Status.KILL       , trigger='kill_all_jobs'                                                 )
 
 # Machine state hack for now
-schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_not_allow_job_status_in_running_state'                       )
-
+schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_not_allow_job_status_in_running_state'                   )
 schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING    , trigger='retry_all_failed_jobs'                                         )
 schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed','start_timer'] )
 schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
@@ -57,20 +58,25 @@ schedule.add_transiction( source=Status.TO_BE_REMOVED_SOON, destination=Status.R
 
 
 
-
-
 #orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
 orchestrator  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitura/data/job_template.yaml",
                               "/home/rancher/.cluster/orchestra/external/partitura/data/lps_cluster.yaml" )
 
 # create the pilot
 pilot = Pilot(db, schedule, orchestrator,
-              bypass_gpu_rule=False,
-              run_slots = True,
-              update_task_boards = True,
               timeout = None, # run forever
-              queue_name = Queue.LPS, cluster=Cluster.LPS,
+              cluster=Cluster.LPS,
               max_update_time = 0.1*MINUTE )
+
+
+# Set all queues
+pilot.add( Slots("CPU", Cluster.LPS, "cpu_small") )
+pilot.add( Slots("CPU", Cluster.LPS, "cpu_large") )
+pilot.add( Slots("CPU", Cluster.LPS, "nvidia", gpu=True) )
+
+
+
+
 
 
 postman = pilot.postman()

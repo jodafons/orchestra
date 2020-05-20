@@ -9,7 +9,7 @@ CLUSTER_RANCHER_CREDENTIALS = os.environ["CLUSTER_RANCHER_CREDENTIALS"]
 CLUSTER_POSTGRES_URL = os.environ["CLUSTER_POSTGRES_URL"]
 CLUSTER_VOLUME = '/mnt/cluster-volume' # LPS default
 
-
+allow_queue_names = ["cpu_small" , "cpu_large", "nvidia"]
 
 
 
@@ -58,14 +58,6 @@ salt = b'g\xc2U\x1c\x9fx\xddxm\xf1\x85\x85w\x8dA\xa3`\x07F\xfdHP\x87Zc\xe8\xea\x
 iterations = 100000
 
 
-
-
-
-#
-# Others
-#
-
-CLUSTER_VOLUME_SDUMONT = '/'
 
 
 

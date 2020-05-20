@@ -27,6 +27,7 @@ class Board (Base, db.Model):
   running       = Column( Integer )
   done          = Column( Integer )
   failed        = Column( Integer )
+  broken        = Column( Integer )
   kill          = Column( Integer )
   killed        = Column( Integer )
   priority      = Column( Integer )

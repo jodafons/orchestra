@@ -75,7 +75,6 @@ class Schedule(Logger):
 
     end = time.time()
     MSG_INFO( self, "Schedule loop calculated in %1.2fs", end-start )
-
     return StatusCode.SUCCESS
 
 
@@ -103,33 +102,14 @@ class Schedule(Logger):
     return self.__rules( self.db(), user)
 
 
-
   #
   # Get the list of jobs ordered by the priority for CPU
   #
-  def getCPUQueue( self, njobs ):
+  def getQueue( self, njobs , queue_name):
     try:
-      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-        Job.isGPU==False, Job.cluster==self.__cluster) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
+      jobs = self.db().session().query(Job).filter(Job.cluster==self.__cluster).filter(  and_( Job.status==Status.ASSIGNED ,
+        Job.queueName==queue_name) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
       jobs.reverse()
-      print(jobs)
-      #for j in jobs:
-      #  print(j.getPriority() )
-
-      return jobs
-    except Exception as e:
-      MSG_ERROR(self,e)
-      return []
-
-
-  #
-  # Get the list of jobs ordered by the priority for GPU
-  #
-  def getGPUQueue( self, njobs ):
-    try:
-      jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-             Job.isGPU==True, Job.cluster==self.__cluster) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
-      #jobs.reverse()
       return jobs
     except Exception as e:
       MSG_ERROR(self,e)
@@ -139,11 +119,10 @@ class Schedule(Logger):
   #
   # Get all running jobs into the job list
   #
-  def getAllRunningJobs(self):
+  def getAllRunningJobs(self, queuename):
     try:
-
       MSG_INFO(self, "Getting all jobs with status: " + Color.CGREEN2+"[RUNNING]" + Color.CEND)
-      return self.db().session().query(Job).filter( and_( Job.cluster==self.__cluster , Job.status==Status.RUNNING) ).with_for_update().all()
+      return self.db().session().query(Job).filter(Job.cluster==self.__cluster).filter( and_( Job.queueName==queuename , Job.status==Status.RUNNING) ).with_for_update().all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []

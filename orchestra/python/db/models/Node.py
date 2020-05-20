@@ -15,57 +15,40 @@ class Node (Base, db.Model):
   __tablename__ = 'node'
 
   id        = Column(Integer, primary_key = True)
+  
+  queueName = Column( String )
   name      = Column(String)
-
-  CPUJobs = Column( Integer )
-  GPUJobs = Column( Integer )
-
-  maxCPUJobs = Column( Integer )
-  maxGPUJobs = Column( Integer )
-
-  CPUCompletedJobs = Column( Integer, default=0 )
-  GPUCompletedJobs = Column( Integer, default=0 )
-
-  CPUFailedJobs = Column( Integer, default=0 )
-  GPUFailedJobs = Column( Integer, default=0 )
-
+  jobs = Column( Integer )
+  maxJobs = Column( Integer )
+  cluster = Column( String )
+  completedJobs = Column( Integer, default=0 )
+  failedJobs = Column( Integer, default=0 )
+  
   ip = Column( String )
 
-  queueName = Column( String )
-  cluster = Column( String )
 
   def getName(self):
     return self.name
 
-  def getMaxCPUJobs(self):
-    return self.maxCPUJobs
 
-  def getMaxGPUJobs(self):
-    return self.maxGPUJobs
+  def getMaxJobs(self):
+    return self.maxJobs
 
-  def getCPUJobs(self):
-    return self.CPUJobs
 
-  def getGPUJobs(self):
-    return self.GPUJobs
+  def getJobs(self):
+    return self.jobs
+
 
   def getQueueName(self):
     return self.queueName
 
 
-  def completed( self, gpu=False ):
-    if gpu:
-      self.GPUCompletedJobs+=1
-    else:
-      self.CPUCompletedJobs+=1
+  def completed( self ):
+    self.completedJobs+=1
 
 
-  def failed( self, gpu=False ):
-    if gpu:
-      self.GPUFailedJobs+=1
-    else:
-      self.CPUFailedJobs+=1
-
+  def failed( self ):
+    self.failedJobs+=1
 
 
   def getCluster( self ):

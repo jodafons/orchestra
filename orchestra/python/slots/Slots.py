@@ -99,6 +99,10 @@ class Slots( Logger ):
     return self.__orchestrator
 
 
+  def getQueueName(self):
+    return self.__queue_name
+
+
   def initialize(self):
 
     if self.db() is NotSet:
@@ -107,19 +111,22 @@ class Slots( Logger ):
     if self.orchestrator() is NotSet:
       MSG_FATAL( self, "Orchestrator object not passed to slot.")
 
-
+    MSG_INFO(self,"Setup all slots into the queue with name: %s", self.__queue_name)
     # Create all nodes for each machine into the database
     for machine in self.db().getAllMachines( self.__cluster , self.__queue_name):
+
       if self.__gpu:
         # The node start enable flag as False. You must enable this in the first interation
-        self.__machines[machine.getName()] = [ GPUNode(machine.getName(),idx) for idx in range(machine.getMaxGPUJobs()) ]
+        self.__machines[machine.getName()] = [ GPUNode(machine.getName(),idx) for idx in range(machine.getMaxJobs()) ]
       else:
         # The node start enable flag as False. You must enable this in the first interation
-        self.__machines[machine.getName()] = [ CPUNode(machine.getName()) for _ in range(machine.getMaxCPUJobs()) ]
+        self.__machines[machine.getName()] = [ CPUNode(machine.getName()) for _ in range(machine.getMaxJobs()) ]
+
       self.__available_nodes.extend( self.__machines[machine.getName()] )
 
+
       # enable each machine node
-      for idx in range( machine.getMaxGPUJobs() if self.__gpu else machine.getMaxCPUJobs() ):
+      for idx in range( machine.getJobs() ):
         try:
           self.__machines[machine.getName()][idx].enable()
         except:
@@ -129,7 +136,7 @@ class Slots( Logger ):
         for node in self.__machines[machine.getName()]:
           MSG_INFO( self, "Creating a GPU Node(%s) with device %d. This node is enable? %s", node.name(), node.device(), node.isEnable() )
       else:
-        MSG_INFO( self, "Creating a CPU Node(%s) with %d/%d", machine.getName(), machine.getMaxCPUJobs(), machine.getMaxCPUJobs() )
+        MSG_INFO( self, "Creating a CPU Node(%s) with %d/%d", machine.getName(), machine.getJobs(), machine.getMaxJobs() )
 
 
     # Count the number of enable slots
@@ -145,8 +152,9 @@ class Slots( Logger ):
   # EXPERIMENTAL
   #
   def sendJobLogs (self, consumer):
-
     self.postman.sendLogs('gabriel-milan', "[LPS Cluster][Experimental] Job #{} failed".format(consumer.job().id), "Bla bla bla", logs=consumer.logs)
+
+
 
   def execute(self):
     self.update()
@@ -192,7 +200,7 @@ class Slots( Logger ):
         consumer.node().unlock()
 
         # increment the failed counter in node table just for monitoring
-        self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).failed( gpu= True if (consumer.node().device() is not None) else False )
+        self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).failed()
         self.__slots.remove(consumer)
 
       elif consumer.status() is Status.KILL:
@@ -215,7 +223,7 @@ class Slots( Logger ):
         consumer.node().unlock()
 
         # increment the completed counter in node table just for monitoring
-        self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).completed( gpu= True if (consumer.node().device() is not None) else False )
+        self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).completed()
         self.__slots.remove(consumer)
 
 
@@ -261,7 +269,7 @@ class Slots( Logger ):
     for machine in self.db().getAllMachines(self.__cluster, self.__queue_name):
       # enable each machine node
       for idx in range( len(self.__machines[machine.getName()]) ):
-        if idx < (machine.getMaxGPUJobs() if self.__gpu else machine.getMaxCPUJobs()):
+        if idx < machine.getJobs():
           self.__machines[machine.getName()][idx].enable(); total+=1
         else:
           self.__machines[machine.getName()][idx].disable()
@@ -269,14 +277,17 @@ class Slots( Logger ):
     # Update the total number of enable slots in the list
     self.__total=total
 
+
+    MSG_INFO(self,"Setup all slots into the queue with name: %s", self.__queue_name)
     if self.size()!=before:
       for machine in self.db().getAllMachines(self.__cluster, self.__queue_name):
         if self.__gpu:
           for node in self.__machines[machine.getName()]:
             MSG_INFO( self, "Updating a GPU Node(%s) with device %d. This node is enable? %s", node.name(), node.device(), node.isEnable() )
         else:
-          MSG_INFO( self, "Updating a CPU Node(%s) with %d/%d", machine.getName(), machine.getMaxCPUJobs(), machine.getMaxCPUJobs() )
+          MSG_INFO( self, "Updating a CPU Node(%s) with %d/%d", machine.getName(), machine.getJobs(), machine.getMaxJobs() )
 
+    MSG_INFO( self, "Creating cluster stack with %d slots", self.size() )
 
 
 

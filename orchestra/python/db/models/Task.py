@@ -27,13 +27,13 @@ class Task (Base, db.Model):
 
   # Useful for extra data paths
   secondaryDataPath = Column( JSON, default="{}" )
-  # Is GPU task
-  isGPU = Column(Boolean, default=False)
 
 
   # For task status
   status = Column(String, default="registered")
   cluster = Column( String )
+
+  queueName = Column( String )
 
   # Foreign
   jobs = relationship("Job", order_by="Job.id", back_populates="task")
@@ -53,8 +53,8 @@ class Task (Base, db.Model):
 
 
   def __repr__ (self):
-    return "<Task (taskName='{}', etBinIdx={}, etaBinIdx={}, jobs='{}', isGPU = {})>".format(
-        self.taskName, self.etBinIdx, self.etaBinIdx, self.jobs, self.isGPU)
+    return "<Task (taskName='{}', etBinIdx={}, etaBinIdx={}, jobs='{}', queue = {})>".format(
+        self.taskName, self.etBinIdx, self.etaBinIdx, self.jobs, self.queueName)
 
   # Method that adds jobs into task
   def addJob (self, job):
@@ -133,7 +133,8 @@ class Task (Base, db.Model):
     return (datetime.datetime.now() - self.timer)
 
 
-
+  def getQueueName(self):
+    return self.queueName
 
 
 

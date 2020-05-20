@@ -17,32 +17,27 @@ from orchestra import Postman
 class Pilot(Logger):
 
   def __init__(self, db, schedule, orchestrator,
-               bypass_gpu_rule=False,
-               cluster=Cluster.LPS,
-               update_task_boards=True,
-               timeout=None,
-               run_slots = True,
-               queue_name = Queue.LPS,
+               cluster    = Cluster.LPS,
+               timeout    = None,
                max_update_time=MAX_UPDATE_TIME):
 
     Logger.__init__(self)
-    self.__cpu_slots = Slots("CPU", cluster, queue_name)
-    self.__gpu_slots = Slots("GPU", cluster, queue_name, gpu=True)
     self.__db = db
     self.__schedule = schedule
     self.__orchestrator = orchestrator
-    self.__bypass_gpu_rule = bypass_gpu_rule
     self.__cluster = cluster
-    self.__queue_name = queue_name
-    self.__update_task_boards = update_task_boards
     self.__timeout_clock = Clock( timeout )
-    self.__run_slots = run_slots
     self.__clock = Clock(max_update_time)
+    self.__queue = {}
 
     try:
       self.__postman = Postman()
     except:
       MSG_FATAL( self, "It's not possible to create the Postman service." )
+
+
+  def add( self, slots ):
+    self.__queue[slots.getQueueName()] = slots
 
 
   def checkTimeout(self):
@@ -65,14 +60,9 @@ class Pilot(Logger):
     return self.__orchestrator
 
 
-  def cpuSlots(self):
-    return self.__cpu_slots
-
-
-  def gpuSlots(self):
-    return self.__gpu_slots
-
-
+  #
+  # Initialize the schedule service
+  #
   def initialize(self):
 
     # connect to the sql database (service)
@@ -85,18 +75,12 @@ class Pilot(Logger):
     if self.schedule().initialize().isFailure():
       MSG_FATAL( self, "Not possible to initialize the Schedule tool. abort" )
 
-    # link orchestrator/db to slots
-    self.cpuSlots().setDatabase( self.db() )
-    self.cpuSlots().setOrchestrator( self.orchestrator() )
-    if self.cpuSlots().initialize().isFailure():
-      MSG_FATAL( self, "Not possible to initialize the CPU slot tool. abort" )
 
-    # link orchestrator/db to slots
-    self.gpuSlots().setDatabase( self.db() )
-    self.gpuSlots().setOrchestrator( self.orchestrator() )
-    if self.gpuSlots().initialize().isFailure():
-      MSG_FATAL( self, "Not possible to initialize the GPU slot tool. abort" )
-
+    for queue , slot in self.__queue.items():
+      slot.setDatabase( self.db() )
+      slot.setOrchestrator( self.orchestrator() )
+      if slot.initialize().isFailure():
+        MSG_FATAL( self, "Not possible to initialize the %s slot tool. abort", queue )
 
     return StatusCode.SUCCESS
 
@@ -104,8 +88,11 @@ class Pilot(Logger):
 
   def execute(self):
 
-    if self.__run_slots:
-      self.treatRunningJobsBeforeStart()
+
+    for queue, slot in self.__queue.items():
+      MSG_INFO(self, "Put all running jobs to run for queue with name %s", queue)
+      self.treatRunningJobsBeforeStart(slot)
+
 
     # Infinite loop
     while True:
@@ -113,51 +100,28 @@ class Pilot(Logger):
       if self.__clock():
 
         self.checkNodesHealthy()
-        #self.checkNodesHealthyWithLoadBalancer()
 
         # Calculate all priorities for all REGISTERED jobs for each 5 minutes
         self.schedule().execute()
 
         # If in standalone mode, these slots will not in running mode. Only schedule will run.
-        if self.__run_slots:
+        for queue , slot in self.__queue.items():
 
-          if self.gpuSlots().isAvailable():
-            njobs = self.gpuSlots().size() - self.gpuSlots().allocated()
-            MSG_DEBUG( self, "We have %d GPU slots available" , njobs )
-            if self.__bypass_gpu_rule:
-              MSG_DEBUG(self,"There are GPU slots available. Retrieving the first %d jobs from the CPU queue since bypass gpu rule is True",njobs )
-              jobs = self.schedule().getCPUQueue(njobs)
-            else:
-              MSG_DEBUG(self,"There are GPU slots available. Retrieving the first %d jobs from the GPU queue.",njobs )
-              jobs = self.schedule().getGPUQueue(njobs)
-            while (self.gpuSlots().isAvailable()) and len(jobs)>0:
-              self.gpuSlots().push_back( jobs.pop() )
-          else:
-            MSG_DEBUG( self, "There is no GPU slots availale" )
-
-          if self.cpuSlots().isAvailable():
-            ## Prepare jobs for CPU slots only
-            njobs = self.cpuSlots().size() - self.cpuSlots().allocated()
-            MSG_DEBUG( self, "We have %d GPU slots available" , njobs )
+          if slot.isAvailable():
+            njobs = slot.size() - slot.allocated()
+            MSG_DEBUG( self, "We have %d slots available in %s queue" , njobs, queue )
             MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
-            jobs = self.schedule().getCPUQueue(njobs)
+            jobs = self.schedule().getQueue(njobs, queue)
 
-            while (self.cpuSlots().isAvailable()) and len(jobs)>0:
-              self.cpuSlots().push_back( jobs.pop() )
-          else:
-            MSG_DEBUG( self, "There is no CPU slots availale" )
+            while (slot.isAvailable()) and len(jobs)>0:
+              slot.push_back( jobs.pop() )
 
-          ## Run the pilot for cpu queue
-          self.cpuSlots().execute()
-          ## Run the pilot for gpu queue
-          self.gpuSlots().execute()
+          slot.execute()
+
 
         # If in standalone mode, this can be calculated or note. Depend on demand.
-        if self.__update_task_boards:
-          MSG_DEBUG(self, "Calculate all task boards...")
-          self.updateAllBoards()
-
-
+        MSG_DEBUG(self, "Calculate all task boards...")
+        self.updateAllBoards()
 
 
     return StatusCode.SUCCESS
@@ -167,8 +131,8 @@ class Pilot(Logger):
 
     self.db().finalize()
     self.schedule().finalize()
-    self.cpuSlots().finalize()
-    self.gpuSlots().finalize()
+    for queue , slot in self.__queue:
+      queue.finalize()
     self.orchestrator().finalize()
     return StatusCode.SUCCESS
 
@@ -180,19 +144,19 @@ class Pilot(Logger):
     return StatusCode.SUCCESS
 
 
-  def treatRunningJobsBeforeStart(self):
+  def treatRunningJobsBeforeStart(self , slot):
 
-    jobs = self.schedule().getAllRunningJobs()
+    jobs = self.schedule().getAllRunningJobs(slot.getQueueName())
     if len(jobs) > 0:
       for job in jobs:
         job.setStatus( Status.ASSIGNED )
         job.getTask().setStatus( Status.RUNNING )
       i=0
-      while (self.cpuSlots().isAvailable()) and i<len(jobs):
-        self.cpuSlots().push_back( jobs[i] )
+      while (slot.isAvailable()) and i<len(jobs):
+        slot.push_back( jobs[i] )
         i+=1
       self.db().commit()
-      self.cpuSlots().execute()
+      slot.execute()
 
 
   #
@@ -206,15 +170,16 @@ class Pilot(Logger):
 
       for task in tasks:
         board = self.db().session().query(Board).filter( Board.taskName==task.taskName ).first()
-        board.jobs = len(task.getAllJobs())
+        board.jobs          = len(task.getAllJobs())
+        board.queueName     = task.getQueueName()
 
         board.registered    = len(self.db().session().query(Job).filter( and_( Job.status==Status.REGISTERED, Job.taskId==task.id )).all())
         board.assigned      = len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED  , Job.taskId==task.id )).all())
         board.testing       = len(self.db().session().query(Job).filter( and_( Job.status==Status.TESTING   , Job.taskId==task.id )).all())
         board.running       = len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING   , Job.taskId==task.id )).all())
         board.done          = len(self.db().session().query(Job).filter( and_( Job.status==Status.DONE      , Job.taskId==task.id )).all())
-        board.failed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all()) + \
-                              len(self.db().session().query(Job).filter( and_( Job.status==Status.BROKEN    , Job.taskId==task.id )).all())
+        board.failed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all())
+        board.broken        = len(self.db().session().query(Job).filter( and_( Job.status==Status.BROKEN    , Job.taskId==task.id )).all())
         board.kill          = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL      , Job.taskId==task.id )).all())
         board.killed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
         board.status        = task.status
@@ -223,19 +188,22 @@ class Pilot(Logger):
 
 
 
+
   def checkNodesHealthy(self):
 
-    nodes = self.orchestrator().getNodeStatus()
-
-    for node in nodes:
+    for node in self.orchestrator().getNodeStatus():
 
       MSG_INFO(self, "Checking %s healthy...", node['name'])
-      # Get the node database
-      machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
+
+      njobs=0
+      for queue, slot in self.__queue.items():
+        machine = self.db().getMachine(self.__cluster, queue, node['name'])
+        if machine:  njobs+=machine.jobs
+
 
       machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
-      machineIsReady = (node['Ready'] and ( (machine.maxCPUJobs > 0) or (machine.maxGPUJobs > 0) ) )
-      machineIsRunning = ( machine.CPUJobs > 0 ) or ( machine.GPUJobs > 0 )
+      machineIsReady = node['Ready']
+      machineIsRunning = ( njobs > 0 )
 
 
       # Node is up and running but suffering with pressure
@@ -247,8 +215,11 @@ class Pilot(Logger):
         MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
         MSG_WARNING( self, "Shutting it down..."                   )
 
-        machine.CPUJobs = 0
-        machine.GPUJobs = 0
+
+        for queue, slot in self.__queue.items():
+          machine = self.db().getMachine(self.__cluster, queue, node['name'])
+          if machine:
+            machine.jobs = 0
 
         self.db().commit()
 
@@ -259,7 +230,7 @@ class Pilot(Logger):
               subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
               message = ("Node with name {} in unhealthy. Further information below:<br><br>* "+\
                   "Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
-                machine.getName(),
+                node['name'],
                 str(machineIsReady),
                 str(node['MemoryPressure']),
                 str(node['DiskPressure']),
@@ -273,134 +244,132 @@ class Pilot(Logger):
 
       # Node is not running nor ready, do nothing
       else:
-        MSG_WARNING( self, "The node %s is healthy.", node['name']            )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
-        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+        MSG_INFO( self, "The node %s is healthy.", node['name']            )
+        MSG_INFO( self, "    Ready               : %s", str(machineIsReady)              )
+        MSG_INFO( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+        MSG_INFO( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
 
 
 
 
 
 
-  # Test version
   def checkNodesHealthyWithLoadBalancer(self):
 
     nodes = self.orchestrator().getNodeStatus()
+    #for node in nodes:
 
-    for node in nodes:
+    #  MSG_INFO(self, "Checking %s healthy...", node['name'])
+    #  # Get the node database
+    #  machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
 
-      MSG_INFO(self, "Checking %s healthy...", node['name'])
-      # Get the node database
-      machine = self.db().getMachine(self.__cluster, self.__queue_name, node['name'])
+    #  machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
 
-      machineIsUnderPressure = (node["MemoryPressure"] or node["DiskPressure"])
-
-      machineIsRunning = ( machine.CPUJobs > 0 ) or ( machine.GPUJobs > 0 )
-
-
-      # If max(GPU/CPU)Jobs is zero than the node will be shut donw
-      machineIsReady = (node['Ready'] and ( (machine.maxCPUJobs > 0) or (machine.maxGPUJobs > 0) ) )
-
-      # Node is probably down (not ready and is running)
-      if ((not machineIsReady) and (machineIsRunning)):
-        MSG_WARNING( self, "The node %s is not healthy.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
-        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
-        MSG_WARNING( self, "Shutting it down..."                   )
-        # Disable the node
-        machine.CPUJobs = 0
-        machine.GPUJobs = 0
-        self.db().commit()
-        # Send the email to the admin
-        for user in self.db().getAllUsers():
-          if user.isAdmin():
-            try:
-              subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
-              message = ("Node with name {} in unhealthy. Further information below:<br><br>* "+\
-                  "Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
-                machine.getName(),
-                str(machineIsReady),
-                str(node['MemoryPressure']),
-                str(node['DiskPressure']),
-              ))
-              self.__postman.sendNotification(user.getUserName(), subject, message)
-            except Exception as e:
-              MSG_ERROR(self, e)
-              MSG_ERROR(self, "Couldn't send warning mail.")
-
-      # Should restart adding load to the node (it's ready but not running)
-      elif (not(machineIsRunning) and machineIsReady):
-        MSG_WARNING( self, "The node %s has recovered health.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
-        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
-        MSG_WARNING( self, "Restablishing workloads..."                   )
+    #  machineIsRunning = ( machine.CPUJobs > 0 ) or ( machine.GPUJobs > 0 )
 
 
-        if machine.maxCPUJobs>0:
-          machine.CPUJobs = 1
+    #  # If max(GPU/CPU)Jobs is zero than the node will be shut donw
+    #  machineIsReady = (node['Ready'] and ( (machine.maxCPUJobs > 0) or (machine.maxGPUJobs > 0) ) )
 
-        # GPU slots should be always maximum
-        machine.GPUJobs = machine.maxGPUJobs
-        self.db().commit()
+    #  # Node is probably down (not ready and is running)
+    #  if ((not machineIsReady) and (machineIsRunning)):
+    #    MSG_WARNING( self, "The node %s is not healthy.", node['name']                   )
+    #    MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
+    #    MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+    #    MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+    #    MSG_WARNING( self, "Shutting it down..."                   )
+    #    # Disable the node
+    #    machine.CPUJobs = 0
+    #    machine.GPUJobs = 0
+    #    self.db().commit()
+    #    # Send the email to the admin
+    #    for user in self.db().getAllUsers():
+    #      if user.isAdmin():
+    #        try:
+    #          subject = ("[LPS Cluster] FATAL - %s unready")%(machine.getName())
+    #          message = ("Node with name {} in unhealthy. Further information below:<br><br>* "+\
+    #              "Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> This node will be disabled until it's fixed".format(
+    #            machine.getName(),
+    #            str(machineIsReady),
+    #            str(node['MemoryPressure']),
+    #            str(node['DiskPressure']),
+    #          ))
+    #          self.__postman.sendNotification(user.getUserName(), subject, message)
+    #        except Exception as e:
+    #          MSG_ERROR(self, e)
+    #          MSG_ERROR(self, "Couldn't send warning mail.")
+
+    #  # Should restart adding load to the node (it's ready but not running)
+    #  elif (not(machineIsRunning) and machineIsReady):
+    #    MSG_WARNING( self, "The node %s has recovered health.", node['name']                   )
+    #    MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
+    #    MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+    #    MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+    #    MSG_WARNING( self, "Restablishing workloads..."                   )
 
 
-        # Send the email to the admin
-        for user in self.db().getAllUsers():
-          if user.isAdmin():
-            try:
-              subject = ("[LPS Cluster] INFO - %s restablished")%(machine.getName())
-              message = ("Node with name {} has recovered health. Further information "+\
-                  "below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> Setting CPUJobs to {} and GPUJobs to {}".format(
-                machine.getName(),
-                str(machineIsReady),
-                str(node['MemoryPressure']),
-                str(node['DiskPressure']),
-                machine.CPUJobs,
-                machine.GPUJobs
-              ))
-              self.__postman.sendNotification(user.getUserName(), subject, message)
-            except Exception as e:
-              MSG_ERROR(self, e)
-              MSG_ERROR(self, "Couldn't send warning mail.")
+    #    if machine.maxCPUJobs>0:
+    #      machine.CPUJobs = 1
 
-      # Node is up and running but suffering with pressure
-      elif (machineIsReady and (machineIsUnderPressure) and (machineIsRunning)):
-        MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
-        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
-        MSG_WARNING( self, "Reducing load..."                   )
-        # Reduce CPU load on node
-        if machine.CPUJobs > 0:
-          machine.CPUJobs -= 1
+    #    # GPU slots should be always maximum
+    #    machine.GPUJobs = machine.maxGPUJobs
+    #    self.db().commit()
 
-        self.db().commit()
 
-      # Node is up and running without any health issues
-      elif (machineIsReady and (not(machineIsUnderPressure)) and (machineIsRunning)):
-        MSG_WARNING( self, "The node %s is running and healthy.", node['name']              )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
-        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+    #    # Send the email to the admin
+    #    for user in self.db().getAllUsers():
+    #      if user.isAdmin():
+    #        try:
+    #          subject = ("[LPS Cluster] INFO - %s restablished")%(machine.getName())
+    #          message = ("Node with name {} has recovered health. Further information "+\
+    #              "below:<br><br>* Ready={}<br>* MemoryPressure={}<br>DiskPressure={}<br><br> Setting CPUJobs to {} and GPUJobs to {}".format(
+    #            machine.getName(),
+    #            str(machineIsReady),
+    #            str(node['MemoryPressure']),
+    #            str(node['DiskPressure']),
+    #            machine.CPUJobs,
+    #            machine.GPUJobs
+    #          ))
+    #          self.__postman.sendNotification(user.getUserName(), subject, message)
+    #        except Exception as e:
+    #          MSG_ERROR(self, e)
+    #          MSG_ERROR(self, "Couldn't send warning mail.")
 
-        # Increase load on node
-        if machine.CPUJobs == machine.maxCPUJobs:
-          MSG_WARNING( self, "Load already at full capacity.")
-        elif machine.CPUJobs <  machine.maxCPUJobs:
-          MSG_WARNING( self, "Increasing load...")
-          machine.CPUJobs += 1
+    #  # Node is up and running but suffering with pressure
+    #  elif (machineIsReady and (machineIsUnderPressure) and (machineIsRunning)):
+    #    MSG_WARNING( self, "The node %s is under pressure.", node['name']                   )
+    #    MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
+    #    MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+    #    MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+    #    MSG_WARNING( self, "Reducing load..."                   )
+    #    # Reduce CPU load on node
+    #    if machine.CPUJobs > 0:
+    #      machine.CPUJobs -= 1
 
-        self.db().commit()
+    #    self.db().commit()
 
-      # Node is not running nor ready, do nothing
-      else:
-        MSG_WARNING( self, "The node %s is not running nor ready.", node['name']                   )
-        MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
-        MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
-        MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+    #  # Node is up and running without any health issues
+    #  elif (machineIsReady and (not(machineIsUnderPressure)) and (machineIsRunning)):
+    #    MSG_WARNING( self, "The node %s is running and healthy.", node['name']              )
+    #    MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)              )
+    #    MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+    #    MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
+
+    #    # Increase load on node
+    #    if machine.CPUJobs == machine.maxCPUJobs:
+    #      MSG_WARNING( self, "Load already at full capacity.")
+    #    elif machine.CPUJobs <  machine.maxCPUJobs:
+    #      MSG_WARNING( self, "Increasing load...")
+    #      machine.CPUJobs += 1
+
+    #    self.db().commit()
+
+    #  # Node is not running nor ready, do nothing
+    #  else:
+    #    MSG_WARNING( self, "The node %s is not running nor ready.", node['name']                   )
+    #    MSG_WARNING( self, "    Ready               : %s", str(machineIsReady)               )
+    #    MSG_WARNING( self, "    MemoryPressure      : %s", str(node['MemoryPressure'])      )
+    #    MSG_WARNING( self, "    DiskPressure        : %s", str(node['DiskPressure'])        )
 
 
 

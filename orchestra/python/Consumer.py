@@ -30,10 +30,8 @@ class Consumer( Logger ):
     self.__hash = hash_object.hexdigest()
     # the namespace is the username
     self.__namespace = job.getTask().getUser().getUserName()
-    if node.device() is not None:
-      self.__name = 'user.' + self.__namespace + '.gpu.' + self.__hash
-    else: # To make easier to identify gpu jobs into the workload dashboard
-      self.__name = 'user.' + self.__namespace + '.' + self.__hash
+    queuename = job.getQueueName()
+    self.__name = queuename+ '.user.' + self.__namespace + '.' + self.__hash
     MSG_INFO(self, "Create consumer with name: %s for namespace: %s", self.__name, self.__namespace)
 
 
@@ -136,3 +134,4 @@ class Consumer( Logger ):
       logs = self.orchestrator().logs(self.name(), self.namespace())
       if logs != []:
         self.__logs = logs
+

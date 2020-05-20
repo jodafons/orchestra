@@ -15,14 +15,13 @@ from orchestra import Cluster
 
 class OrchestraDB(Logger):
 
-  def __init__( self, cluster=Cluster.LPS ):
+  def __init__( self, cluster=Cluster.LPS, url=CLUSTER_POSTGRES_URL ):
 
     Logger.__init__(self)
     self.__cluster = cluster
-    url = CLUSTER_POSTGRES_URL
 
     try: # Get the connection and create an session
-      MSG_DEBUG( self, "Connect to %s.", url )
+      MSG_INFO( self, "Connect to %s.", url )
       self.__engine = create_engine(url)
       Session= sessionmaker(bind=self.__engine)
       self.__session = Session()
@@ -50,13 +49,13 @@ class OrchestraDB(Logger):
                   secondaryDataPath="{}",
                   etBinIdx=None,
                   etaBinIdx=None,
-                  isGPU=False):
+                  queue='cpu_small'):
 
     try:
       # Create the task and append into the user area
-      desired_id = self.__session.query(Task).order_by(Task.id.desc()).first().id + 1
+      #desired_id = self.__session.query(Task).order_by(Task.id.desc()).first().id + 1
       task = Task(
-        id=desired_id,
+        #id=desired_id,
         taskName=taskName,
         inputFilePath=inputFilePath,
         outputFilePath=outputFilePath,
@@ -70,7 +69,7 @@ class OrchestraDB(Logger):
         secondaryDataPath=secondaryDataPath,
         etBinIdx=etBinIdx,
         etaBinIdx=etaBinIdx,
-        isGPU=isGPU
+        queueName=queue,
       )
       user.addTask(task)
       return task
@@ -80,12 +79,12 @@ class OrchestraDB(Logger):
 
 
 
-  def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}", isGPU=False ):
+  def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}" ):
 
     try:
-      desired_id = self.__session.query(Job).order_by(Job.id.desc()).first().id + 1
+      #desired_id = self.__session.query(Job).order_by(Job.id.desc()).first().id + 1
       job = Job(
-        id=desired_id,
+        #id=desired_id,
         configFilePath=configFilePath,
         containerImage=task.containerImage,
         configId=configId,
@@ -94,8 +93,8 @@ class OrchestraDB(Logger):
         retry=0,
         status="registered",
         priority=priority,
-        isGPU=isGPU,
         userId = task.userId,
+        queueName = task.getQueueName(),
       )
       task.addJob(job)
       return job
@@ -114,8 +113,6 @@ class OrchestraDB(Logger):
     except Exception as e:
       MSG_ERROR(self, e)
       return None
-
-
 
 
   def getTask( self, taskName ):
@@ -186,10 +183,8 @@ class OrchestraDB(Logger):
     self.session().close()
 
 
-
   def initialize( self ):
     return StatusCode.SUCCESS
-
 
 
   def execute( self ):
@@ -200,8 +195,6 @@ class OrchestraDB(Logger):
     self.commit()
     self.close()
     return StatusCode.SUCCESS
-
-
 
 
   def retryTask( self, taskname ):
@@ -252,7 +245,6 @@ class OrchestraDB(Logger):
 
 
 
-
   def getAllMachines(self, cluster , queue_name):
     if not self.isConnected():
       return False
@@ -269,7 +261,7 @@ class OrchestraDB(Logger):
     if not self.isConnected():
       return None
     try:
-      return self.session().query(Node).filter(and_( Node.cluster==cluster, Node.name==name)).first()
+      return self.session().query(Node).filter(Node.cluster==cluster).filter(and_( Node.queueName==queue_name, Node.name==name)).first()
     except Exception as e:
       MSG_ERROR(self, e)
       return None

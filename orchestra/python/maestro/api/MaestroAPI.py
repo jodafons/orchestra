@@ -453,9 +453,17 @@ class MaestroAPI (Logger):
         execCommand = request.form['execCommand']
         et = request.form['et']
         eta = request.form['eta']
-        gpu = False if request.form['gpu'] == '0' else True
+        queue = request.form['queue']
 
         import os
+
+
+        from orchestra.constants import allow_queue_names
+        if not queue in allow_queue_names:
+          return jsonify(
+            error_code = HTTPStatus.CONFLICT,
+            message = "The queue with name %s does not exist. Please check the name of all available queues" % queue
+          )
 
 
         if db.getUser(username).getTask(taskname) is not None:
@@ -480,10 +488,8 @@ class MaestroAPI (Logger):
           )
 
         if secondaryDS != "":
-          print (secondaryDS)
           secondaryDS = eval(secondaryDS)
           for key in secondaryDS.keys():
-            print('------> '+get_username_by_name(secondaryDS[key]))
             if db.getDataset(get_username_by_name(secondaryDS[key]), secondaryDS[key]) is None:
               return jsonify(
                 error_code = HTTPStatus.NOT_FOUND,
@@ -538,7 +544,7 @@ class MaestroAPI (Logger):
                               templateExecArgs=execCommand,
                               etBinIdx=et,
                               etaBinIdx=eta,
-                              isGPU=gpu,
+                              queue=queue,
                               )
           task.setStatus('hold')
           task.setStatus( Signal.WAITING )

@@ -50,8 +50,6 @@ class TaskParser(Logger):
       create_parser.add_argument('--sd','--secondaryDS', action='store', dest='secondaryDS', required=False,  default="{}",
                           help = "The secondary datasets to be append in the --exec command. This should be:" +
                           "--secondaryData='{'REF':'path/to/my/extra/data',...}'")
-      create_parser.add_argument('--gpu', action='store_true', dest='gpu', required=False, default=False,
-                          help = "Send these jobs to GPU slots")
       create_parser.add_argument('--et', action='store', dest='et', required=False,default=None,
                           help = "The ET region (ringer staff)")
       create_parser.add_argument('--eta', action='store', dest='eta', required=False,default=None,
@@ -60,6 +58,9 @@ class TaskParser(Logger):
                           help = "Use this as debugger.")
       create_parser.add_argument('--bypass', action='store_true', dest='bypass_test_job', required=False, default=False,
                           help = "Bypass the job test.")
+      create_parser.add_argument('--queue', action='store', dest='queue', required=True, default='cpu_small',
+                          help = "The cluste queue [cpu_small, nvidia or cpu_large]")
+
 
 
       retry_parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -114,8 +115,8 @@ class TaskParser(Logger):
     if args.mode == 'task':
       if args.option == 'create':
         self.create(args.taskname, args.dataFile, args.configFile, args.secondaryDS,
-                    args.execCommand,args.containerImage,args.et,args.eta,args.gpu,
-                    args.bypass_test_job, args.dry_run)
+                    args.execCommand,args.containerImage,args.et,args.eta,
+                    args.bypass_test_job, args.dry_run, args.queue)
       elif args.option == 'retry':
         self.retry(args.taskname)
       elif args.option == 'delete':
@@ -141,8 +142,8 @@ class TaskParser(Logger):
 
   def create( self, taskname, dataFile,
                     configFile, secondaryDS,
-                    execCommand, containerImage, et=None, eta=None, gpu=False,
-                    bypass_test_job=False, dry_run=False):
+                    execCommand, containerImage, et=None, eta=None,
+                    bypass_test_job=False, dry_run=False, queue='cpu_small'):
 
 
     # check task policy (user.username)
@@ -193,7 +194,7 @@ class TaskParser(Logger):
     # parser the secondary data in the exec command
     for key in secondaryDS.keys():
       if not key in execCommand:
-        MSG_FATAL( selrf, "The exec command must include %s into the string. This will substitute to %s when start",key, secondaryDS[key])
+        MSG_FATAL( self, "The exec command must include %s into the string. This will substitute to %s when start",key, secondaryDS[key])
 
 
 
@@ -228,8 +229,9 @@ class TaskParser(Logger):
                             templateExecArgs=execCommand,
                             etBinIdx=et,
                             etaBinIdx=eta,
-                            isGPU=gpu,
+                            queue=queue,
                             )
+        print(task)
         task.setSignal(Signal.WAITING)
         task.setStatus('hold')
 
@@ -257,7 +259,7 @@ class TaskParser(Logger):
           for key in _secondaryDS:
             command = command.replace( key  , _secondaryDS[key])
 
-          job = self.__db.createJob( task, _configFile, idx, execArgs=command, isGPU=gpu, priority=-1 )
+          job = self.__db.createJob( task, _configFile, idx, execArgs=command, priority=-1 )
           job.setStatus('assigned' if bypass_test_job else 'registered')
 
 

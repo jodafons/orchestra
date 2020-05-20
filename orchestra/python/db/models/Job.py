@@ -29,10 +29,10 @@ class Job (Base, db.Model):
 
     status = Column(String, default="registered")
     cluster  = Column( String )
-    isGPU = Column(Boolean, default=False)
+    queueName = Column( String )
+
     priority = Column(Integer)
     retry = Column(Integer, default=0)
-
 
     # Foreign
     task = relationship("Task", back_populates="jobs")
@@ -82,3 +82,9 @@ class Job (Base, db.Model):
 
     def getTimer(self):
       return timer
+
+
+    def getQueueName(self):
+      return self.queueName
+
+
