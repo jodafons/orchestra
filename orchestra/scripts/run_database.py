@@ -11,11 +11,9 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base.metadata.create_all(engine)
 
-users = ["jodafons", "gabriel.milan"]
-
-
-obj = Worker( username = "jodafons", maxPriority = 1000, email="jodafons@lps.ufrj.br", active=True  )
-session.add(obj)
+#users = ["jodafons", "gabriel.milan"]
+#obj = Worker( username = "jodafons", maxPriority = 1000, email="jodafons@lps.ufrj.br", active=True  )
+#session.add(obj)
 
 
 
