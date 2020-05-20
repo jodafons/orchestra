@@ -268,7 +268,7 @@ class UserView(AdminAccessModelView):
 class NodeView(AdminAccessModelView):
   column_editable_list = ['maxJobs']
   column_searchable_list = ['name', 'maxJobs', 'ip', 'cluster', 'queueName']
-  column_exclude_list = []
+  column_exclude_list = ['jobs']
   # form_excluded_columns = column_exclude_list
   column_details_exclude_list = column_exclude_list
   column_filters = column_searchable_list
