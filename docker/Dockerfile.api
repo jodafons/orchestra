@@ -1,0 +1,5 @@
+FROM orchestra/base
+
+COPY run_api.sh /root/run_api.sh
+
+CMD ["/root/run_api.sh"]

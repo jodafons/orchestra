@@ -1,0 +1,5 @@
+FROM orchestra/base
+
+COPY run_main.sh /root/run_main.sh
+
+CMD ["/root/run_main.sh"]
