@@ -6,10 +6,8 @@ from orchestra.kubernetes import Orchestrator
 from orchestra.constants import *
 from orchestra.slots import *
 
-url = "postgres://postgres:postgres@localhost:5432/lps_dev"
-
 # Create DB API
-db  = OrchestraDB( cluster=Cluster.LPS, url=url)
+db  = OrchestraDB( cluster=Cluster.LPS)
 
 # Create all services
 schedule      = Schedule( "Schedule", LCGRule() )
