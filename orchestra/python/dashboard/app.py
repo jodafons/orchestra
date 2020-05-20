@@ -266,9 +266,9 @@ class UserView(AdminAccessModelView):
   details_modal = True
 
 class NodeView(AdminAccessModelView):
-  column_editable_list = ['maxCPUJobs', 'maxGPUJobs']
-  column_searchable_list = ['name', 'maxCPUJobs', 'maxGPUJobs', 'cluster']
-  column_exclude_list = ['queueName']
+  column_editable_list = ['maxJobs']
+  column_searchable_list = ['name', 'maxJobs', 'ip', 'cluster', 'queueName']
+  column_exclude_list = []
   # form_excluded_columns = column_exclude_list
   column_details_exclude_list = column_exclude_list
   column_filters = column_searchable_list
