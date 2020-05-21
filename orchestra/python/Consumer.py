@@ -136,7 +136,7 @@ class Consumer( Logger ):
       if answer == Status.DONE:
         # Check for any output file into the job directory
         output = self.job().getTheOutputStoragePath()
-        flist = glob.glob(output)
+        flist = glob.glob(output+"/*")
         print(flist)
         MSG_INFO(self, "The job with name (%s) finished with %d files into the output directory: %s", self.name(), len(flist), output)
         return Status.FAILED if len(flist)==0 else Status.DONE
