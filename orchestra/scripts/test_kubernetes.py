@@ -12,8 +12,15 @@ orchestrator  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitu
 
 
 
-nodes = orchestrator.getNodeStatus()
+#nodes = orchestrator.getNodeStatus()
 
-pprint(nodes)
+#pprint(nodes)
+
+logs = orchestrator.logs("nvidia.user.mverissi.3764e201d86245fa0574644def5c20fa-pt9x4", 'mverissi')
+print(len(logs))
+
+f = open('test.log','w')
+f.write(logs[0])
+f.close()
 
 

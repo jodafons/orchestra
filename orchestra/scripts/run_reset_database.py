@@ -5,12 +5,21 @@ from orchestra.kubernetes import Orchestrator
 from orchestra.constants import *
 
 
-db            = OrchestraDB(cluster=Cluster.LPS)
+db            = OrchestraDB(cluster=Cluster.LPS, url="postgres://postgres:postgres@localhost:5432/lps_dev")
 
+#name='mverissi'
+#name='plisboa'
+#name='pedrosergiot'
+name='gabriel-milan'
 
-for user in db.getAllUsers():
-  for task in user.getAllTasks():
-    if task.id==8:
-      for job in task.getAllJobs():
-        print('id = %d, status = %s'%(job.id,job.getStatus()) )
+#queue='nvidia'
+queue='cpu_small'
+
+user = db.getUser(name)
+for task in user.getAllTasks():
+  task.queueName=queue
+  for job in task.getAllJobs():
+    job.queueName=queue
+
+db.commit()
 

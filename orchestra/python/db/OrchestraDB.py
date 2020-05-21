@@ -274,6 +274,9 @@ class OrchestraDB(Logger):
       return None
 
     try:
+
+      desired_id = self.__session.query(Dataset).order_by(Dataset.id.desc()).first().id + 1
+      dataset.id = desired_id
       self.session().add(dataset)
       return True
     except Exception as e:

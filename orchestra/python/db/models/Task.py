@@ -89,7 +89,7 @@ class Task (Base, db.Model):
     self.taskName = value
 
   def getTaskName(self):
-    self.taskName
+    return self.taskName
 
 
   def setCluster( self, name ):

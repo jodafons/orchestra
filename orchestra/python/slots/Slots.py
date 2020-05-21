@@ -161,8 +161,6 @@ class Slots( Logger ):
 
     for idx, consumer in enumerate(self.__slots):
 
-      # Update consumer logs
-      consumer.updateLogs()
 
       # Check if we have the kill signed
       if consumer.job().getStatus() == Status.KILL:
@@ -183,6 +181,7 @@ class Slots( Logger ):
         if consumer.execute().isFailure():
           # Tell to DB that this job is in broken status
           consumer.job().setStatus( Status.BROKEN )
+          consumer.saveLogs()
           consumer.finalize()
           consumer.node().unlock()
           self.__slots.remove(consumer)
@@ -193,8 +192,7 @@ class Slots( Logger ):
       elif consumer.status() is Status.FAILED:
         # Tell to db that this job was failed
         consumer.job().setStatus( Status.FAILED )
-        MSG_WARNING(self, Color.CGREEN2 + "=====> JOB #{} FAILED. SENDING EXPERIMENTAL LOGS THROUGH E-MAIL TO GABRIEL".format(consumer.job().id) + Color.CEND)
-        self.sendJobLogs(consumer)
+        consumer.saveLogs()
         consumer.finalize()
         # Remove this job into the stack
         consumer.node().unlock()
@@ -206,6 +204,7 @@ class Slots( Logger ):
       elif consumer.status() is Status.KILL:
         MSG_INFO(self, "Prepare to kill the job using kubernetes")
         # Tell to the database that this job was killed
+        consumer.saveLogs()
         consumer.job().setStatus( Status.KILLED )
         MSG_INFO(self, "Finalize the consumer.")
         consumer.finalize()
@@ -219,6 +218,7 @@ class Slots( Logger ):
 
       elif consumer.status() is Status.DONE:
         consumer.job().setStatus( Status.DONE )
+        consumer.saveLogs()
         consumer.finalize()
         consumer.node().unlock()
 

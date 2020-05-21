@@ -186,8 +186,10 @@ class DatasetParser( Logger ):
 
     # Let's registry and upload into the database
     try:
+
       # Create the new dataset
-      ds  = Dataset( username=username, dataset=datasetname, cluster=self.__db.getCluster())
+      desired_id = self.__db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
+      ds  = Dataset( id=desired_id,username=username, dataset=datasetname, cluster=self.__db.getCluster())
 
       # check if file exist into the storage
       # Get file and assure file name is OK
@@ -203,13 +205,17 @@ class DatasetParser( Logger ):
 
       os.system( 'cp -r {FILE} {DESTINATION}'.format(FILE=filename, DESTINATION=destination_dir) )
       # Loop over files
-      for path in expandFolders(destination_dir):
+      for idx, path in enumerate(expandFolders(destination_dir)):
         MSG_INFO( self, "Registry %s into %s", path,datasetname)
         hash_object = hashlib.md5(str.encode(path))
-        ds.addFile( File(path=path, hash=hash_object.hexdigest()) )
+        desired_id = self.__db.session().query(File).order_by(File.id.desc()).first().id + 1 + idx
+        file= File(path=path, hash=hash_object.hexdigest(),id=desired_id)
+        ds.addFile(file)
+
       self.__db.createDataset(ds)
       self.__db.commit()
-    except:
-        MSG_FATAL( self, "Impossible to registry the dataset(%s)", datasetname)
+    except Exception as e:
+
+      MSG_FATAL( self, "Impossible to registry the dataset(%s): %s", datasetname, e)
 
 

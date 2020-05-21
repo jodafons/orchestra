@@ -240,7 +240,6 @@ class TaskParser(Logger):
                             etaBinIdx=eta,
                             queue=queue,
                             )
-        print(task)
         task.setSignal(Signal.WAITING)
         task.setStatus('hold')
 
@@ -248,7 +247,7 @@ class TaskParser(Logger):
 
         _dataFile = self.__db.getDataset(username, dataFile).getAllFiles()[0].getPath()
         _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' ) # to docker path
-        _outputFile = '/volume/'+username+'/'+taskname # to docker path
+
         _secondaryDS = {}
 
         for key in secondaryDS.keys():
@@ -257,6 +256,7 @@ class TaskParser(Logger):
 
         for idx, file in enumerate(configFiles):
 
+          _outputFile = '/volume/'+username+'/'+taskname+ '/job_configId_%d'%idx # to docker path
           _configFile = file.getPath()
           _configFile = _configFile.replace(CLUSTER_VOLUME, '/volume') # to docker path
 
@@ -272,8 +272,10 @@ class TaskParser(Logger):
           job.setStatus('assigned' if bypass_test_job else 'registered')
 
 
-        ds  = Dataset( username=username, dataset=taskname, cluster=self.__db.getCluster(), task_usage=True)
-        ds.addFile( File(path=outputFile, hash='' ) ) # the real path
+        desired_id = self.__db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
+        ds  = Dataset( id=desired_id, username=username, dataset=taskname, cluster=self.__db.getCluster(), task_usage=True)
+        desired_id = self.__db.session().query(File).order_by(File.id.desc()).first().id + 1
+        ds.addFile( File(path=outputFile, hash='', id=desired_id ) ) # the real path
         self.__db.createDataset(ds)
         self.createBoard( user, task )
         task.setStatus('registered')

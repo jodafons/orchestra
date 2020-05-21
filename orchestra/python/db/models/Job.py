@@ -88,3 +88,18 @@ class Job (Base, db.Model):
       return self.queueName
 
 
+    def getTaskName(self):
+      return self.getTask().getTaskName()
+
+
+    def getUserName(self):
+      return self.getTask().getUser().getUserName()
+
+
+    def getTheOutputStoragePath(self):
+      from orchestra.constants import CLUSTER_VOLUME as volume
+      from orchestra.constants import OUTPUT_DIR
+      return volume + "/" + self.getUserName() + "/" + self.getTaskName() + "/" + OUTPUT_DIR%self.configId
+
+
+
