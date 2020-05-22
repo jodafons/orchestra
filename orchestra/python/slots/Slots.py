@@ -148,11 +148,6 @@ class Slots( Logger ):
     return StatusCode.SUCCESS
 
 
-  #
-  # EXPERIMENTAL
-  #
-  def sendJobLogs (self, consumer):
-    self.postman.sendLogs('gabriel-milan', "[LPS Cluster][Experimental] Job #{} failed".format(consumer.job().id), "Bla bla bla", logs=consumer.logs)
 
 
 
@@ -204,8 +199,8 @@ class Slots( Logger ):
       elif consumer.status() is Status.KILL:
         MSG_INFO(self, "Prepare to kill the job using kubernetes")
         # Tell to the database that this job was killed
-        consumer.saveLogs()
         consumer.job().setStatus( Status.KILLED )
+        consumer.saveLogs()
         MSG_INFO(self, "Finalize the consumer.")
         consumer.finalize()
         consumer.node().unlock()

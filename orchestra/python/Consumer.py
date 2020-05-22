@@ -137,7 +137,6 @@ class Consumer( Logger ):
         # Check for any output file into the job directory
         output = self.job().getTheOutputStoragePath()
         flist = glob.glob(output+"/*")
-        print(flist)
         MSG_INFO(self, "The job with name (%s) finished with %d files into the output directory: %s", self.name(), len(flist), output)
         return Status.FAILED if len(flist)==0 else Status.DONE
       else:
@@ -151,6 +150,11 @@ class Consumer( Logger ):
       output = self.job().getTheOutputStoragePath() + "/" + LOGFILE_NAME%self.job().configId
       logs = self.orchestrator().logs(self.name(), self.namespace())
       flog = open(output,'w')
+      flog.write("+-----------------------------------------------------------------------------+\n")
+      flog.write("Job name          : %s\n"%self.name()                                             )
+      flog.write("Node              : %s\n"%self.node().name()                                      )
+      flog.write("Out with status   : %s\n"%self.job().getStatus()                                  )
+      flog.write("+-----------------------------------------------------------------------------+\n")
       try:
         flog.write(logs[0])
       except Exception as e:
