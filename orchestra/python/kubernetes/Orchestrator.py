@@ -134,6 +134,7 @@ class Orchestrator(Logger):
     preExecArgs = "export CUDA_DEVICE_ORDER='PCI_BUS_ID'"
     #posExecArgs = "if ! (($?)); then exit 1; fi"
     posExecArgs = "exit $?"
+    #posExecArgs = 'export OUTPUT_SIG=$? && echo "job output with signal $OUTPUT_SIG" && exit $OUTPUT_SIG'
 
     if node.device() is not None:
       MSG_INFO( self, "Setting this (%s) with GPU device (%d)", name, node.device() )

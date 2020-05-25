@@ -12,8 +12,8 @@ CLUSTER_VOLUME = '/mnt/cluster-volume' # LPS default
 allow_queue_names = ["cpu_small" , "cpu_large", "nvidia"]
 
 
-LOGFILE_NAME = "job_configID_%d.log"
-OUTPUT_DIR = "job_configID_%d"
+LOGFILE_NAME = "job_configId_%d.log"
+OUTPUT_DIR = "job_configId_%d"
 
 # ** Orchestra constants **
 

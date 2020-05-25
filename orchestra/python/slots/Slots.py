@@ -221,11 +221,7 @@ class Slots( Logger ):
         self.db().getMachine( self.__cluster, self.__queue_name, consumer.node().name() ).completed()
         self.__slots.remove(consumer)
 
-
-
     self.db().commit()
-
-
 
     return StatusCode.SUCCESS
 
