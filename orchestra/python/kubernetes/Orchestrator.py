@@ -77,15 +77,27 @@ class Orchestrator(Logger):
   def status( self, name, namespace, max_fail=MAX_FAIL ):
     if self.exist( name, namespace ):
       resp = {}
+
       try:
         resp = self.batch().read_namespaced_job_status( name=name, namespace=namespace )
       except Exception as e:
+        MSG_ERROR(self, "It is not possible to retrieve the bacth response from kubernetes server.")
         MSG_ERROR(self, e)
+        # Nothing to do in this case, return failed
         return Status.FAILED
-      timeout = datetime.timedelta(days=5)
-      if (datetime.datetime.now()-resp.status.start_time.replace(tzinfo=None))>timeout:
-        return Status.FAILED
-      elif (resp.status.failed is not None) and resp.status.failed > 0:
+
+
+      try:
+        timeout = datetime.timedelta(days=5)
+        if (datetime.datetime.now()-resp.status.start_time.replace(tzinfo=None))>timeout:
+          return Status.FAILED
+      except Exception as e:
+        # not be able to retrieve the time clock.
+        MSG_ERROR(self, "It's  not possible to calculate the timout. Let's skip this checker.")
+        MSG_ERROR(self,e)
+
+
+      if (resp.status.failed is not None) and resp.status.failed > 0:
         return Status.FAILED
       elif resp.status.succeeded:
         return Status.DONE
@@ -136,6 +148,7 @@ class Orchestrator(Logger):
     posExecArgs = "exit $?"
     #posExecArgs = 'export OUTPUT_SIG=$? && echo "job output with signal $OUTPUT_SIG" && exit $OUTPUT_SIG'
 
+    MSG_INFO( self, Color.CVIOLET2+"Launching job using kubernetes... into %s"+Color.CEND, node.name())
     if node.device() is not None:
       MSG_INFO( self, "Setting this (%s) with GPU device (%d)", name, node.device() )
       template['spec']['template']['spec']['containers'][0]['resources']=\
@@ -154,8 +167,7 @@ class Orchestrator(Logger):
 
     template['spec']['template']['spec']['containers'][0]['args']=[command]
 
-    # Send the job configuration to cluster kube server
-    MSG_INFO( self, Color.CVIOLET2+"Launching job using kubernetes..."+Color.CEND)
+
 
     resp = self.batch().create_namespaced_job(body=template, namespace=namespace)
     name = resp.metadata.name

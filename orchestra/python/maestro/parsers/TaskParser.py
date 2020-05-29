@@ -60,6 +60,10 @@ class TaskParser(Logger):
                           help = "Bypass the job test.")
       create_parser.add_argument('--queue', action='store', dest='queue', required=True, default='cpu_small',
                           help = "The cluste queue [cpu_small, nvidia or cpu_large]")
+      create_parser.add_argument('--is_dummy_data', action='store_true', dest='is_dummy_data', required=False,
+                          help = "The data input is a dummy dataset. ignore the %DATA")
+      create_parser.add_argument('--is_dummy_config', action='store_true', dest='is_dummy_config', required=False,
+                          help = "The config input is a dummy dataset. ignore the %IN")
 
 
 
@@ -116,7 +120,8 @@ class TaskParser(Logger):
       if args.option == 'create':
         self.create(args.taskname, args.dataFile, args.configFile, args.secondaryDS,
                     args.execCommand,args.containerImage,args.et,args.eta,
-                    args.bypass_test_job, args.dry_run, args.queue)
+                    args.bypass_test_job, args.dry_run, args.queue, args.is_dummy_data,
+                    args.is_dummy_config)
       elif args.option == 'retry':
         self.retry(args.taskname)
       elif args.option == 'delete':
@@ -143,7 +148,8 @@ class TaskParser(Logger):
   def create( self, taskname, dataFile,
                     configFile, secondaryDS,
                     execCommand, containerImage, et=None, eta=None,
-                    bypass_test_job=False, dry_run=False, queue='cpu_small'):
+                    bypass_test_job=False, dry_run=False, queue='cpu_small',
+                    is_dummy_data=False, is_dummy_config=False):
 
 
     # check task policy (user.username)
@@ -190,12 +196,14 @@ class TaskParser(Logger):
       if self.__db.getDataset(username, secondaryDS[key]) is None:
         MSG_FATAL( self, "The secondary data file (%s) does not exist into the database. Should be registry first.", secondaryDS[key])
 
-
     # check exec command policy
-    if not '%DATA' in execCommand:
+    if (not is_dummy_data) and (not '%DATA' in execCommand):
       MSG_FATAL( self,  "The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
-    if not '%IN' in execCommand:
+
+    if (not is_dummy_config) and (not '%IN' in execCommand):
       MSG_FATAL( self, "The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
+
+
     if not '%OUT' in execCommand:
       MSG_FATAL( self, "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
 
@@ -499,7 +507,8 @@ class TaskParser(Logger):
   #
   def createBoard( self , user, task):
 
-    board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
+    desired_id = self.__db.session().query(Board).order_by(Board.id.desc()).first().id + 1
+    board = Board( username=user.username, taskId=task.id, taskName=task.taskName, id=desired_id )
     board.jobs = len(task.getAllJobs())
     board.registered = board.jobs
     board.assigned=board.testing=board.running=board.failed=board.done=board.killed=0
