@@ -404,7 +404,7 @@ class MaestroAPI (Logger):
             message=answer
           )
         else:
-          MSG_INFO(self, answer)
+          print( answer)
           return jsonify(
             error_code = HTTPStatus.OK,
             message = "Success!"
@@ -429,7 +429,7 @@ class MaestroAPI (Logger):
             message = answer
           )
         else:
-          MSG_INFO(self, answer)
+          print( answer)
           return jsonify(
             error_code = HTTPStatus.OK,
             message = "Success!"
@@ -454,7 +454,7 @@ class MaestroAPI (Logger):
             message = answer
           )
         else:
-          MSG_INFO(self, answer)
+          print( answer)
           return jsonify(
             error_code = HTTPStatus.OK,
             message = "Success!"
@@ -482,7 +482,7 @@ class MaestroAPI (Logger):
             message = answer
           )
         else:
-          MSG_INFO(self, answer)
+          print( answer)
           return jsonify(
             error_code = HTTPStatus.OK,
             message = "Success!"
@@ -490,6 +490,35 @@ class MaestroAPI (Logger):
 
 
     ###
+
+
+    ###
+    class Queue (Resource):
+
+      def post (self):
+
+        auth = pickledAuth(request.form['credentials'], db)
+        if auth.json['error_code'] != 200:
+          return auth
+
+        name = request.form['name']
+
+        # queue
+        status, answer = TaskParser(db).queue(name)
+
+        if status.isFailure():
+          return jsonify(
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message = answer
+          )
+        else:
+          print( answer)
+          return jsonify(
+            error_code = HTTPStatus.OK,
+            message=answer.get_string()
+          )
+
+
 
 
 
@@ -506,6 +535,7 @@ class MaestroAPI (Logger):
     self.__api.add_resource(ListTasks, '/list-tasks')
     self.__api.add_resource(ListTasksPy, '/list-tasks-py')
     self.__api.add_resource(KillTask, '/kill-task')
+    self.__api.add_resource(Queue, '/queue')
 
   def run (self):
     self.__app.run (host = '0.0.0.0', port = API_PORT)

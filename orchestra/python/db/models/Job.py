@@ -68,7 +68,7 @@ class Job (Base, db.Model):
       self.priority = priority
 
 
-    def getPriority(sefl):
+    def getPriority(self):
       return self.priority
 
 

@@ -23,6 +23,36 @@ import hashlib
 import argparse
 
 
+def getStatus(status):
+  from Gaugi import Color
+  if status == 'registered':
+    return Color.CWHITE2+"REGISTERED"+Color.CEND
+  elif status == 'assigned':
+    return Color.CWHITE2+"ASSIGNED"+Color.CEND
+  elif status == 'testing':
+    return Color.CGREEN2+"TESTING"+Color.CEND
+  elif status == 'running':
+    return Color.CGREEN2+"RUNNING"+Color.CEND
+  elif status == 'done':
+    return Color.CGREEN2+"DONE"+Color.CEND
+  elif status == 'failed':
+    return Color.CGREEN2+"DONE"+Color.CEND
+  elif status == 'killed':
+    return Color.CRED2+"KILLED"+Color.CEND
+  elif status == 'finalized':
+    return Color.CRED2+"FINALIZED"+Color.CEND
+  elif status == 'broken':
+    return Color.CRED2+"BROKEN"+Color.CEND
+  elif status == 'hold':
+    return Color.CRED2+"HOLD"+Color.CEND
+  elif status == 'removed':
+    return Color.CRED2+"REMOVED"+Color.CEND
+  elif status == 'to_be_removed':
+    return Color.CRED2+"REMOVING"+Color.CEND
+  elif status == 'to_be_removed_soon':
+    return Color.CRED2+"REMOVING"+Color.CEND
+
+
 
 class TaskParser(Logger):
 
@@ -88,6 +118,10 @@ class TaskParser(Logger):
       kill_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
                     help = "The taskname to be killed.")
 
+      queue_parser = argparse.ArgumentParser(description = '', add_help = False)
+      queue_parser.add_argument('-n','--name', action='store', dest='name', required=False,
+                    help = "The queue name")
+
 
 
 
@@ -101,6 +135,7 @@ class TaskParser(Logger):
       subparser.add_parser('delete', parents=[delete_parser])
       subparser.add_parser('list', parents=[list_parser])
       subparser.add_parser('kill', parents=[kill_parser])
+      subparser.add_parser('queue', parents=[queue_parser])
       args.add_parser( 'task', parents=[parent] )
 
 
@@ -155,6 +190,15 @@ class TaskParser(Logger):
           MSG_FATAL(self, answer)
         else:
           MSG_INFO(self, answer)
+
+      elif args.option == 'queue':
+        status, answer = self.queue(args.name)
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          print(answer)
+
+
 
       else:
         MSG_FATAL(self, "option not available.")
@@ -425,34 +469,6 @@ class TaskParser(Logger):
 
 
     from Gaugi import Color
-    def getStatus(status):
-      if status == 'registered':
-        return Color.CWHITE2+"REGISTERED"+Color.CEND
-      elif status == 'assigned':
-        return Color.CWHITE2+"ASSIGNED"+Color.CEND
-      elif status == 'testing':
-        return Color.CGREEN2+"TESTING"+Color.CEND
-      elif status == 'running':
-        return Color.CGREEN2+"RUNNING"+Color.CEND
-      elif status == 'done':
-        return Color.CGREEN2+"DONE"+Color.CEND
-      elif status == 'failed':
-        return Color.CGREEN2+"DONE"+Color.CEND
-      elif status == 'killed':
-        return Color.CRED2+"KILLED"+Color.CEND
-      elif status == 'finalized':
-        return Color.CRED2+"FINALIZED"+Color.CEND
-      elif status == 'broken':
-        return Color.CRED2+"BROKEN"+Color.CEND
-      elif status == 'hold':
-        return Color.CRED2+"HOLD"+Color.CEND
-      elif status == 'removed':
-        return Color.CRED2+"REMOVED"+Color.CEND
-      elif status == 'to_be_removed':
-        return Color.CRED2+"REMOVING"+Color.CEND
-      elif status == 'to_be_removed_soon':
-        return Color.CRED2+"REMOVING"+Color.CEND
-
 
     from prettytable import PrettyTable
     t = PrettyTable([
@@ -567,6 +583,50 @@ class TaskParser(Logger):
     board.status = task.status
     self.__db.session().add(board)
 
+
+
+  def queue( self , queuename ):
+
+    from orchestra.constants import allow_queue_names
+    if not queuename in allow_queue_names:
+      return (StatusCode.FATAL, "The queue with name %s does not exist. Please check the name of all available queues"% queue )
+
+
+
+
+
+
+    from Gaugi import Color
+
+
+    from prettytable import PrettyTable
+    t = PrettyTable([
+                      Color.CGREEN2 + 'username'    + Color.CEND,
+                      Color.CGREEN2 + 'Queue'       + Color.CEND,
+                      Color.CGREEN2 + 'Taskname'    + Color.CEND,
+                      Color.CGREEN2 + 'job'         + Color.CEND,
+                      Color.CGREEN2 + 'priority'    + Color.CEND,
+                      Color.CGREEN2 + 'Status'      + Color.CEND,
+                      ])
+    from sqlalchemy import and_, or_
+    from sqlalchemy import desc
+
+
+    assigned_jobs = self.__db.session().query(Job).filter(Job.cluster=='LPS').filter(  and_( Job.status==Status.ASSIGNED ,
+        Job.queueName==queuename) ).order_by(desc(Job.priority)).limit(10).with_for_update().all()
+    assigned_jobs.reverse()
+
+    running_jobs = self.__db.session().query(Job).filter(Job.cluster=='LPS').filter(  and_( Job.status==Status.RUNNING ,
+        Job.queueName==queuename) ).order_by(desc(Job.priority)).with_for_update().all()
+    running_jobs.reverse()
+
+
+    for job in running_jobs:
+      t.add_row(  [job.getUserName(), job.getQueueName(), job.getTaskName(), job.configId, job.getPriority(), getStatus(job.status)] )
+    for job in assigned_jobs:
+      t.add_row(  [job.getUserName(), job.getQueueName(), job.getTaskName(), job.configId, job.getPriority(), getStatus(job.status)] )
+
+    return (StatusCode.SUCCESS, t)
 
 
 
