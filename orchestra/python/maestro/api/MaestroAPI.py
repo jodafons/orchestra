@@ -419,21 +419,25 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-        taskname = request.form['taskname']
+        #taskname = request.form['taskname']
+        #status, answer = TaskParser(db).delete(taskname, remove=False)
 
-        status, answer = TaskParser(db).delete(taskname, remove=False)
-
-        if status.isFailure():
-          return jsonify(
-            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            message = answer
-          )
-        else:
-          print( answer)
-          return jsonify(
+        #if status.isFailure():
+        #  return jsonify(
+        #    error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        #    message = answer
+        #  )
+        #else:
+        #  print( answer)
+        #  return jsonify(
+        #    error_code = HTTPStatus.OK,
+        #    message = "Success!"
+        #  )
+        return jsonify(
             error_code = HTTPStatus.OK,
-            message = "Success!"
+            message = "The external user is not allow to delete tasks. Please, contanct the administrator."
           )
+
 
     ###
 

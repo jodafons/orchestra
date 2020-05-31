@@ -108,6 +108,9 @@ class TaskParser(Logger):
                     help = "The task name to be remove")
       delete_parser.add_argument('--remove', action='store_true', dest='remove', required=False,
                     help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
+      delete_parser.add_argument('--force', action='store_true', dest='force', required=False,
+                    help = "Force delete.")
+
 
 
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -169,7 +172,7 @@ class TaskParser(Logger):
 
       # delete option
       elif args.option == 'delete':
-        status , answer = self.delete(args.taskname, args.remove)
+        status , answer = self.delete(args.taskname, remove=args.remove, force=args.force)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -377,7 +380,7 @@ class TaskParser(Logger):
 
 
 
-  def delete( self, taskname, remove=False ):
+  def delete( self, taskname, remove=False, force=False ):
 
 
     if taskname.split('.')[0] != 'user':
@@ -395,8 +398,9 @@ class TaskParser(Logger):
 
 
     # Check possible status before continue
-    if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE, Status.TO_BE_REMOVED, Status.TO_BE_REMOVED_SOON]:
-      return (StatusCode.FATAL, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status."% task.getStatus() )
+    if not force:
+      if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE, Status.TO_BE_REMOVED, Status.TO_BE_REMOVED_SOON]:
+        return (StatusCode.FATAL, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status."% task.getStatus() )
 
 
     id = task.id
@@ -404,55 +408,59 @@ class TaskParser(Logger):
     # remove all jobs that allow to this task
     try:
       self.__db.session().query(Job).filter(Job.taskId==id).delete()
+      self.__db.commit()
     except Exception as e:
-      MSG_ERROR(self,e)
-      return (StatusCode.FATAL, "Impossible to remove Job lines from (%d) task"%id )
+      MSG_WARNING(self,e)
+      #return (StatusCode.FATAL, "Impossible to remove Job lines from (%d) task"%id )
 
 
     # remove the task table
     try:
       self.__db.session().query(Task).filter(Task.id==id).delete()
+      self.__db.commit()
     except Exception as e:
-      MSG_ERROR(self,e)
-      return (StatusCode.FATAL, "Impossible to remove Task lines from (%d) task"%id )
+      MSG_WARNING(self,e)
+      #return (StatusCode.FATAL, "Impossible to remove Task lines from (%d) task"%id )
 
     # remove the board table
     try:
       self.__db.session().query(Board).filter(Board.taskId==id).delete()
+      self.__db.commit()
     except Exception as e:
-      MSG_ERROR(self,e)
-      return (StatusCode.FATAL, "Impossible to remove Task board lines from (%d) task"%id )
+      MSG_WARNING(self,e)
+      #return (StatusCode.FATAL, "Impossible to remove Task board lines from (%d) task"%id )
 
 
     # prepare to remove from database
-    ds = self.__db.getDataset( username, taskname )
+    try:
+      ds = self.__db.getDataset( username, taskname )
+      if not ds.task_usage:
+        MSG_ERROR( "This dataset is not task usage. There is something strange..." )
 
-    if not ds.task_usage:
-      return (StatusCode.FATAL, "This dataset is not task usage. There is something strange..." )
+      for file in ds.getAllFiles():
+        # Delete the file inside of the dataset
+        self.__db.session().query(File).filter( File.id==file.id ).delete()
 
-
-    for file in ds.getAllFiles():
-      # Delete the file inside of the dataset
-      self.__db.session().query(File).filter( File.id==file.id ).delete()
-
-
-    # Delete the dataset
-    self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
-
-    if remove:
-      # The path to the dataset in the cluster
-      file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
-      file_dir = file_dir.replace('//','/')
-      # Delete the file from the storage
-      # check if this path exist
-      if os.path.exists(file_dir):
-        command = 'rm -rf {FILE}'.format(FILE=file_dir)
-        print(command)
-      else:
-        MSG_ERROR(self, "This dataset does not exist into the database (%s)", file_dir)
+      # Delete the dataset
+      self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
+      self.__db.commit()
+    except Exception as e:
+      MSG_WARNING(self,e)
 
 
-    self.__db.commit()
+    try:
+      if remove:
+        file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
+        file_dir = file_dir.replace('//','/')
+        if os.path.exists(file_dir):
+          command = 'rm -rf {FILE}'.format(FILE=file_dir)
+          print(command)
+        else:
+          MSG_ERROR(self, "This dataset does not exist into the database (%s)", file_dir)
+    except Exception as e:
+      MSG_ERROR(self, e)
+
+
     return (StatusCode.SUCCESS, "Succefully deleted.")
 
 
