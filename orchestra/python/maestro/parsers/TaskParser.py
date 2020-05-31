@@ -5,6 +5,7 @@ from Gaugi.messenger import LoggingLevel, Logger
 from Gaugi.messenger.macros import *
 from Gaugi import csvStr2List, expandFolders
 from Gaugi import load
+from Gaugi import StatusCode
 
 # Connect to DB
 from orchestra.constants import CLUSTER_VOLUME
@@ -71,32 +72,21 @@ class TaskParser(Logger):
       retry_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
                     help = "The task name to be retry")
 
+
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
       delete_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
                     help = "The task name to be remove")
-      delete_parser.add_argument('--remove_files', action='store_true', dest='remove_files', required=False,
+      delete_parser.add_argument('--remove', action='store_true', dest='remove', required=False,
                     help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
-      delete_parser.add_argument('--all', action='store_true', dest='all', required=False,
-                    help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
-      delete_parser.add_argument('-u','--user', action='store', dest='username', required=True,
-                    help = "The username.")
-
-
 
 
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
       list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
                     help = "The username.")
 
-
       kill_parser = argparse.ArgumentParser(description = '', add_help = False)
-      kill_parser.add_argument('-u','--user', action='store', dest='username', required=True,
-                    help = "The username.")
       kill_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
                     help = "The taskname to be killed.")
-      kill_parser.add_argument('-a','--all', action='store_true', dest='kill_all', required=False, default=False,
-                    help = "Remove all tasks.")
-
 
 
 
@@ -114,77 +104,124 @@ class TaskParser(Logger):
       args.add_parser( 'task', parents=[parent] )
 
 
+
+
   def compile( self, args ):
     # Task CLI
     if args.mode == 'task':
+
+      # create task
       if args.option == 'create':
-        self.create(args.taskname, args.dataFile, args.configFile, args.secondaryDS,
-                    args.execCommand,args.containerImage,args.et,args.eta,
-                    args.bypass_test_job, args.dry_run, args.queue, args.is_dummy_data,
-                    args.is_dummy_config)
-      elif args.option == 'retry':
-        self.retry(args.taskname)
-      elif args.option == 'delete':
+        status , answer = self.create(args.taskname, args.dataFile, args.configFile, args.secondaryDS,
+                                      args.execCommand,args.containerImage,args.et,args.eta,
+                                      args.bypass_test_job, args.dry_run, args.queue, args.is_dummy_data,
+                                      args.is_dummy_config)
 
-        if args.all:
-          if args.username in self.__db.getAllUsers():
-            MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
-          user = self.__db.getUser( args.username )
-          for task in user.getAllTasks():
-            self.delete(task.taskName, args.remove_files)
+        if status.isFailure():
+          MSG_FATAL(self, answer)
         else:
-          self.delete(args.taskname, args.remove_files)
+          MSG_INFO(self, answer)
 
+
+      # retry option
+      elif args.option == 'retry':
+        status, answer = self.retry(args.taskname)
+        if status.isFailure():
+          MSG_FATAL(answer)
+        else:
+          MSG_INFO(answer
+              )
+
+      # delete option
+      elif args.option == 'delete':
+        status , answer = self.delete(args.taskname, args.remove)
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+
+      # list all tasks
       elif args.option == 'list':
-        self.list(args.username)
+        status, answer = self.list(args.username)
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          print(answer)
+
+      # kill option
       elif args.option == 'kill':
-        self.kill(args.username, 'all' if args.kill_all else args.taskname)
+        status, answer = self.kill(args.taskname)
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+
+      else:
+        MSG_FATAL(self, "option not available.")
 
 
 
 
+      #
+      # Check the status and disp the answer
+      #
+      if status.isFailure():
+        MSG_FATAL()
 
 
-  def create( self, taskname, dataFile,
-                    configFile, secondaryDS,
-                    execCommand, containerImage, et=None, eta=None,
-                    bypass_test_job=False, dry_run=False, queue='cpu_small',
-                    is_dummy_data=False, is_dummy_config=False):
+
+
+  #
+  # Create the new task
+  #
+  def create( self, taskname,
+                    dataFile,
+                    configFile,
+                    secondaryDS,
+                    execCommand,
+                    containerImage,
+                    et=None,
+                    eta=None,
+                    bypass_test_job=False,
+                    dry_run=False,
+                    queue='cpu_small',
+                    is_dummy_data=False,
+                    is_dummy_config=False):
 
 
     # check task policy (user.username)
     if taskname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
+      return (StatusCode.FATAL, 'The task name must starts with user.$USER.taskname.')
+
 
     # check task policy (username must exist into the database)
     username = taskname.split('.')[1]
-
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+      return (StatusCode.FATAL,'The username does not exist into the database.')
 
 
     from orchestra.constants import allow_queue_names
     if not queue in allow_queue_names:
-      MSG_FATAL(  self, "The queue with name %s does not exist. Please check the name of all available queues", queue )
+      return (StatusCode.FATAL, "The queue with name %s does not exist. Please check the name of all available queues"% queue )
 
 
     if not queue in self.__db.getUser(username).getAllAllowedQueues():
-      MSG_FATAL( self, "You not allowed to create tasks using this queue: %s. Please contact the administrator.", queue )
+      return (StatusCode, "You not allowed to create tasks using this queue: %s. Please contact the administrator."% queue )
 
 
     # Check if the task exist into the databse
     if self.__db.getUser(username).getTask(taskname) is not None:
-      MSG_FATAL( self, "The task exist into the database. Abort.")
+      return (StatusCode.FATAL, "The task exist into the database. Abort.")
 
 
     # check data (file) is in database
     if self.__db.getDataset(username, dataFile) is None:
-      MSG_FATAL( self, "The file (%s) does not exist into the database. Should be registry first.", dataFile)
+      return (StatusCode.FATAL, "The file (%s) does not exist into the database. Should be registry first."%dataFile)
 
 
     # check configFile (file) is in database
     if self.__db.getDataset(username, configFile) is None:
-      MSG_FATAL( self, "The config file (%s) does not exist into the database. Should be registry first.", configFile)
+      return (StatusCode.FATAL, "The config file (%s) does not exist into the database. Should be registry first."%configFile)
 
 
     # Get the secondary data as dict
@@ -194,35 +231,34 @@ class TaskParser(Logger):
     # check secondary data paths exist is in database
     for key in secondaryDS.keys():
       if self.__db.getDataset(username, secondaryDS[key]) is None:
-        MSG_FATAL( self, "The secondary data file (%s) does not exist into the database. Should be registry first.", secondaryDS[key])
+        return (StatusCode.FATAL , "The secondary data file (%s) does not exist into the database. Should be registry first."% secondaryDS[key] )
 
     # check exec command policy
     if (not is_dummy_data) and (not '%DATA' in execCommand):
-      MSG_FATAL( self,  "The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
+      return (StatusCode.FATAL,"The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
 
     if (not is_dummy_config) and (not '%IN' in execCommand):
-      MSG_FATAL( self, "The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
-
+      return (StatusCode.FATAL,"The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
 
     if not '%OUT' in execCommand:
-      MSG_FATAL( self, "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
+      return (StatusCode.FATAL, "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
 
 
     # parser the secondary data in the exec command
     for key in secondaryDS.keys():
       if not key in execCommand:
-        MSG_FATAL( self, "The exec command must include %s into the string. This will substitute to %s when start",key, secondaryDS[key])
+        return (StatusCode.FATAL,  ("The exec command must include %s into the string. This will substitute to %s when start")%(key, secondaryDS[key]) )
 
 
 
     # check if the output exist into the dataset base
     if self.__db.getDataset(username, taskname ):
-      MSG_FATAL( self, "The output dataset exist. Please, remove than or choose another name for this task")
+      return (StatusCode.FATAL, "The output dataset exist. Please, remove than or choose another name for this task")
 
 
     # Check if the board monitoring for this task exist into the database
     if self.__db.session().query(Board).filter( Board.taskName==taskname ).first():
-      MSG_FATAL( self, "There is a board monitoring with this taskname. Contact the administrator." )
+      return (StatusCode.FATAL, "There is a board monitoring with this taskname. Contact the administrator." )
 
 
     # check if task exist into the storage
@@ -289,67 +325,77 @@ class TaskParser(Logger):
         task.setStatus('registered')
         self.__db.commit()
       except Exception as e:
-        MSG_FATAL(self, e)
+        MSG_ERROR(self,e)
+        return (StatusCode.FATAL, "Unknown error.")
+
+
+    return (StatusCode.SUCCESS, "Succefully created.")
 
 
 
+  def delete( self, taskname, remove=False ):
 
-
-  def delete( self, taskname, remove_files=False ):
 
     if taskname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
+      return (StatusCode.FATAL, 'The task name must starts with user.$USER.taskname.')
+
     username = taskname.split('.')[1]
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
 
-    try:
-      user = self.__db.getUser( username )
-    except:
-      MSG_FATAL( self , "The user name (%s) does not exist into the data base", username)
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+      return (StatusCode.FATAL, 'The username does not exist into the database.')
 
-    try:
-      task = self.__db.getTask( taskname )
-    except:
-      MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
+
+    task = self.__db.getTask( taskname )
+    if not task:
+      return (StatusCode.FATAL, "The task name (%s) does not exist into the data base"%taskname )
 
 
     # Check possible status before continue
     if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE, Status.TO_BE_REMOVED, Status.TO_BE_REMOVED_SOON]:
-      MSG_FATAL(self, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status.", task.getStatus())
+      return (StatusCode.FATAL, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status."% task.getStatus() )
+
 
     id = task.id
 
+    # remove all jobs that allow to this task
     try:
       self.__db.session().query(Job).filter(Job.taskId==id).delete()
     except Exception as e:
-      MSG_FATAL( self, "Impossible to remove Job lines from (%d) task", id)
+      MSG_ERROR(self,e)
+      return (StatusCode.FATAL, "Impossible to remove Job lines from (%d) task"%id )
 
+
+    # remove the task table
     try:
       self.__db.session().query(Task).filter(Task.id==id).delete()
     except Exception as e:
-      MSG_FATAL( self, "Impossible to remove Task lines from (%d) task", id)
+      MSG_ERROR(self,e)
+      return (StatusCode.FATAL, "Impossible to remove Task lines from (%d) task"%id )
 
+    # remove the board table
     try:
       self.__db.session().query(Board).filter(Board.taskId==id).delete()
     except Exception as e:
-      MSG_WARNING( self, "Impossible to remove Task board lines from (%d) task", id)
+      MSG_ERROR(self,e)
+      return (StatusCode.FATAL, "Impossible to remove Task board lines from (%d) task"%id )
 
 
     # prepare to remove from database
     ds = self.__db.getDataset( username, taskname )
 
     if not ds.task_usage:
-      MSG_FATAL( self, "This dataset is not task usage. There is something strange..." )
+      return (StatusCode.FATAL, "This dataset is not task usage. There is something strange..." )
+
 
     for file in ds.getAllFiles():
       # Delete the file inside of the dataset
       self.__db.session().query(File).filter( File.id==file.id ).delete()
 
+
     # Delete the dataset
     self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
 
-    if remove_files:
+    if remove:
       # The path to the dataset in the cluster
       file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
       file_dir = file_dir.replace('//','/')
@@ -359,43 +405,23 @@ class TaskParser(Logger):
         command = 'rm -rf {FILE}'.format(FILE=file_dir)
         print(command)
       else:
-        MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
+        MSG_ERROR(self, "This dataset does not exist into the database (%s)", file_dir)
+
 
     self.__db.commit()
+    return (StatusCode.SUCCESS, "Succefully deleted.")
 
 
 
 
 
-  def retry( self, taskname ):
-
-    if taskname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
-    username = taskname.split('.')[1]
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
-    try:
-      user = self.__db.getUser( username )
-    except:
-      MSG_FATAL( self , "The user name (%s) does not exist into the data base", username)
-
-    try:
-      task = self.__db.getTask( taskname )
-
-      # Send retry signal to the task
-      task.setSignal( Signal.RETRY )
-
-    except:
-      MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
-
-    self.__db.commit()
 
 
 
   def list( self, username ):
 
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+      return (StatusCode.FATAL, 'The username does not exist into the database.' )
 
 
     from Gaugi import Color
@@ -470,34 +496,60 @@ class TaskParser(Logger):
       status        = task.status
       t.add_row(  [queue, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
 
-    print(t)
+    return (StatusCode.SUCCESS, t)
 
 
 
-  def kill( self, username, taskname ):
+
+
+
+  def kill( self, taskname ):
+
+    if taskname.split('.')[0] != 'user':
+      return ( StatusCode.FATAL , 'The task name must starts with: user.%USER.taskname.' )
+
+    username = taskname.split('.')[1]
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+      return ( StatusCode.FATAL, 'The username does not exist into the database.')
 
     try:
-      user = self.__db.getUser( username )
-    except:
-      MSG_FATAL( self , "The user name (%s) does not exist into the data base", username)
+      task = self.__db.getTask( taskname )
+      if task is None:
+        return (StatusCode.FATAL, "Task does not exist into the database.")
+      # Send kill signal to the task
+      task.setSignal( Signal.KILL )
+      self.__db.commit()
+    except Exception as e:
+      MSG_ERROR(self,e)
+      return (StatusCode.FATAL, "Unknown error." )
 
-    if taskname=='all':
-      MSG_INFO( self, "Remove all tasks inside of %s username", username )
-      for task in user.getAllTasks():
-        # Send kill signal to the task
-        task.setSignal( Signal.KILL )
-    else:
-      if taskname.split('.')[0] != 'user':
-        MSG_FATAL( self, 'The task name must starts with: user.%USER.taskname.')
-        task = self.__db.getTask( taskname )
+    return (StatusCode.SUCCESS, "Succefully killed.")
 
-        if not task:
-          MSG_FATAL( self, "The task name (%s) does not exist into the data base", args.taskname)
-        else:
-          # Send kill signal to the task
-          task.setSignal( Signal.KILL )
 
-    self.__db.commit()
+
+
+  def retry( self, taskname ):
+
+    if taskname.split('.')[0] != 'user':
+      return (StatusCode.FATAL, 'The task name must starts with: user.%USER.taskname.')
+
+    username = taskname.split('.')[1]
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+      return  (StatusCode.FATAL, 'The username does not exist into the database.')
+
+    try:
+      task = self.__db.getTask( taskname )
+      if task is None:
+        return (StatusCode.FATAL, "The task does not exist into the database.")
+      # Send retry signal to the task
+      task.setSignal( Signal.RETRY )
+      self.__db.commit()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return (StatusCode.FATAL, "Unknown error." )
+
+    return (StatusCode.SUCCESS, "Succefully retry.")
+
 
 
 

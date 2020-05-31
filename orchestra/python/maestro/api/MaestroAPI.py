@@ -108,8 +108,9 @@ class MaestroAPI (Logger):
     self.__db = OrchestraDB()
     self.__api = Api(self.__app)
     self.__login = LoginManager(self.__app)
-
     db = self.__db
+
+
 
     ###
     class Authenticate (Resource):
@@ -151,28 +152,21 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-        from Gaugi import Color
-        from prettytable import PrettyTable
-
         username = request.form['username']
+        status, answer = DatasetParser(db).list(username)
 
-        user = db.getUser(request.form['username'])
-        if user is None:
+        if status.isFailure():
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="User not found."
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message=answer
           )
-
-        t = PrettyTable([ Color.CGREEN2 + 'Username' + Color.CEND,
-                          Color.CGREEN2 + 'Dataset'  + Color.CEND,
-                          Color.CGREEN2 + 'Files' + Color.CEND])
-        for ds in db.getAllDatasets( username ):
-          t.add_row(  [username, ds.dataset, len(ds.files)] )
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message=t.get_string()
-        )
+        else:
+          return jsonify(
+            error_code=HTTPStatus.OK,
+            message=answer.get_string()
+          )
     ###
+
 
     ###
     class ListDatasetsPy (Resource):
@@ -201,6 +195,7 @@ class MaestroAPI (Logger):
         return Response(b64_pickled_datasets)
     ###
 
+
     ###
     class ListTasks (Resource):
       def post (self):
@@ -209,94 +204,21 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-        from prettytable import PrettyTable
-
         username = request.form['username']
+        status, answer = TaskParser(db).list(username)
 
-        from Gaugi import Color
-        def getStatus(status):
-          if status == 'registered':
-            return Color.CWHITE2+"REGISTERED"+Color.CEND
-          elif status == 'assigned':
-            return Color.CWHITE2+"ASSIGNED"+Color.CEND
-          elif status == 'testing':
-            return Color.CGREEN2+"TESTING"+Color.CEND
-          elif status == 'running':
-            return Color.CGREEN2+"RUNNING"+Color.CEND
-          elif status == 'done':
-            return Color.CGREEN2+"DONE"+Color.CEND
-          elif status == 'failed':
-            return Color.CGREEN2+"DONE"+Color.CEND
-          elif status == 'killed':
-            return Color.CRED2+"KILLED"+Color.CEND
-          elif status == 'finalized':
-            return Color.CRED2+"FINALIZED"+Color.CEND
-          elif status == 'broken':
-            return Color.CRED2+"BROKEN"+Color.CEND
-          elif status == 'hold':
-            return Color.CRED2+"HOLD"+Color.CEND
-          elif status == 'removed':
-            return Color.CRED2+"REMOVED"+Color.CEND
-          elif status == 'to_be_removed':
-            return Color.CRED2+"REMOVING"+Color.CEND
-          elif status == 'to_be_removed_soon':
-            return Color.CRED2+"REMOVING"+Color.CEND
-
-
-        from prettytable import PrettyTable
-        t = PrettyTable([
-                          Color.CGREEN2 + 'Queue'       + Color.CEND,
-                          Color.CGREEN2 + 'Taskname'    + Color.CEND,
-                          Color.CGREEN2 + 'Registered'  + Color.CEND,
-                          Color.CGREEN2 + 'Assigned'    + Color.CEND,
-                          Color.CGREEN2 + 'Testing'     + Color.CEND,
-                          Color.CGREEN2 + 'Running'     + Color.CEND,
-                          Color.CRED2   + 'Failed'      + Color.CEND,
-                          Color.CGREEN2 + 'Done'        + Color.CEND,
-                          Color.CRED2   + 'kill'        + Color.CEND,
-                          Color.CRED2   + 'killed'      + Color.CEND,
-                          Color.CRED2   + 'broken'      + Color.CEND,
-                          Color.CGREEN2 + 'Status'      + Color.CEND,
-                          ])
-
-        user = db.getUser(username)
-        if user is None:
+        if status.isFailure():
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="User not found."
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message=answer
           )
-
-        tasks = user.getAllTasks()
-
-        def count( jobs, status ):
-          total=0
-          for job in jobs:
-            if job.status==status:  total+=1
-          return total
-
-
-        for task in tasks:
-          jobs = task.getAllJobs()
-          queue         = task.queueName
-          taskName      = task.taskName
-          registered    = count( jobs, Status.REGISTERED)
-          assigned      = count( jobs, Status.ASSIGNED  )
-          testing       = count( jobs, Status.TESTING   )
-          running       = count( jobs, Status.RUNNING   )
-          done          = count( jobs, Status.DONE      )
-          failed        = count( jobs, Status.FAILED    )
-          kill          = count( jobs, Status.KILL      )
-          killed        = count( jobs, Status.KILLED    )
-          broken        = count( jobs, Status.BROKEN    )
-          status        = task.status
-          t.add_row(  [queue, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
-
-
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message=t.get_string()
-        )
+        else:
+          return jsonify(
+            error_code=HTTPStatus.OK,
+            message=answer.get_string()
+          )
     ###
+
 
     ###
     class ListTasksPy (Resource):
@@ -305,9 +227,7 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-
         username = request.form['username']
-
         user = db.getUser(request.form['username'])
         if user is None:
           return jsonify(
@@ -317,7 +237,6 @@ class MaestroAPI (Logger):
 
         tasks = db.session().query(Board).filter( Board.username==username ).all()
         tasks = [task.taskName for task in tasks]
-
         import pickle
         import base64
         pickled_tasks = pickle.dumps(tasks)
@@ -326,6 +245,7 @@ class MaestroAPI (Logger):
         return Response(b64_pickled_tasks)
     ###
 
+
     ###
     class DeleteDataset (Resource):
       def post (self):
@@ -333,43 +253,22 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-        import os
-
         username = request.form['username']
         datasetname = request.form['datasetname']
+        status, answer = DatasetParser(db).delete(datasetname)
 
-        ds = db.getDataset( username, datasetname )
-
-        if ds is None:
+        if status.isFailure():
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="Dataset not found on the database."
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message = answer
           )
-
-        if ds.task_usage:
-          return jsonify(
-            error_code=HTTPStatus.CONFLICT,
-            message="This dataset is in use right now, please delete the task related to it."
-          )
-        for file in ds.getAllFiles():
-          db.session().query(File).filter( File.id==file.id ).delete()
-        db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
-        file_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
-        file_dir = file_dir.replace('//','/')
-        if os.path.exists(file_dir):
-          command = 'rm -rf {FILE}'.format(FILE=file_dir)
-          os.system(command)
         else:
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="This dataset does not exist in the database ({})".format(file_dir)
+            error_code=HTTPStatus.OK,
+            message="Successfully deleted."
           )
-        db.commit()
-        return jsonify(
-          error_code=HTTPStatus.OK,
-          message="Successfully deleted."
-        )
     ###
+
 
     ###
     class DownloadDataset (Resource):
@@ -415,6 +314,7 @@ class MaestroAPI (Logger):
 
         return send_file(zipfilepath, attachment_filename=zipfilename)
     ###
+
 
     ###
     class UploadDataset (Resource):
@@ -467,8 +367,12 @@ class MaestroAPI (Logger):
           )
     ###
 
+
+
+
     ###
     class CreateTask (Resource):
+
       def post (self):
         auth = pickledAuth(request.form['credentials'], db)
         if auth.json['error_code'] != 200:
@@ -484,157 +388,27 @@ class MaestroAPI (Logger):
         et = request.form['et']
         eta = request.form['eta']
         queue = request.form['queue']
+        is_dummy_data = request.form['is_dummy_data']
+        is_dummy_config = request.form['is_dummy_config']
 
-        import os
+        status , answer = TaskParser(db).create( taskname, dataFile, configFile, secondaryDS,
+                                                 execCommand,containerImage,et,eta,
+                                                 False, False, queue,is_dummy_data,
+                                                 is_dummy_config)
 
-
-        from orchestra.constants import allow_queue_names
-        if not queue in allow_queue_names:
-          return jsonify(
-            error_code = HTTPStatus.CONFLICT,
-            message = "The queue with name %s does not exist. Please check the name of all available queues" % queue
-          )
-
-
-        if not queue in db.getUser(username).getAllAllowedQueues():
-          return jsonify(
-            error_code = HTTPStatus.CONFLICT,
-            message = "You not allowed to create tasks using this queue: %s. Please contact the administrator." % queue
-          )
-
-
-        if db.getUser(username).getTask(taskname) is not None:
-          return jsonify(
-            error_code = HTTPStatus.CONFLICT,
-            message = "The task name already exists."
-          )
-
-
-        if db.getDataset(get_username_by_name(dataFile), dataFile) is None:
-          return jsonify(
-            error_code = HTTPStatus.NOT_FOUND,
-            message = "This dataset doesn't exist in the database, should be registered first."
-          )
-
-
-
-        if db.getDataset(get_username_by_name(configFile), configFile) is None:
-          return jsonify(
-            error_code = HTTPStatus.NOT_FOUND,
-            message = "This config doesn't exist in the database, should be registered first."
-          )
-
-        if secondaryDS != "":
-          secondaryDS = eval(secondaryDS)
-          for key in secondaryDS.keys():
-            if db.getDataset(get_username_by_name(secondaryDS[key]), secondaryDS[key]) is None:
-              return jsonify(
-                error_code = HTTPStatus.NOT_FOUND,
-                message = "The secondary data file {} is not on the database.".format(secondaryDS[key])
-              )
-          for key in secondaryDS.keys():
-            if not key in execCommand:
-              return jsonify(
-                error_code = HTTPStatus.BAD_REQUEST,
-                message = "The exec command must include '{}' on it, this shall be replaced by {} when the job starts.".format(key, secondaryDS[key])
-              )
-        else:
-          secondaryDS = {}
-
-        if not '%DATA' in execCommand:
-          return jsonify(
-            error_code = HTTPStatus.BAD_REQUEST,
-            message = "The exec command must include '%DATA' on it, this shall be replaced by the dataFile when the jobs starts."
-          )
-        if not '%IN' in execCommand:
-          return jsonify(
-            error_code = HTTPStatus.BAD_REQUEST,
-            message = "The exec command must include '%IN' on it, this shall be replaced by the configFile when the jobs starts."
-          )
-        if not '%OUT' in execCommand:
-          return jsonify(
-            error_code = HTTPStatus.BAD_REQUEST,
-            message = "The exec command must include '%OUT' on it, this shall be replaced by the outputFile when the jobs starts."
-          )
-
-        if db.getDataset(username, taskname):
-          return jsonify(
-            error_code = HTTPStatus.BAD_REQUEST,
-            message = "The output data file already exists. Please remove it or choose another name."
-          )
-
-        if db.session().query(Board).filter( Board.taskName==taskname ).first():
-          return jsonify(
-            error_code = HTTPStatus.BAD_REQUEST,
-            message = "There's already a board monitoring with this taskname, please contact the administrators."
-          )
-
-        outputFile = CLUSTER_VOLUME +'/'+username+'/'+taskname
-        if not os.path.exists(outputFile):
-          os.makedirs(outputFile)
-
-        try:
-          user = db.getUser( username )
-          task = db.createTask( user, taskname, configFile, dataFile, taskname,
-                              containerImage, db.getCluster(),
-                              secondaryDataPath=secondaryDS,
-                              templateExecArgs=execCommand,
-                              etBinIdx=et,
-                              etaBinIdx=eta,
-                              queue=queue,
-                              )
-          task.setStatus('hold')
-          task.setStatus( Signal.WAITING )
-          configFiles = db.getDataset(get_username_by_name(configFile), configFile).getAllFiles()
-          _dataFile = db.getDataset(get_username_by_name(dataFile), dataFile).getAllFiles()[0].getPath()
-          _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' )
-          _outputFile = '/volume/'+username+'/'+taskname
-          _secondaryDS = {}
-          for key in secondaryDS.keys():
-            _secondaryDS[key] = db.getDataset(get_username_by_name(secondaryDS[key]), secondaryDS[key]).getAllFiles()[0].getPath()
-            _secondaryDS[key] = _secondaryDS[key].replace(CLUSTER_VOLUME, '/volume')
-          for idx, file in enumerate(configFiles):
-            _configFile = file.getPath()
-            _configFile = _configFile.replace(CLUSTER_VOLUME, '/volume')
-            command = execCommand
-            command = command.replace( '%DATA' , _dataFile  )
-            command = command.replace( '%IN'   , _configFile)
-            command = command.replace( '%OUT'  , _outputFile)
-            for key in _secondaryDS:
-              command = command.replace( key  , _secondaryDS[key])
-            job = db.createJob( task, _configFile, idx, execArgs=command, isGPU=gpu, priority=-1 )
-          desired_id = db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
-          ds  = Dataset( id=desired_id, username=username, dataset=taskname, cluster=db.getCluster(), task_usage=True)
-          desired_id = db.session().query(File).order_by(File.id.desc()).first().id + 1
-          ds.addFile( File(id=desired_id, path=outputFile, hash='' ) )
-          db.createDataset(ds)
-          self.createBoard( user, task, db )
-          task.setStatus('registered')
-          db.commit()
-          return jsonify(
-            error_code=HTTPStatus.OK,
-            message="Success!"
-          )
-        except Exception as e:
-          print(e)
+        if status.isFailure():
           return jsonify(
             error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            message="Unknown error"
+            message=answer
+          )
+        else:
+          MSG_INFO(self, answer)
+          return jsonify(
+            error_code = HTTPStatus.OK,
+            message = "Success!"
           )
 
-      #
-      # This is for monitoring purpose. Should be used to dashboard view
-      #
-      def createBoard( self , user, task, db ):
 
-        board = Board( username=user.username, taskId=task.id, taskName=task.taskName )
-        board.jobs = len(task.getAllJobs())
-        board.registered = board.jobs
-        board.assigned=board.testing=board.running=board.failed=board.done=board.killed=0
-        board.status = task.status
-        db.session().add(board)
-
-    ###
 
     ###
     class DeleteTask (Resource):
@@ -643,44 +417,21 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-        username = request.form['username']
         taskname = request.form['taskname']
 
-        try:
-          user = db.getUser(request.form['username'])
-          if user is None:
-            return jsonify(
-              error_code=HTTPStatus.NOT_FOUND,
-              message="User not found."
-            )
-        except:
+        status, answer = TaskParser(db).delete(taskname, remove=False)
+
+        if status.isFailure():
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="User not found."
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message = answer
           )
-
-        try:
-          task = db.getTask( taskname )
-          if task is None:
-            return jsonify(
-              error_code=HTTPStatus.NOT_FOUND,
-              message="Task not found."
-            )
-        except:
+        else:
+          MSG_INFO(self, answer)
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="Task not found."
+            error_code = HTTPStatus.OK,
+            message = "Success!"
           )
-
-
-        # Return always this error message since this feature is not supported yet
-        return jsonify(
-            error_code=HTTPStatus.BAD_REQUEST,
-            message="The cluster users are not allow to delete tasks. Please contact the cluster administrator to remove it."
-        )
-
-
-
 
     ###
 
@@ -691,75 +442,55 @@ class MaestroAPI (Logger):
         if auth.json['error_code'] != 200:
           return auth
 
-        username = request.form['username']
         taskname = request.form['taskname']
 
-        try:
-          user = db.getUser(request.form['username'])
-          if user is None:
-            return jsonify(
-              error_code=HTTPStatus.NOT_FOUND,
-              message="User not found."
-            )
-        except:
+        status, answer = TaskParser(db).retry(taskname)
+
+        if status.isFailure():
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="User not found."
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message = answer
+          )
+        else:
+          MSG_INFO(self, answer)
+          return jsonify(
+            error_code = HTTPStatus.OK,
+            message = "Success!"
           )
 
-        try:
-          task = db.getTask( taskname )
-          task.setSignal( Signal.RETRY )
-        except:
-          return jsonify(
-            error_code = HTTPStatus.NOT_FOUND,
-            message = "Task is not in the database."
-          )
-        db.commit()
-        return jsonify(
-          error_code = HTTPStatus.OK,
-          message = "Success!"
-        )
     ###
 
     ###
     class KillTask (Resource):
+
       def post (self):
+
         auth = pickledAuth(request.form['credentials'], db)
         if auth.json['error_code'] != 200:
           return auth
 
-        username = request.form['username']
         taskname = request.form['taskname']
 
-        try:
-          user = db.getUser(request.form['username'])
-          if user is None:
-            return jsonify(
-              error_code=HTTPStatus.NOT_FOUND,
-              message="User not found."
-            )
-        except:
+        # kill this task
+        status, answer = TaskParser(db).kill(taskname)
+
+        if status.isFailure():
           return jsonify(
-            error_code=HTTPStatus.NOT_FOUND,
-            message="User not found."
+            error_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            message = answer
+          )
+        else:
+          MSG_INFO(self, answer)
+          return jsonify(
+            error_code = HTTPStatus.OK,
+            message = "Success!"
           )
 
-        try:
-          task = db.getTask( taskname )
-          task.setSignal( Signal.KILL )
-        except:
-          return jsonify(
-            error_code = HTTPStatus.NOT_FOUND,
-            message = "Task is not in the database."
-          )
 
-        db.commit()
-        return jsonify(
-          error_code = HTTPStatus.OK,
-          message = "Success!"
-        )
     ###
+
+
+
 
     self.__api.add_resource(Authenticate, '/authenticate')
     self.__api.add_resource(ListDatasets, '/list-datasets')

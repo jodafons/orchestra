@@ -5,6 +5,7 @@ from Gaugi.messenger import LoggingLevel, Logger
 from Gaugi.messenger.macros import *
 from Gaugi import csvStr2List, expandFolders
 from Gaugi import load
+from Gaugi import StatusCode
 
 # Connect to DB
 from orchestra.constants import CLUSTER_VOLUME
@@ -67,14 +68,39 @@ class DatasetParser( Logger ):
     # Dataset CLI
     if args.mode == 'castor':
       if args.option == 'upload':
-        self.upload(args.datasetname, args.path)
-      elif args.option == 'download':
-        self.download(args.datasetname)
-      elif args.option == 'delete':
-        self.delete(args.datasetname)
-      elif args.option == 'list':
-        self.list(args.username)
+        status, answer = self.upload(args.datasetname, args.path)
 
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+
+      elif args.option == 'download':
+        status, answer = self.download(args.datasetname)
+
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+
+      elif args.option == 'delete':
+        status, answer = self.delete(args.datasetname)
+
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+
+      elif args.option == 'list':
+        status, answer = self.list(args.username)
+
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          print(answer)
+
+      else:
+        MSG_FATAL(self, "Not valid option.")
 
 
 
@@ -84,8 +110,8 @@ class DatasetParser( Logger ):
   #
   def list( self, username ):
 
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+    if not username in [user.getUserName() for user in self.__db.getAllUsers()]:
+      return (StatusCode.FATAL, 'The username does not exist into the database. Please, report this to the db manager...')
 
     from Gaugi import Color
     from prettytable import PrettyTable
@@ -96,7 +122,8 @@ class DatasetParser( Logger ):
     # Loop over all datasets inside of the username
     for ds in self.__db.getAllDatasets( username ):
       t.add_row(  [username, ds.dataset, len(ds.files)] )
-    print(t)
+
+    return (StatusCode.SUCCESS, t)
 
 
 
@@ -106,41 +133,59 @@ class DatasetParser( Logger ):
 
     # check task policy
     if datasetname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The dataset name must starts with: user.%USER.taskname.')
+      return (StatusCode.FATAL, 'The dataset name must starts with user.$USER.taskname.')
+
     username = datasetname.split('.')[1]
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+    if not username in [user.getUserName() for user in self.__db.getAllUsers()]:
+      return (StatusCode.FATAL, 'The username does not exist into the database. Please, report this to the db manager...')
+
     if not self.__db.getDataset( username, datasetname ):
-      MSG_FATAL( self, "The dataset exist into the database")
+      return (StatusCode.FATAL, "The dataset exist into the database")
 
     # prepare to remove from database
     ds = self.__db.getDataset( username, datasetname )
 
-
     if ds.task_usage:
-      MSG_FATAL( self, "This is a task dataset and can not be removed. Please use task delete." )
+      return (StatusCode.FATAL, "This is a task dataset and can not be removed. Please use task delete." )
 
 
     for file in ds.getAllFiles():
-      # Delete the file inside of the dataset
-      self.__db.session().query(File).filter( File.id==file.id ).delete()
+      try:
+        # Delete the file inside of the dataset
+        self.__db.session().query(File).filter( File.id==file.id ).delete()
+      except Exception as e:
+        MSG_ERROR(self, e)
+        return (StatusCode.FATAL, "It's not possible to remove the file. %s"%e )
 
-    # Delete the dataset
-    self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
+
+    try:
+      # Delete the dataset
+      self.__db.session().query(Dataset).filter( Dataset.id==ds.id ).delete()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return (StatusCode.FATAL, "It's not possible to remove the dataset. %s"%e )
+
 
     # The path to the dataset in the cluster
     file_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
     file_dir = file_dir.replace('//','/')
 
+
     # Delete the file from the storage
     # check if this path exist
-    if os.path.exists(file_dir):
-      command = 'rm -rf {FILE}'.format(FILE=file_dir)
-      os.system(command)
-    else:
-      MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
+    try:
+      if os.path.exists(file_dir):
+        command = 'rm -rf {FILE}'.format(FILE=file_dir)
+        os.system(command)
+      else:
+        MSG_WARNING(self, "This dataset does not exist into the database (%s)", file_dir)
+    except Exception as e:
+      MSG_ERROR(self,  e)
+      return (StatusCode.FATAL, "Unknown error. %s")
 
     self.__db.commit()
+    return (StatusCode.SUCCESS, "Successfully deleted." )
+
 
 
   #
@@ -150,12 +195,14 @@ class DatasetParser( Logger ):
 
     # check task policy
     if datasetname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The dataset name must starts with: user.%USER.taskname.')
+      return (StatusCode.FATAL, 'The dataset name must starts with: user.%USER.taskname.')
+
     username = datasetname.split('.')[1]
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers()]:
+      return (StatusCode.FATAL, 'The username does not exist into the database. Please, report this to the db manager...')
+
     if not self.__db.getDataset( username, datasetname ):
-      MSG_FATAL( self, "The dataset exist into the database")
+      return (StatusCode.FATAL, "The dataset exist into the database")
 
 
     # The path to the dataset in the cluster
@@ -163,10 +210,13 @@ class DatasetParser( Logger ):
 
     # check if this path exist
     if not os.path.exists(file_dir):
-      MSG_FATAL(self, "This dataset does not exist into the database (%s)", file_dir)
+      MSG_FATAL(self, "This dataset does not exist into the database (%s)"%file_dir )
 
     # copy to the current directory
     os.system( 'cp -r {FILE} {DESTINATION}'.format(FILE=file_dir,DESTINATION=datasetname) )
+
+    return (StatusCode.SUCCESS, "Successfully downloaded." )
+
 
 
 
@@ -177,16 +227,18 @@ class DatasetParser( Logger ):
 
     # check task policy
     if datasetname.split('.')[0] != 'user':
-      MSG_FATAL( self, 'The dataset name must starts with: user.%USER.taskname.')
+      return (StatusCode.FATAL, 'The dataset name must starts with: user.%USER.taskname.')
+
     username = datasetname.split('.')[1]
-    if username in self.__db.getAllUsers():
-      MSG_FATAL( self, 'The username does not exist into the database. Please, report this to the db manager...')
+
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers()]:
+      return (StatusCode.FATAL, 'The username does not exist into the database. Please, report this to the db manager...')
+
     if self.__db.getDataset( username, datasetname ):
-      MSG_FATAL( self, "The dataset exist into the database")
+      return (StatusCode.FATAL, "The dataset exist into the database")
 
     # Let's registry and upload into the database
     try:
-
       # Create the new dataset
       desired_id = self.__db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
       ds  = Dataset( id=desired_id,username=username, dataset=datasetname, cluster=self.__db.getCluster())
@@ -215,7 +267,9 @@ class DatasetParser( Logger ):
       self.__db.createDataset(ds)
       self.__db.commit()
     except Exception as e:
+      MSG_ERROR(self,e)
+      return (StatusCode.FATAL, "Impossible to registry the dataset(%s)."%datasetname)
 
-      MSG_FATAL( self, "Impossible to registry the dataset(%s): %s", datasetname, e)
+    return (StatusCode.SUCCESS, "Successfully uploaded." )
 
 
