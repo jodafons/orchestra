@@ -13,6 +13,11 @@ import time
 from orchestra.constants import *
 from orchestra import Cluster
 
+
+
+
+
+
 class OrchestraDB(Logger):
 
   def __init__( self, cluster=Cluster.LPS, url=CLUSTER_POSTGRES_URL ):
@@ -52,10 +57,9 @@ class OrchestraDB(Logger):
                   queue='cpu_small'):
 
     try:
-      # Create the task and append into the user area
-      desired_id = self.__session.query(Task).order_by(Task.id.desc()).first().id + 1
+
       task = Task(
-        id=desired_id,
+        id=self.generateId(Task),
         taskName=taskName,
         inputFilePath=inputFilePath,
         outputFilePath=outputFilePath,
@@ -82,9 +86,8 @@ class OrchestraDB(Logger):
   def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}" ):
 
     try:
-      desired_id = self.__session.query(Job).order_by(Job.id.desc()).first().id + 1
       job = Job(
-        id=desired_id,
+        id=self.generateId(Job),
         configFilePath=configFilePath,
         containerImage=task.containerImage,
         configId=configId,
@@ -274,9 +277,7 @@ class OrchestraDB(Logger):
       return None
 
     try:
-
-      desired_id = self.__session.query(Dataset).order_by(Dataset.id.desc()).first().id + 1
-      dataset.id = desired_id
+      dataset.id = self.generateId(Dataset)
       self.session().add(dataset)
       return True
     except Exception as e:
@@ -310,6 +311,13 @@ class OrchestraDB(Logger):
       MSG_ERROR(self, e)
       return None
 
+
+
+  def generateId( self, model  ):
+    if self.session().query(model).all():
+      return self.session().query(model).order_by(model.id.desc()).first().id + 1
+    else:
+      return 0
 
 
 

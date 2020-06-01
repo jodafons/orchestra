@@ -121,7 +121,6 @@ class Pilot(Logger):
 
         # If in standalone mode, this can be calculated or note. Depend on demand.
         MSG_DEBUG(self, "Calculate all task boards...")
-        self.updateAllBoards()
 
 
     return StatusCode.SUCCESS
@@ -157,35 +156,6 @@ class Pilot(Logger):
         i+=1
       self.db().commit()
       slot.execute()
-
-
-  #
-  # This is for monitoring purpose. Should be used to dashboard view
-  #
-  def updateAllBoards( self ):
-
-    for user in self.db().getAllUsers():
-      # Get the number of tasks
-      tasks = user.getAllTasks( self.__cluster)
-
-      for task in tasks:
-        board = self.db().session().query(Board).filter( Board.taskName==task.taskName ).first()
-        board.jobs          = len(task.getAllJobs())
-        board.queueName     = task.getQueueName()
-
-        board.registered    = len(self.db().session().query(Job).filter( and_( Job.status==Status.REGISTERED, Job.taskId==task.id )).all())
-        board.assigned      = len(self.db().session().query(Job).filter( and_( Job.status==Status.ASSIGNED  , Job.taskId==task.id )).all())
-        board.testing       = len(self.db().session().query(Job).filter( and_( Job.status==Status.TESTING   , Job.taskId==task.id )).all())
-        board.running       = len(self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING   , Job.taskId==task.id )).all())
-        board.done          = len(self.db().session().query(Job).filter( and_( Job.status==Status.DONE      , Job.taskId==task.id )).all())
-        board.failed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.FAILED    , Job.taskId==task.id )).all())
-        board.broken        = len(self.db().session().query(Job).filter( and_( Job.status==Status.BROKEN    , Job.taskId==task.id )).all())
-        board.kill          = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILL      , Job.taskId==task.id )).all())
-        board.killed        = len(self.db().session().query(Job).filter( and_( Job.status==Status.KILLED    , Job.taskId==task.id )).all())
-        board.status        = task.status
-        board.priority      = self.db().session().query(Job).filter( Job.taskId==task.id ).order_by(Job.priority.desc()).first().priority
-        self.db().commit()
-
 
 
 

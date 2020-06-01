@@ -19,10 +19,6 @@ from . import Job
 __all__.extend( Job.__all__ )
 from .Job import *
 
-from . import Board
-__all__.extend( Board.__all__ )
-from .Board import *
-
 from . import Node
 __all__.extend( Node.__all__ )
 from .Node import *

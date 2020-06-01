@@ -10,7 +10,7 @@ from Gaugi import StatusCode
 # Connect to DB
 from orchestra.constants import CLUSTER_VOLUME
 from orchestra.db import OrchestraDB
-from orchestra.db import Task,Dataset,File, Board, Job
+from orchestra.db import Task,Dataset,File,Job
 from orchestra import Status, Cluster, Signal
 from sqlalchemy import and_, or_
 
@@ -303,11 +303,6 @@ class TaskParser(Logger):
       return (StatusCode.FATAL, "The output dataset exist. Please, remove than or choose another name for this task")
 
 
-    # Check if the board monitoring for this task exist into the database
-    if self.__db.session().query(Board).filter( Board.taskName==taskname ).first():
-      return (StatusCode.FATAL, "There is a board monitoring with this taskname. Contact the administrator." )
-
-
     # check if task exist into the storage
     outputFile = CLUSTER_VOLUME +'/'+username+'/'+taskname
 
@@ -363,12 +358,9 @@ class TaskParser(Logger):
           job.setStatus('assigned' if bypass_test_job else 'registered')
 
 
-        desired_id = self.__db.session().query(Dataset).order_by(Dataset.id.desc()).first().id + 1
-        ds  = Dataset( id=desired_id, username=username, dataset=taskname, cluster=self.__db.getCluster(), task_usage=True)
-        desired_id = self.__db.session().query(File).order_by(File.id.desc()).first().id + 1
-        ds.addFile( File(path=outputFile, hash='', id=desired_id ) ) # the real path
+        ds  = Dataset( id=self.__db.generateId(Dataset), username=username, dataset=taskname, cluster=self.__db.getCluster(), task_usage=True)
+        ds.addFile( File(path=outputFile, hash='', id=self.__db.generateId(File) ) ) # the real path
         self.__db.createDataset(ds)
-        self.createBoard( user, task )
         task.setStatus('registered')
         self.__db.commit()
       except Exception as e:
@@ -421,14 +413,6 @@ class TaskParser(Logger):
     except Exception as e:
       MSG_WARNING(self,e)
       #return (StatusCode.FATAL, "Impossible to remove Task lines from (%d) task"%id )
-
-    # remove the board table
-    try:
-      self.__db.session().query(Board).filter(Board.taskId==id).delete()
-      self.__db.commit()
-    except Exception as e:
-      MSG_WARNING(self,e)
-      #return (StatusCode.FATAL, "Impossible to remove Task board lines from (%d) task"%id )
 
 
     # prepare to remove from database
@@ -578,34 +562,13 @@ class TaskParser(Logger):
 
 
 
-  #
-  # This is for monitoring purpose. Should be used to dashboard view
-  #
-  def createBoard( self , user, task):
-
-    desired_id = self.__db.session().query(Board).order_by(Board.id.desc()).first().id + 1
-    board = Board( username=user.username, taskId=task.id, taskName=task.taskName, id=desired_id )
-    board.jobs = len(task.getAllJobs())
-    board.registered = board.jobs
-    board.assigned=board.testing=board.running=board.failed=board.done=board.killed=0
-    board.status = task.status
-    self.__db.session().add(board)
-
-
-
   def queue( self , queuename ):
 
     from orchestra.constants import allow_queue_names
     if not queuename in allow_queue_names:
       return (StatusCode.FATAL, "The queue with name %s does not exist. Please check the name of all available queues"% queue )
 
-
-
-
-
-
     from Gaugi import Color
-
 
     from prettytable import PrettyTable
     t = PrettyTable([
