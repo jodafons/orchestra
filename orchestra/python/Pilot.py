@@ -11,12 +11,12 @@ from orchestra.slots import *
 from orchestra.constants import *
 from orchestra.utilities import *
 from orchestra.enumerations import *
-from orchestra import Postman
+
 
 
 class Pilot(Logger):
 
-  def __init__(self, db, schedule, orchestrator,
+  def __init__(self, db, schedule, orchestrator, postman,
                cluster    = Cluster.LPS,
                timeout    = None,
                max_update_time=MAX_UPDATE_TIME):
@@ -29,11 +29,7 @@ class Pilot(Logger):
     self.__timeout_clock = Clock( timeout )
     self.__clock = Clock(max_update_time)
     self.__queue = {}
-
-    try:
-      self.__postman = Postman()
-    except:
-      MSG_FATAL( self, "It's not possible to create the Postman service." )
+    self.__postman = postman
 
 
   def add( self, slots ):
@@ -79,6 +75,7 @@ class Pilot(Logger):
     for queue , slot in self.__queue.items():
       slot.setDatabase( self.db() )
       slot.setOrchestrator( self.orchestrator() )
+      slot.setPostman(self.postman())
       if slot.initialize().isFailure():
         MSG_FATAL( self, "Not possible to initialize the %s slot tool. abort", queue )
 

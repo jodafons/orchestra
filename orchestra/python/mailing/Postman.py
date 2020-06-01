@@ -4,8 +4,7 @@ from Gaugi import Logger
 from Gaugi.messenger.macros import *
 from orchestra import OrchestraDB
 import sys
-sys.path.append("/home/rancher/.cluster/orchestra/external")
-from partitura.data import mail_credentials
+#sys.path.append("/home/rancher/.cluster/orchestra/external")
 from smtplib import SMTP
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -15,14 +14,16 @@ import os
 
 class Postman (Logger):
 
-  def __init__ (self):
+  def __init__ (self, login, password, templates, db):
     Logger.__init__(self)
-    self.__myEmail = mail_credentials.login
-    self.__myPassword = mail_credentials.pw
+    self.__myEmail = login
+    self.__myPassword = password
     self.__smtpServer = 'smtp.gmail.com'
     self.__smtpPort = 587
-    self.__env = Environment(loader=FileSystemLoader('/home/rancher/.cluster/orchestra/orchestra/python/mailing/templates/'))
-    self.__db = OrchestraDB()
+    #self.__env = Environment(loader=FileSystemLoader('/home/rancher/.cluster/orchestra/orchestra/python/mailing/templates/'))
+    self.__env = Environment(loader=FileSystemLoader(templates))
+    self.__db = db
+
 
   def __send (self, to_email, subject, bodyContent, logs=[]):
 

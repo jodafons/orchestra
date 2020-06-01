@@ -73,15 +73,19 @@ class Slots( Logger ):
     self.__machines = {}
     self.__gpu = gpu
     self.__total = 0
-    self.__postman = Postman()
 
     # necessary infos to retrieve the node from the correct cluster/queue
     self.__queue_name = queue_name
     self.__cluster = cluster
 
-  @property
+
   def postman (self):
     return self.__postman
+
+
+  def setPostman(self, postman):
+    self.__postman = postman
+
 
   def setDatabase( self, db ):
     self.__db = db
@@ -298,7 +302,7 @@ class Slots( Logger ):
       else:
         node = self.getAvailableNode()
         # Create the job object
-        obj = Consumer( job, node )
+        obj = Consumer( job, node, self.db().volume() )
         # Tell to database that this job will be activated
         obj.setOrchestrator( self.orchestrator() )
         # TODO: the job must set the internal status to ACTIVATED mode

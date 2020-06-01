@@ -19,11 +19,12 @@ class Consumer( Logger ):
   # the database job object), node (use this to choose a specific node for
   # gpu staff
   #
-  def __init__(self, job,  node ):
+  def __init__(self, job,  node, volume ):
     Logger.__init__(self)
     self.__job = job
     self.__orchestrator = NotSet
     self.__node = node
+    self.__volume = volume
     self.__pending=True
     self.__broken=False
     self.__killed=False
@@ -69,7 +70,7 @@ class Consumer( Logger ):
 
   def execute(self):
     try:
-      dirname = self.job().getTheOutputStoragePath()
+      dirname = self.__volume + '/' + self.job().getTheOutputStoragePath()
       try:
         # check if directory exist
         if os.path.exists(dirname):
@@ -135,7 +136,7 @@ class Consumer( Logger ):
       # If any, we assume that the job fail in somepoint and kube dont catch.
       if answer == Status.DONE:
         # Check for any output file into the job directory
-        output = self.job().getTheOutputStoragePath()
+        output = self.__volume + '/' + self.job().getTheOutputStoragePath()
         flist = glob.glob(output+"/*")
         MSG_INFO(self, "The job with name (%s) finished with %d files into the output directory: %s", self.name(), len(flist), output)
         return Status.FAILED if len(flist)==0 else Status.DONE
@@ -147,7 +148,7 @@ class Consumer( Logger ):
   def saveLogs(self):
     try:
       from orchestra.constants import LOGFILE_NAME
-      output = self.job().getTheOutputStoragePath() + "/" + LOGFILE_NAME%self.job().configId
+      output = self.__volume + '/' +self.job().getTheOutputStoragePath() + "/" + LOGFILE_NAME%self.job().configId
       logs = self.orchestrator().logs(self.name(), self.namespace())
       flog = open(output,'w')
       flog.write("+-----------------------------------------------------------------------------+\n")

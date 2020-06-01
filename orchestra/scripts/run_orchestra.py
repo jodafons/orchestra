@@ -5,9 +5,7 @@ from orchestra import Cluster, Queue
 from orchestra.kubernetes import Orchestrator
 from orchestra.constants import *
 from orchestra.slots import *
-
-# Create DB API
-db  = OrchestraDB( cluster=Cluster.LPS)
+from orchestra import Postman
 
 # Create all services
 schedule      = Schedule( "Schedule", LCGRule() )
@@ -56,12 +54,27 @@ schedule.add_transiction( source=Status.TO_BE_REMOVED_SOON, destination=Status.R
 
 
 
-#orchestrator  = Orchestrator( "../data/job_template.yaml",  "../data/lps_cluster.yaml" )
+
+###########################################################################################################################
+### Set everything to partitura private package
+
+from partitura import lps
+
+db  = OrchestraDB( lps.postgres_url, lps.cluster_volume , cluster=Cluster.LPS )
+
+
+postman = Postman( lps.email_login , lps.email_password,
+                  '/home/rancher/.cluster/orchestra/orchestra/python/mailing/templates/', db)
+
 orchestrator  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitura/data/job_template.yaml",
                               "/home/rancher/.cluster/orchestra/external/partitura/data/lps_cluster.yaml" )
 
+
+###########################################################################################################################
+
+
 # create the pilot
-pilot = Pilot(db, schedule, orchestrator,
+pilot = Pilot(db, schedule, orchestrator, postman,
               timeout = None, # run forever
               cluster=Cluster.LPS,
               max_update_time = 0.1*MINUTE )
@@ -73,11 +86,6 @@ pilot.add( Slots("CPU", Cluster.LPS, "cpu_large") )
 pilot.add( Slots("CPU", Cluster.LPS, "nvidia", gpu=True) )
 
 
-
-
-
-
-postman = pilot.postman()
 
 
 import traceback

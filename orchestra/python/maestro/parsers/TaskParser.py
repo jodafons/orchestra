@@ -8,7 +8,6 @@ from Gaugi import load
 from Gaugi import StatusCode
 
 # Connect to DB
-from orchestra.constants import CLUSTER_VOLUME
 from orchestra.db import OrchestraDB
 from orchestra.db import Task,Dataset,File,Job
 from orchestra import Status, Cluster, Signal
@@ -304,7 +303,7 @@ class TaskParser(Logger):
 
 
     # check if task exist into the storage
-    outputFile = CLUSTER_VOLUME +'/'+username+'/'+taskname
+    outputFile = self.__db.volume() +'/'+username+'/'+taskname
 
     if os.path.exists(outputFile):
       MSG_WARNING(self, "The task dir exist into the storage. Beware!")
@@ -332,19 +331,19 @@ class TaskParser(Logger):
         configFiles = self.__db.getDataset(username, configFile).getAllFiles()
 
         _dataFile = self.__db.getDataset(username, dataFile).getAllFiles()[0].getPath()
-        _dataFile = _dataFile.replace( CLUSTER_VOLUME, '/volume' ) # to docker path
+        _dataFile = _dataFile.replace( self.__db.volume(), '/volume' ) # to docker path
 
         _secondaryDS = {}
 
         for key in secondaryDS.keys():
           _secondaryDS[key] = self.__db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
-          _secondaryDS[key] = _secondaryDS[key].replace(CLUSTER_VOLUME, '/volume') # to docker path
+          _secondaryDS[key] = _secondaryDS[key].replace(self.__db.volume(), '/volume') # to docker path
 
         for idx, file in enumerate(configFiles):
 
           _outputFile = '/volume/'+username+'/'+taskname+ '/job_configId_%d'%idx # to docker path
           _configFile = file.getPath()
-          _configFile = _configFile.replace(CLUSTER_VOLUME, '/volume') # to docker path
+          _configFile = _configFile.replace(self.__db.volume(), '/volume') # to docker path
 
           command = execCommand
           command = command.replace( '%DATA' , _dataFile  )
@@ -434,7 +433,7 @@ class TaskParser(Logger):
 
     try:
       if remove:
-        file_dir = CLUSTER_VOLUME + '/' + username + '/' + taskname
+        file_dir = self.__db.volume() + '/' + username + '/' + taskname
         file_dir = file_dir.replace('//','/')
         if os.path.exists(file_dir):
           command = 'rm -rf {FILE}'.format(FILE=file_dir)

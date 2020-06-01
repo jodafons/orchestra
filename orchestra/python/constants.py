@@ -2,18 +2,16 @@ import os
 
 
 
-# The cluster job template to used
-
-CLUSTER_JOB_TEMPLATE = '../data/job_template.yaml'
-CLUSTER_RANCHER_CREDENTIALS = os.environ["CLUSTER_RANCHER_CREDENTIALS"]
-CLUSTER_POSTGRES_URL = os.environ["CLUSTER_POSTGRES_URL"]
-CLUSTER_VOLUME = '/mnt/cluster-volume' # LPS default
-
-allow_queue_names = ["cpu_small" , "cpu_large", "nvidia"]
-
-
+# The cluster templates
 LOGFILE_NAME = "job_configId_%d.log"
 OUTPUT_DIR = "job_configId_%d"
+CLUSTER_VOLUME = '/mnt/cluster-volume' # LPS default
+
+
+
+# queues
+allow_queue_names = ["cpu_small" , "cpu_large", "nvidia"]
+
 
 # ** Orchestra constants **
 
@@ -34,16 +32,6 @@ MAX_FAIL=1
 NUMBER_OF_TRIALS=3;
 
 
-
-
-# ** Maestro constants **
-
-#
-# Flask
-#
-
-#API_PORT = '5020'
-API_PORT = os.environ["CLUSTER_API_PORT"]
 
 #
 # Error codes

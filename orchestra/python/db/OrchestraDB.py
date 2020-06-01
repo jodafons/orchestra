@@ -9,7 +9,6 @@ from orchestra.db.models import *
 from orchestra.constants import *
 from sqlalchemy import and_, or_
 import time
-
 from orchestra.constants import *
 from orchestra import Cluster
 
@@ -20,11 +19,11 @@ from orchestra import Cluster
 
 class OrchestraDB(Logger):
 
-  def __init__( self, cluster=Cluster.LPS, url=CLUSTER_POSTGRES_URL ):
+  def __init__( self, url, volume, cluster=Cluster.LPS ):
 
     Logger.__init__(self)
     self.__cluster = cluster
-
+    self.__volume = volume
     try: # Get the connection and create an session
       MSG_INFO( self, "Connect to %s.", url )
       self.__engine = create_engine(url)
@@ -38,15 +37,8 @@ class OrchestraDB(Logger):
     return self.__cluster
 
 
-  def getStoragePath(self):
-
-    if self.__cluster is Cluster.LPS:
-      return CLUSTER_VOLUME
-    elif self.__cluster is Cluster.SDUMONT:
-      return CLUSTER_VOLUME_SDUMONT
-    else:
-      MSG_WARNING( self, "Cluster path not defined.")
-
+  def volume(self):
+    return self.__volume
 
 
   def createTask( self , user, taskName, configFilePath, inputFilePath, outputFilePath, containerImage, cluster,
@@ -162,15 +154,6 @@ class OrchestraDB(Logger):
 
 
   def isConnected( self ):
-    # for _ in range(NUMBER_OF_TRIALS):
-    #   try:
-    #     self.session().query(Worker).all()
-    #     return True
-    #   except:
-    #     MSG_WARNING(self, "Data base connection is failed... wainting 5 minutes")
-    #     time.sleep( 5*MINUTE )
-    #     continue
-    # return False
     return True
 
 

@@ -47,9 +47,14 @@ db.init_app(app)
 
 docker_client = docker.from_env()
 
-_orchestra = Orchestrator( CLUSTER_JOB_TEMPLATE,
-                           CLUSTER_RANCHER_CREDENTIALS )
-_engine = create_engine( CLUSTER_POSTGRES_URL )
+
+#########################################################################
+from partitura import lps
+
+_orchestra  = Orchestrator( "/home/rancher/.cluster/orchestra/external/partitura/data/job_template.yaml",
+                              "/home/rancher/.cluster/orchestra/external/partitura/data/lps_cluster.yaml" )
+
+_engine = create_engine( lps.postgres_url )
 
 _session = sessionmaker(bind=_engine)
 

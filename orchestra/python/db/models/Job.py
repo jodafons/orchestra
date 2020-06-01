@@ -97,9 +97,8 @@ class Job (Base, db.Model):
 
 
     def getTheOutputStoragePath(self):
-      from orchestra.constants import CLUSTER_VOLUME as volume
       from orchestra.constants import OUTPUT_DIR
-      return volume + "/" + self.getUserName() + "/" + self.getTaskName() + "/" + OUTPUT_DIR%self.configId
+      return self.getUserName() + "/" + self.getTaskName() + "/" + OUTPUT_DIR%self.configId
 
 
 

@@ -26,8 +26,10 @@ import hmac
 import hashlib
 import base64
 from passlib.context import CryptContext
-
 from orchestra.maestro.parsers import *
+
+
+
 
 home = str(Path.home())
 text_type = str
@@ -103,14 +105,14 @@ def get_username_by_name(name):
 
 class MaestroAPI (Logger):
 
-  def __init__ (self):
+  def __init__ (self, db, port):
     Logger.__init__(self)
     self.__app = Flask (__name__)
     self.__app.secret_key = "pxgTWHQEaA28qz95"
-    self.__db = OrchestraDB()
+    self.__db = db
     self.__api = Api(self.__app)
     self.__login = LoginManager(self.__app)
-    db = self.__db
+    self.__port = port
 
 
 
@@ -289,7 +291,7 @@ class MaestroAPI (Logger):
             error_code=HTTPStatus.NOT_FOUND,
             message="This dataset doesn't exist on the database"
           )
-        file_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+        file_dir = db.volume() + '/' + username + '/' + datasetname
         file_dir = file_dir.replace('//','/')
 
         if not os.path.exists(file_dir):
@@ -339,7 +341,7 @@ class MaestroAPI (Logger):
             ds_exists = False
           receivedFile = request.files['file']
           filename = secure_filename(receivedFile.filename)
-          destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+          destination_dir = db.volume() + '/' + username + '/' + datasetname
           destination_dir = destination_dir.replace('//','/')
           if not os.path.exists(destination_dir):
             os.makedirs(destination_dir)
@@ -542,4 +544,4 @@ class MaestroAPI (Logger):
     self.__api.add_resource(Queue, '/queue')
 
   def run (self):
-    self.__app.run (host = '0.0.0.0', port = API_PORT)
+    self.__app.run (host = '0.0.0.0', port = self.__port)

@@ -8,7 +8,6 @@ from Gaugi import load
 from Gaugi import StatusCode
 
 # Connect to DB
-from orchestra.constants import CLUSTER_VOLUME
 from orchestra.db import OrchestraDB
 from orchestra.db import Dataset,File
 from orchestra import Status, Cluster
@@ -167,7 +166,7 @@ class DatasetParser( Logger ):
 
 
     # The path to the dataset in the cluster
-    file_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+    file_dir = self.__db.volume() + '/' + username + '/' + datasetname
     file_dir = file_dir.replace('//','/')
 
 
@@ -206,7 +205,7 @@ class DatasetParser( Logger ):
 
 
     # The path to the dataset in the cluster
-    file_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+    file_dir = self.__db.volume() + '/' + username + '/' + datasetname
 
     # check if this path exist
     if not os.path.exists(file_dir):
@@ -245,7 +244,7 @@ class DatasetParser( Logger ):
       # check if file exist into the storage
       # Get file and assure file name is OK
       filename = path
-      destination_dir = CLUSTER_VOLUME + '/' + username + '/' + datasetname
+      destination_dir = self.__db.volume() + '/' + username + '/' + datasetname
 
       # treat path string with duplicate /
       destination_dir = destination_dir.replace('//','/')
