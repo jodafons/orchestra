@@ -255,13 +255,15 @@ class DatasetParser( Logger ):
 
       os.system( 'cp -r {FILE} {DESTINATION}'.format(FILE=filename, DESTINATION=destination_dir) )
       # Loop over files
+      desired_id = self.__db.generateId(File)+1
       for idx, path in enumerate(expandFolders(destination_dir)):
         MSG_INFO( self, "Registry %s into %s", path,datasetname)
         hash_object = hashlib.md5(str.encode(path))
-        file= File(path=path, hash=hash_object.hexdigest(),id=self.__db.generateId(File))
+        file= File(path=path, hash=hash_object.hexdigest(),id=desired_id+idx)
         ds.addFile(file)
 
-      self.__db.createDataset(ds)
+      self.__db.session().add(ds)
+      #self.__db.createDataset(ds)
       self.__db.commit()
     except Exception as e:
       MSG_ERROR(self,e)

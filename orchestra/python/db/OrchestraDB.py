@@ -260,7 +260,7 @@ class OrchestraDB(Logger):
       return None
 
     try:
-      dataset.id = self.generateId(Dataset)
+      #dataset.id = self.generateId(Dataset)
       self.session().add(dataset)
       return True
     except Exception as e:
