@@ -13,10 +13,10 @@ import os, sys
 
 class Postman (Logger):
 
-  def __init__ (self, login, password, templates):
+  def __init__ (self, token,  templates):
     Logger.__init__(self)
-    self.__myEmail = login
-    self.__myPassword = password
+    self.__myEmail = token.split(':')[0]
+    self.__myPassword = token.split(':')[1]
     self.__smtpServer = 'smtp.gmail.com'
     self.__smtpPort = 587
     self.__env = Environment(loader=FileSystemLoader(templates))
@@ -51,12 +51,7 @@ class Postman (Logger):
       MSG_WARNING(self, e)
 
 
-  def sendNotification (self, username, subject, message):
-    user = self.__db.getUser(username)
-    if user is None:
-      return -1
-    else:
-      to_email = user.email
+  def send (self, to_email, subject, message):
     template = self.__env.get_template('templates/task_notification.html')
     data = {}
     data['message'] = message

@@ -1,8 +1,8 @@
 
-__all__ = ["Clock", "getStatus"]
+__all__ = ["Clock", "getStatus", "getEnv"]
 
 from Gaugi import Color
-import time
+import time, os
 
 
 class Clock(object):
@@ -65,6 +65,8 @@ def getStatus(status):
 
 
 
+def getEnv( name ):
+  return os.environ[name]
 
 
 

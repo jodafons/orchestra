@@ -430,8 +430,8 @@ class Schedule(Logger):
 
     try:
       subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("The task with name %s was assigned with DONE status and will be removed in ten days. Please download all outputs using maestro.")%(task.taskName)
-      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      message = ("The task with name %s was assigned with DONE status.")%(task.taskName)
+      self.__postman.send(task.getUser().email, subject, message)
       return True
     except Exception as e:
       MSG_ERROR(self, e)
@@ -447,8 +447,8 @@ class Schedule(Logger):
 
     try:
       subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("Your task with name %s was set to BROKEN and will be removed in ten days if you don't reach it or retry it.")%(task.taskName)
-      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      message = ("Your task with name %s was set to BROKEN status.")%(task.taskName)
+      self.__postman.send(task.getUser().email, subject, message)
       return True
     except:
 
@@ -463,8 +463,8 @@ class Schedule(Logger):
 
     try:
       subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("The task with name %s was assigned with FINALIZED status and will be removed in ten days if you not ping it or retry.")%(task.taskName)
-      self.__postman.sendNotification(task.getUser().getUserName(), subject, message)
+      message = ("The task with name %s was assigned with FINALIZED status.")%(task.taskName)
+      self.__postman.send(task.getUser().email, subject, message)
       return True
     except:
 

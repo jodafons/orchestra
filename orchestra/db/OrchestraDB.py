@@ -205,9 +205,12 @@ class OrchestraDB(Logger):
 
 
 
-  def getAllNodes(self, queueName):
+  def getAllNodes(self, queueName=None):
     try:
-      return self.session().query(Node).filter(Node.queueName==queueName).all()
+      if queueName:
+        return self.session().query(Node).filter(Node.queueName==queueName).all()
+      else:
+        return self.session().query(Node).all()
     except Exception as e:
       MSG_ERROR(self, e)
       return []
@@ -258,6 +261,41 @@ class OrchestraDB(Logger):
     except Exception as e:
       MSG_ERROR(self, e)
       return None
+
+
+
+
+  def createUser( self, username, email ):
+
+    try:
+      if self.getUser(username) is None:
+        worker = Worker(username=username,email=email,volume='')
+        self.session().add(worker)
+        self.commit()
+        return True
+      else:
+        MSG_ERROR( self, "The user with name (%s) exist into the database.", username )
+        return False
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return False
+
+
+
+  def createNode( self, nodename, queuename, jobs, maxJobs ): 
+
+    try:
+      if self.getNode(nodename, queuename) is None:
+        node = Node(queueName=queuename, name=nodename, jobs=jobs, maxJobs=maxJobs)
+        self.session().add(node)
+        self.commit()
+        return True
+      else:
+        MSG_ERROR( self, "The node (%s) with queue (%s) exist into the database", nodename, queuename )
+        return False
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return False
 
 
 

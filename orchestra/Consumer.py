@@ -4,7 +4,7 @@ __all__ = ["Consumer"]
 
 from Gaugi import Logger, StatusCode
 from Gaugi.messenger.macros import *
-from orchestra import Status
+from orchestra import Status, getEnv
 import os, glob, hashlib, sys
 
 from subprocess import Popen, PIPE, STDOUT
@@ -144,7 +144,7 @@ class Consumer( Logger ):
       if answer == Status.DONE:
         # Check for any output file into the job directory
         output = self.job().getTheOutputStoragePath()
-        flist = glob.glob(output+"/*")
+        flist = glob.glob(output+"/"+getEnv("ORCHESTRA_JOB_COMPLETE_FILE"))
         MSG_INFO(self, "The job with name (%s) finished with %d files into the output directory: %s", self.__jobname, len(flist), output)
         return Status.FAILED if len(flist)==0 else Status.DONE
       else:
@@ -197,7 +197,7 @@ class Consumer( Logger ):
             sys.stdout.buffer.write(line) # pass bytes as is
             file.write(line)
         
-      except Exception as e
+      except Exception as e:
         MSG_ERROR( self, "It's not possible to save the log file. %s", e )
       
       # delete the process

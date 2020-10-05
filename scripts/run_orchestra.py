@@ -1,6 +1,45 @@
 
 from orchestra import *
+import traceback
+import argparse
+import sys,os
 
+
+parser = argparse.ArgumentParser(description = '', add_help = False)
+parser = argparse.ArgumentParser()
+
+postgres_url = getEnv("ORCHESTRA_POSTGRES_URL")
+
+parser.add_argument('-p', '--postgres', action='store',
+        dest='postgres', required = False, default=postgres_url,
+            help = "The postgres url to access the database (format: postgres://username:password@machine.cef22bckysso.us-east-1.rds.amazonaws.com:5432/dbname).")
+
+parser.add_argument('-e','--email', action='store',
+        dest='email', required = True, default = None,
+        help = "The email used to send messages (format: username@myemail.com:password).")
+
+parser.add_argument('-n','--nodename', action='store',
+        dest='nodename', required = True, default = None,
+            help = "The node name registered into the daatabase.")
+
+parser.add_argument('-a','--adm', action='store',
+        dest='admin', required = True, default = None,
+            help = "The administrator user name.")
+
+
+
+
+
+if len(sys.argv)==1:
+  parser.print_help()
+  sys.exit(1)
+
+args = parser.parse_args()
+
+
+#
+# Create the schedule
+#
 schedule = Schedule()
 
 # Create the state machine
@@ -16,51 +55,40 @@ schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING  
 schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING    , trigger='retry_all_failed_jobs'                                         )
 schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed']               )
 schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
+schedule.add_transiction( source=Status.DONE      , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
 
 
 
+# create the postman
+postman = Postman( args.email ,getEnv('ORCHESTRA_PATH')+'/orchestra/mailing/templates')
 
-
-###########################################################################################################################
-### Set everything to partitura private package
-
-
-postgres_url = 'postgres://ringer:12345678@ringer.cef2wazkyxso.us-east-1.rds.amazonaws.com:5432/postgres'
-email_login = 'jodafons@lps.ufrj.br'
-email_password = '6sJ09066sV1990;6'
-
-
-db  = OrchestraDB( postgres_url )
-
-postman = Postman( email_login , email_password , '/Users/jodafons/Desktop/orchestra/orchestra/mailing/templates')
-
-
-backend = Subprocess()
-
-
-############################################################################################################################
-
+# create and connect to the database
+db = OrchestraDB(args.postgres)
 
 # create the pilot
-pilot = Pilot('verdun', db, schedule, backend, postman)
+pilot = Pilot(args.nodename, db, schedule, postman)
 
 
-# Set all queues
-pilot+=Slots("verdun", "cpu_small")
-pilot+=Slots("verdun", "nvidia", gpu=True)
+# Set all slots 
+pilot+=Slots(args.nodename, "cpu_small")
+pilot+=Slots(args.nodename, "nvidia", gpu=True)
 
 
 
-pilot.run()
+try:
+  admin = db.getUser(args.admin)
+except Exception as e:
+  print(e)
 
-#import traceback
-#try:
-#
-#except Exception as e:
-#  print(e)
-#  subject = "[Cluster LPS] (ALARM) Orchestra stop"
-#  message=traceback.format_exc()
-#  postman.sendNotification('jodafons',subject,message)
-#  print(message)
-#
+
+
+try:
+  pilot.run()
+except Exception as e:
+  print(e)
+  subject = "[Cluster LPS] (ALARM) Orchestra stop"
+  message=traceback.format_exc()
+  postman.send( admin.email,subject,message)
+  print(message)
+
 
