@@ -1,13 +1,13 @@
 __all__ = []
 
 
-from . import enumerations
-__all__.extend(enumerations.__all__)
-from .enumerations import *
+from . import enums
+__all__.extend(enums.__all__)
+from .enums import *
 
-from . import backend
-__all__.extend(backend.__all__)
-from .backend import *
+from . import utils
+__all__.extend(utils.__all__)
+from .utils import *
 
 from . import db
 __all__.extend(db.__all__)
@@ -33,6 +33,6 @@ from . import Pilot
 __all__.extend(Pilot.__all__)
 from .Pilot import *
 
-#from . import maestro
-#__all__.extend(maestro.__all__)
-#from .maestro import *
+from . import maestro
+__all__.extend(maestro.__all__)
+from .maestro import *

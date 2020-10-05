@@ -4,7 +4,7 @@ __all__ = ["Job"]
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
-
+import datetime
 
 #
 #   Jobs Table
@@ -93,10 +93,15 @@ class Job (Base):
 
 
     def isAlive(self):
-      return True  if (datetime.datetime.now() - self.timer) < 0.3 else False
+      if self.timer is None:
+        return False
+      else:
+        return True  if (datetime.datetime.now() - self.timer).total_seconds() < 30 else False
 
-
+    #
+    # Get the output file path for this job into the storage
+    #
     def getTheOutputStoragePath(self):
-      return self.getTask().getUser().getVolume() + "/" + self.getTaskName() + "/" + OUTPUT_DIR%self.configId
+      return self.getTask().getTheOutputStoragePath() + "/" + "job_configId_%d"%self.configId
 
 

@@ -2,18 +2,25 @@
 __all__ = ["Schedule"]
 
 
-from Gaugi import Logger, NotSet, Color
+from Gaugi import Logger, StatusCode
 from Gaugi.messenger.macros import *
-from Gaugi import StatusCode
-import time
-from sqlalchemy import and_, or_
-from sqlalchemy import desc
-from orchestra.enumerations import *
+
+from sqlalchemy import and_, or_, desc
+
+from orchestra.enums import *
 from orchestra.db.models import *
 
+import time
 
+
+#
+# Schedule
+#
 class Schedule(Logger):
 
+  #
+  # Constructor
+  #
   def __init__(self):
     Logger.__init__(self)
     self.__states = []
@@ -46,6 +53,8 @@ class Schedule(Logger):
   # execute
   #
   def execute(self):
+
+    self.treatRunningJobsNotAlive()
     self.calculate()
     return StatusCode.SUCCESS
 
@@ -62,8 +71,9 @@ class Schedule(Logger):
   #
   def calculate(self):
 
-    for task in self.getAllTasks():
-      self.run(task)
+    for user in self.db().getAllUsers():
+      for task in user.getAllTasks():
+        self.run(task)
     return StatusCode.SUCCESS
 
 
@@ -84,19 +94,13 @@ class Schedule(Logger):
   #
   # Get all running jobs into the job list
   #
-  def getAllRunningJobs(self, queuename):
+  def getAllRunningJobs(self):
     try:
-      return self.db().session().query(Job).filter( and_( Job.queueName==queuename , Job.status==Status.RUNNING) ).with_for_update().all()
+      return self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING) ).with_for_update().all()
     except Exception as e:
       MSG_ERROR(self,e)
       return []
 
-
-
-
-  #
-  # Transictions functions
-  #
 
 
 
@@ -123,6 +127,14 @@ class Schedule(Logger):
         if passed:
           task.setStatus( destination )
           break
+
+
+  def treatRunningJobsNotAlive(self):
+
+    jobs = self.getAllRunningJobs()
+    for job in jobs:
+      if not job.isAlive():
+        job.setStatus( Status.ASSIGNED )
 
 
 
@@ -287,7 +299,7 @@ class Schedule(Logger):
     try:
       # Get the first job from the list of jobs into this task
       job = task.getAllJobs()[0]
-      if job.getStatus() == Status.FAILED:
+      if job.getStatus() == Status.FAILED or job.getStatus() == Status.BROKEN:
         return True
       else:
         return False
@@ -324,7 +336,7 @@ class Schedule(Logger):
     try:
       # Get the user from the task
       user = task.getUser()
-      priority = user.getMaxPriority()
+      priority = 1000
       # Get the first job from the list of jobs into this task
       job = task.getAllJobs()[0]
       job.setPriority( priority )
@@ -408,8 +420,6 @@ class Schedule(Logger):
 
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
       return False
-
-
 
 
 

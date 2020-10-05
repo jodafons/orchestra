@@ -1,10 +1,7 @@
 __all__ = ["Base"]
 
 from sqlalchemy.ext.declarative import declarative_base
-#from flask_sqlalchemy import SQLAlchemy
 Base = declarative_base()
-#db = SQLAlchemy()
-
 
 from . import Task
 __all__.extend( Task.__all__ )
@@ -22,6 +19,9 @@ from . import Node
 __all__.extend( Node.__all__ )
 from .Node import *
 
+from . import Dataset
+__all__.extend( Dataset.__all__ )
+from .Dataset import *
 
 
 

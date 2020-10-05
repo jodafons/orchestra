@@ -13,14 +13,13 @@ import os, sys
 
 class Postman (Logger):
 
-  def __init__ (self, login, password, templates, db):
+  def __init__ (self, login, password, templates):
     Logger.__init__(self)
     self.__myEmail = login
     self.__myPassword = password
     self.__smtpServer = 'smtp.gmail.com'
     self.__smtpPort = 587
     self.__env = Environment(loader=FileSystemLoader(templates))
-    self.__db = db
 
 
   def __send (self, to_email, subject, bodyContent, logs=[]):

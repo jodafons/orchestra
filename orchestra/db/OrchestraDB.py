@@ -20,13 +20,13 @@ class OrchestraDB(Logger):
   def __init__( self, url):
 
     Logger.__init__(self)
-    self.__volume = volume
     try:
       self.__engine = create_engine(url)
       Session= sessionmaker(bind=self.__engine)
       self.__session = Session()
     except Exception as e:
       MSG_FATAL( self, e )
+
 
 
 
@@ -62,6 +62,9 @@ class OrchestraDB(Logger):
     except Exception as e:
       MSG_ERROR(self, e)
       return None
+
+
+
 
 
 
@@ -202,18 +205,18 @@ class OrchestraDB(Logger):
 
 
 
-  def getAllNodes(self, cluster , queue_name):
+  def getAllNodes(self, queueName):
     try:
-      return self.session().query(Node).filter(Node.queueName==queue_name).all()
+      return self.session().query(Node).filter(Node.queueName==queueName).all()
     except Exception as e:
       MSG_ERROR(self, e)
       return []
 
 
 
-  def getNode( self, node_name, queue_name):
+  def getNode( self, nodeName, queueName):
     try:
-      return self.session().query(Node).filter(and_( Node.queueName==queue_name, Node.name==name)).first()
+      return self.session().query(Node).filter(and_( Node.queueName==queueName, Node.name==nodeName)).first()
     except Exception as e:
       MSG_ERROR(self, e)
       return None
@@ -226,6 +229,35 @@ class OrchestraDB(Logger):
     else:
       return 0
 
+
+
+
+  def createDataset( self, dataset ):
+    try:
+      self.session().add(dataset)
+      return True
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return False
+
+
+
+  def getAllDatasets( self, username):
+    try:
+      return self.session().query(Dataset).filter(Dataset.username==username).all()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return None
+
+
+
+
+  def getDataset( self, username, dataset ):
+    try:
+      return self.session().query(Dataset).filter(and_( Dataset.username==username, Dataset.dataset==dataset) ).first()
+    except Exception as e:
+      MSG_ERROR(self, e)
+      return None
 
 
 

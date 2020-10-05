@@ -4,20 +4,22 @@ __all__ = ["Pilot"]
 
 from Gaugi import Logger, StatusCode
 from Gaugi.messenger.macros import *
-from orchestra.enumerations import *
+from orchestra.enums import *
+
 
 
 
 class Pilot(Logger):
 
-
-  def __init__(self, nodename, db, schedule, backend, postman):
+  #
+  # Constructor
+  #
+  def __init__(self, nodename, db, schedule,  postman):
 
     Logger.__init__(self)
     self.__nodename = nodename
     self.__schedule = schedule
     self.__postman = postman
-    self.__backend = backend
     self.__db = db
     self.__queue = {}
 
@@ -25,15 +27,18 @@ class Pilot(Logger):
 
   def __add__( self, slots ):
     self.__queue[slots.getQueueName()] = slots
+    return self
 
 
 
   def initialize(self):
 
+    self.__schedule.setDatabase( self.__db )
+    self.__schedule.setPostman( self.__postman )
+
     for queue , slots in self.__queue.items():
-      slot.setDatabase( self.__db )
-      slot.setBackend( self.__backend )
-      slot.setPostman(self.__postman )
+      slots.setDatabase( self.__db )
+      slots.setPostman(self.__postman )
       if slots.initialize().isFailure():
         MSG_FATAL( self, "Not possible to initialize the %s slot for %s node. abort", queue, self.__nodename )
 
@@ -45,16 +50,16 @@ class Pilot(Logger):
 
     while True:
 
-      # If in standalone mode, these slots will not in running mode. Only schedule will run.
-      for queue , slots in self.__queues.items():
+      self.__schedule.execute()
 
-        self.treatRunningJobsNotAlive(slots)
+      # If in standalone mode, these slots will not in running mode. Only schedule will run.
+      for queue , slots in self.__queue.items():
           
         if slots.isAvailable():
-          njobs = slot.size() - slot.allocated()
+          njobs = slots.size() - slots.allocated()
 
           MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
-          jobs = self.schedule().getQueue(njobs, queue)
+          jobs = self.__schedule.getQueue(njobs, queue)
 
           while (slots.isAvailable()) and len(jobs)>0:
             slots.push_back( jobs.pop() )
@@ -66,28 +71,21 @@ class Pilot(Logger):
 
 
   def finalize(self):
+
     self.__db.finalize()
     self.__schedule.finalize()
     for queue , slots in self.__queue.items():
       slots.finalize()
-    self.__backend.finalize()
     return StatusCode.SUCCESS
 
 
 
   def run(self):
+
     self.initialize()
     self.execute()
     self.finalize()
     return StatusCode.SUCCESS
-
-
-
-  def treatRunningJobsNotAlive(self , slots):
-    jobs = self.schedule().getAllRunningJobs(slots.getQueueName())
-    for job in jobs:
-      if not job.isAlive():
-        job.setStatus( Status.ASSIGNED )
 
 
 

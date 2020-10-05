@@ -7,7 +7,7 @@ from Gaugi.messenger.macros import *
 from Gaugi import StatusCode
 from collections import deque
 from orchestra import Status
-from orchestra import Consumer
+from orchestra.Consumer import Consumer
 from orchestra import Postman
 
 
@@ -67,8 +67,9 @@ class Slots( Logger ):
   #
   # Constructor
   #
-  def __init__(self, nodename, queuename, db=None, backend=None, gpu=False, postman=None):
-    Logger.__init__(self,name)
+  def __init__(self, nodename, queuename, db=None, gpu=False, postman=None):
+    Logger.__init__(self,name=queuename)
+
 
     self.__slots = list() 
     self.__available_nodes = list()
@@ -78,8 +79,8 @@ class Slots( Logger ):
     self.__queuename = queuename
 
     self.__db = db 
-    self.__backend = backend
     self.__postman = postman
+    self.__node = None
 
 
   def postman (self):
@@ -94,19 +95,11 @@ class Slots( Logger ):
     self.__db = db
 
 
-  def setBackend( self, backend ):
-    self.__backend = backend
-
-
   def db(self):
     return self.__db
 
 
-  def backend(self):
-    return self.__backend
-
-
-  def queueName(self):
+  def getQueueName(self):
     return self.__queuename
 
 
@@ -116,42 +109,37 @@ class Slots( Logger ):
     if not self.db():
       MSG_FATAL( self, "Database object not passed to slot." )
 
-    # check if orchestrator exist
-    if not self.backend():
-      MSG_FATAL( self, "Orchestrator object not passed to slot.")
-
-
-    if self.__nodename in self.db().getAllNodes(self.__queuename):
-      MSG_FATAL( self, "Node with name %s does not exist into the database. You must registered this first", self.__nodename)
-
 
     MSG_INFO(self,"Setup all slots into the queue with name: %s", self.__queuename)
     
     # Get the node descriptor
-    node = self.db().getNode(self.__nodename, self.__queuename)
+    self.__node = self.db().getNode(self.__nodename, self.__queuename)
+
+    if self.__node is None:
+      MSG_FATAL( self, "Node with name %s does not exist into the database. You must registered this first", self.__nodename)
 
 
     if self.__gpu:
       # The node start enable flag as False. You must enable this in the first interation
-      self.__available_slots = [ GPUSlot(node.getName(),idx) for idx in range(node.getMaxJobs()) ]
+      self.__available_slots = [ GPUSlot(self.__node.getName(),idx) for idx in range(self.__node.getMaxJobs()) ]
     else:
       # The node start enable flag as False. You must enable this in the first interation
-      self.__available_slots = [ CPUSlot(node.getName()) for _ in range(node.getMaxJobs()) ]
+      self.__available_slots = [ CPUSlot(self.__node.getName()) for _ in range(self.__node.getMaxJobs()) ]
 
 
     # enable each machine node
-    for idx in range( node.getJobs() ):
+    for idx in range( self.__node.getJobs() ):
       try:
         self.__available_slots[idx].enable()
       except:
-        MSG_ERROR(self, "Failed to enable {}'s node {}".format(node.getName(), idx))
+        MSG_ERROR(self, "Failed to enable {}'s node {}".format(self.__node.getName(), idx))
 
 
     if self.__gpu:
       for slot in self.__available_slots:
-        MSG_INFO( self, "Creating a GPU Slot(%s) with device %d. This slot is enable? %s", node.getName(), slot.device(), slot.isEnable() )
+        MSG_INFO( self, "Creating a GPU Slot(%s) with device %d. This slot is enable? %s", self.__node.getName(), slot.device(), slot.isEnable() )
     else:
-      MSG_INFO( self, "Creating a CPU Slot(%s) with %d/%d", node.getName(), node.getJobs(), node.getMaxJobs() )
+      MSG_INFO( self, "Creating a CPU Slot(%s) with %d/%d", self.__node.getName(), self.__node.getJobs(), self.__node.getMaxJobs() )
 
 
     # Count the number of enable slots
@@ -259,11 +247,9 @@ class Slots( Logger ):
 
     total = 0
     
-    node = self.db().getNode(self.__node_name, self.__queue_name)
-    
     # enable each machine node
     for idx, slot in enumerate(self.__available_slots):
-      if idx < node.getJobs():
+      if idx < self.__node.getJobs():
         slot.enable(); total+=1
       else:
         slot.disable()
@@ -275,11 +261,11 @@ class Slots( Logger ):
     if self.size()!=before:
       if self.__gpu:
         for slot in self.__available_slots:
-          MSG_INFO( self, "Updating a GPU Slot(%s) with device %d. This slot is enable? %s", node.getName(), slot.device(), slot.isEnable() )
+          MSG_INFO( self, "Updating a GPU Slot(%s) with device %d. This slot is enable? %s", self.__node.getName(), slot.device(), slot.isEnable() )
       else:
-        MSG_INFO( self, "Updating a CPU Slots(%s) with %d/%d", node.getName(), node.getJobs(), node.getMaxJobs() )
+        MSG_INFO( self, "Updating a CPU Slots(%s) with %d/%d", self.__node.getName(), self.__node.getJobs(), self.__node.getMaxJobs() )
 
-    MSG_INFO( self, "Creating cluster stack with %d slots", self.size() )
+      MSG_INFO( self, "Creating cluster stack with %d slots", self.size() )
 
 
 
@@ -292,8 +278,9 @@ class Slots( Logger ):
     # Check if we have available slots
     if self.isAvailable():
       slot = self.getAvailableSlot()
-      consumer = Consumer( job, slot, self.db(), self.backend() )
+      consumer = Consumer( job, slot, self.db() )
       consumer.job().setStatus( Status.PENDING )
+      job.ping()
       consumer.initialize()
       self.__slots.append( consumer )
       slot.lock()

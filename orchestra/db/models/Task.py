@@ -117,4 +117,8 @@ class Task (Base):
   
 
 
+    def getTheOutputStoragePath(self):
+      return self.outputFilePath
+
+
 

@@ -1,13 +1,7 @@
 
-from orchestra import Schedule, Pilot, LCGRule, Status
-from orchestra.db import OrchestraDB
-from orchestra import Cluster, Queue
-from orchestra.kubernetes import Orchestrator
-from orchestra.constants import *
-from orchestra.slots import *
-from orchestra import Postman
+from orchestra import *
 
-schedule = Schedule( "Schedule" )
+schedule = Schedule()
 
 # Create the state machine
 schedule.add_transiction( source=Status.REGISTERED, destination=Status.TESTING    , trigger=['all_jobs_are_registered', 'assigned_one_job_to_test']         )
@@ -30,42 +24,43 @@ schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERE
 ###########################################################################################################################
 ### Set everything to partitura private package
 
-from partitura import lps
+
+postgres_url = 'postgres://ringer:12345678@ringer.cef2wazkyxso.us-east-1.rds.amazonaws.com:5432/postgres'
+email_login = 'jodafons@lps.ufrj.br'
+email_password = '6sJ09066sV1990;6'
+
 
 db  = OrchestraDB( postgres_url )
 
-postman = Postman( email_login , email_password )
+postman = Postman( email_login , email_password , '/Users/jodafons/Desktop/orchestra/orchestra/mailing/templates')
 
 
+backend = Subprocess()
 
-orchestrator = Orchestrator()
 
-
-###########################################################################################################################
+############################################################################################################################
 
 
 # create the pilot
-pilot = Pilot(db, schedule, orchestrator, postman,
-              timeout = None, # run forever
-              cluster=Cluster.LPS,
-              max_update_time = 0.1*MINUTE )
+pilot = Pilot('verdun', db, schedule, backend, postman)
 
 
 # Set all queues
-pilot.add( Slots("CPU", Cluster.LPS, "cpu_large") )
-pilot.add( Slots("GPU", Cluster.LPS, "nvidia", gpu=True) )
+pilot+=Slots("verdun", "cpu_small")
+pilot+=Slots("verdun", "nvidia", gpu=True)
 
 
 
+pilot.run()
 
-import traceback
-try:
-  pilot.run()
-except Exception as e:
-  print(e)
-  subject = "[Cluster LPS] (ALARM) Orchestra stop"
-  message=traceback.format_exc()
-  postman.sendNotification('jodafons',subject,message)
-  print(message)
-
+#import traceback
+#try:
+#
+#except Exception as e:
+#  print(e)
+#  subject = "[Cluster LPS] (ALARM) Orchestra stop"
+#  message=traceback.format_exc()
+#  postman.sendNotification('jodafons',subject,message)
+#  print(message)
+#
 
