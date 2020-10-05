@@ -474,6 +474,22 @@ class Schedule(Logger):
 
 
   #
+  # Notify the user
+  #
+  def send_email_task_killed( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
+      message = ("The task with name %s was assigned with KILLED status.")%(task.taskName)
+      self.__postman.send(task.getUser().email, subject, message)
+      return True
+    except:
+
+      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
+      return True
+
+
+  #
   # Set the timer
   #
   def start_timer(self, task):
