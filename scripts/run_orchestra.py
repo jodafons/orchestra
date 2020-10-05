@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 from orchestra import *
 import traceback
@@ -8,23 +9,34 @@ import sys,os
 parser = argparse.ArgumentParser(description = '', add_help = False)
 parser = argparse.ArgumentParser()
 
-postgres_url = getEnv("ORCHESTRA_POSTGRES_URL")
 
-parser.add_argument('-p', '--postgres', action='store',
-        dest='postgres', required = False, default=postgres_url,
+config = getConfig()
+
+parser.add_argument('-u', '--postgres', action='store',
+        dest='postgres', required = False, default=config['postgres'],
             help = "The postgres url to access the database (format: postgres://username:password@machine.cef22bckysso.us-east-1.rds.amazonaws.com:5432/dbname).")
 
 parser.add_argument('-e','--email', action='store',
-        dest='email', required = True, default = None,
-        help = "The email used to send messages (format: username@myemail.com:password).")
+        dest='email', required = False, default=config['email'],
+        help = "The email used to send messages.")
+
+parser.add_argument('-p','--password', action='store',
+        dest='password', required = False, default=config['password'],
+        help = "The email used to send messages.")
 
 parser.add_argument('-n','--nodename', action='store',
         dest='nodename', required = True, default = None,
             help = "The node name registered into the daatabase.")
 
-parser.add_argument('-a','--adm', action='store',
-        dest='admin', required = True, default = None,
-            help = "The administrator user name.")
+
+parser.add_argument('--cpu', action='store',
+        dest='cpu', required = False, default='cpu_small',
+            help = "All cpu queue (cpu_large,cpu_small,...) separated by commam." )
+
+
+parser.add_argument('--gpu', action='store',
+        dest='gpu', required = False, default='cpu_small',
+            help = "All gpu queue (nvidia,rtx,...) separated by commam." )
 
 
 
@@ -60,7 +72,7 @@ schedule.add_transiction( source=Status.DONE      , destination=Status.REGISTERE
 
 
 # create the postman
-postman = Postman( args.email ,getEnv('ORCHESTRA_PATH')+'/orchestra/mailing/templates')
+postman = Postman( args.email, args.password , getEnv('ORCHESTRA_PATH')+'/orchestra/mailing/templates')
 
 # create and connect to the database
 db = OrchestraDB(args.postgres)
@@ -70,16 +82,11 @@ pilot = Pilot(args.nodename, db, schedule, postman)
 
 
 # Set all slots 
-pilot+=Slots(args.nodename, "cpu_small")
-pilot+=Slots(args.nodename, "nvidia", gpu=True)
+for queue in args.cpu.split(','):
+  pilot+=Slots(args.nodename, queue)
 
-
-
-try:
-  admin = db.getUser(args.admin)
-except Exception as e:
-  print(e)
-
+for queue in args.cpu.split(','):
+  pilot+=Slots(args.nodename, queue, gpu=True)
 
 
 try:
@@ -88,7 +95,8 @@ except Exception as e:
   print(e)
   subject = "[Cluster LPS] (ALARM) Orchestra stop"
   message=traceback.format_exc()
-  postman.send( admin.email,subject,message)
+  for user in db.getAllUsers():
+    postman.send( user.email,subject,message)
   print(message)
 
 

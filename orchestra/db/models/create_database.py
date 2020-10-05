@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 
-postgres_url = os.env["ORCHESTRA_POSTGRES_URL"]
+postgres_url = os.environ["ORCHESTRA_POSTGRES_URL"]
 
 engine = create_engine(postgres_url)
 

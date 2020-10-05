@@ -1,6 +1,0 @@
-[submodule "external/maestro"]
-	path = external/maestro
-	url = https://github.com/gabriel-milan/maestro.git
-[submodule "external/partitura"]
-	path = external/partitura
-	url = https://github.com/jodafons/partitura.git

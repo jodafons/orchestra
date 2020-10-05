@@ -9,8 +9,6 @@ export PATH=`pwd`/scripts:$PATH
 
 # Set all orchestra configurations
 export ORCHESTRA_PATH=`pwd`
-export ORCHESTRA_POSTGRES_URL="postgres://ringer:12345678@ringer.cef2wazkyxso.us-east-1.rds.amazonaws.com:5432/postgres"
-export ORCHESTRA_JOB_COMPLETE_FILE=".job_complete"
 
 
 

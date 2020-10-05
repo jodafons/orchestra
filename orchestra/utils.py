@@ -1,5 +1,5 @@
 
-__all__ = ["Clock", "getStatus", "getEnv"]
+__all__ = ["Clock", "getStatus", "getEnv", "getConfig"]
 
 from Gaugi import Color
 import time, os
@@ -67,6 +67,23 @@ def getStatus(status):
 
 def getEnv( name ):
   return os.environ[name]
+
+
+
+def getConfig():
+
+  # default
+  fname = getEnv("HOME")+'/.orchestra.json'
+  import json
+  try:
+    with open(fname,'r') as f:
+      data = json.load(f)
+      return data
+  except OSError as e:
+    print(e)
+    print("Could not open/read file: %s" % fname)
+
+
 
 
 
