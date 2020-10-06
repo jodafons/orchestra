@@ -71,14 +71,13 @@ class Slots( Logger ):
     Logger.__init__(self,name=queuename)
 
 
-    self.__slots = list() 
+    self.__slots = list()
     self.__available_nodes = list()
     self.__gpu = gpu
     self.__total = 0
-    self.__nodename = nodename
     self.__queuename = queuename
 
-    self.__db = db 
+    self.__db = db
     self.__postman = postman
     self.__node = node
 
@@ -111,7 +110,7 @@ class Slots( Logger ):
 
 
     MSG_INFO(self,"Setup all slots into the queue with name: %s", self.__queuename)
-    
+
     if self.__gpu:
       # The node start enable flag as False. You must enable this in the first interation
       self.__available_slots = [ GPUSlot(self.__node.getName(),idx) for idx in range(self.__node.getMaxNumberOfSlots( gpu=True )) ]
@@ -149,7 +148,7 @@ class Slots( Logger ):
 
 
   def execute(self):
-    
+
     self.update()
 
 
@@ -161,9 +160,9 @@ class Slots( Logger ):
 
 
       if consumer.status() is Status.PENDING:
-        
+
         if consumer.execute().isFailure():
-          
+
           consumer.job().setStatus( Status.BROKEN )
           consumer.finalize()
           consumer.slot().unlock()
@@ -173,7 +172,7 @@ class Slots( Logger ):
           consumer.job().setStatus( Status.RUNNING )
 
       elif consumer.status() is Status.FAILED:
-        
+
         consumer.job().setStatus( Status.FAILED )
         consumer.finalize()
         consumer.slot().unlock()
@@ -234,12 +233,12 @@ class Slots( Logger ):
   # Update the number of slots from the database
   #
   def update(self):
-    
+
     # get the number of activated slots
     before = self.size()
 
     total = 0
-    
+
     # enable each machine node
     for idx, slot in enumerate(self.__available_slots):
       if idx < self.__node.getNumberOfEnabledSlots( gpu=self.__gpu ):
@@ -267,7 +266,7 @@ class Slots( Logger ):
   # Add a job into the slot
   #
   def push_back( self, job ):
-    
+
     # Check if we have available slots
     if self.isAvailable():
       slot = self.getAvailableSlot()

@@ -5,6 +5,8 @@ __all__=['Node']
 from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
+import datetime
+
 
 #
 #   Node Table
@@ -15,7 +17,7 @@ class Node (Base):
 
   id                = Column(Integer, primary_key = True)
   name              = Column(String)
-  
+
   enabledCPUSlots      = Column( Integer )
   enabledGPUSlots      = Column( Integer )
 
@@ -27,14 +29,14 @@ class Node (Base):
 
   # Signal column to be user to retry, delete or kill functions
   signal = Column( String, default='waiting' )
- 
+
 
   def getName(self):
     return self.name
 
 
   def getMaxNumberOfSlots(self, gpu=False):
-    return self.maxNumberOfGPUSlots if gpu else self.maxNumberOfCPUSlots 
+    return self.maxNumberOfGPUSlots if gpu else self.maxNumberOfCPUSlots
 
 
   def getNumberOfEnabledSlots(self, gpu=False):
@@ -51,10 +53,10 @@ class Node (Base):
     else:
       return True  if (datetime.datetime.now() - self.timer).total_seconds() < 30 else False
 
-  
+
   def getSignal(self):
     return self.signal
-  
+
   def setSignal(self, value):
     self.signal = value
- 
+

@@ -58,7 +58,7 @@ class Pilot(Logger):
 
         # If in standalone mode, these slots will not in running mode. Only schedule will run.
         for queue , slots in self.__queue.items():
-            
+
           if slots.isAvailable():
             njobs = slots.size() - slots.allocated()
 
@@ -97,8 +97,8 @@ class Pilot(Logger):
 
   def alive(self):
 
-    if self.__node.getStatus() == 'stop':
-      self.__node.setStatus('waiting')
+    if self.__node.getSignal() == 'stop':
+      self.__node.setSignal('waiting')
       return False
     else:
       # tell to the database that this node is running (alive)

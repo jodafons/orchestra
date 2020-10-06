@@ -28,7 +28,7 @@ class NodeParser( Logger ):
     Logger.__init__(self)
     self.__db = db
     if args:
-      
+
       create_parser = argparse.ArgumentParser(description = 'Node create command lines.' , add_help = False)
       create_parser.add_argument('-n', '--name', action='store', dest='name', required=True,
                                   help = "The name of the node.")
@@ -46,8 +46,13 @@ class NodeParser( Logger ):
 
       delete_parser = argparse.ArgumentParser(description = 'Node remove command lines.', add_help = False)
       delete_parser.add_argument('-n', '--name', action='store', dest='name', required=True,
-                                   help = "The dataset name to be removed")
- 
+                                   help = "The node name to be removed")
+
+
+      stop_parser = argparse.ArgumentParser(description = 'Node stop command lines.', add_help = False)
+      stop_parser.add_argument('-n', '--name', action='store', dest='name', required=True,
+                                   help = "The node name to be stop")
+
 
       # Delete dataset using the dataset CLI
       list_parser = argparse.ArgumentParser(description = 'List all users command lines.', add_help = False)
@@ -60,6 +65,7 @@ class NodeParser( Logger ):
       subparser.add_parser('create', parents=[create_parser])
       subparser.add_parser('delete', parents=[delete_parser])
       subparser.add_parser('list', parents=[list_parser])
+      subparser.add_parser('stop', parents=[stop_parser])
       args.add_parser( 'node', parents=[parent] )
 
 
@@ -99,7 +105,7 @@ class NodeParser( Logger ):
   #
   def list( self ):
 
-    t = PrettyTable([ 
+    t = PrettyTable([
                       Color.CGREEN2 + 'Node'      + Color.CEND,
                       Color.CGREEN2 + 'GPU Slots' + Color.CEND,
                       Color.CGREEN2 + 'CPU slots' + Color.CEND,
@@ -109,8 +115,8 @@ class NodeParser( Logger ):
     # Loop over all datasets inside of the username
     for node in self.__db.getAllNodes():
 
-      t.add_row(  [node.name, 
-                   '%d/%d'%(node.enabledGPUSlots, node.maxNumberGPUOfSlots),
+      t.add_row(  [node.name,
+                   '%d/%d'%(node.enabledGPUSlots, node.maxNumberOfGPUSlots),
                    '%d/%d'%(node.enabledCPUSlots, node.maxNumberOfCPUSlots),
                    'online' if node.isAlive() else 'offline',
                   ] )
@@ -122,11 +128,11 @@ class NodeParser( Logger ):
   #
   # create a node
   #
-  def create( self, nodename, enabledCPUSlots, maxNumberOfCPUSlots, enabledGPUSlots, maxNumberOfGPUSlots): 
+  def create( self, nodename, enabledCPUSlots, maxNumberOfCPUSlots, enabledGPUSlots, maxNumberOfGPUSlots):
 
     if not self.__db.createNode( nodename, enabledCPUSlots, maxNumberOfCPUSlots, enabledGPUSlots, maxNumberOfGPUSlots ):
       return (StatusCode.FATAL, 'Failed to create the node into the database')
-    
+
     return (StatusCode.SUCCESS, "Successfully created." )
 
 
@@ -146,4 +152,18 @@ class NodeParser( Logger ):
       return (StatusCode.FATAL, 'The node (%s) does not exist into the database'%nodename)
 
     return (StatusCode.SUCCESS, "Successfully removed." )
+
+
+
+  def stop( self, nodename ):
+
+    node = self.__db.getNode(nodename)
+    if node:
+      node.setSignal("stop")
+    else:
+      return (StatusCode.FATAL, 'The node (%s) does not exist into the database'%nodename)
+
+    return (StatusCode.SUCCESS, "Successfully removed." )
+
+
 
