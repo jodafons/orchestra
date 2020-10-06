@@ -144,7 +144,11 @@ class Consumer( Logger ):
       if answer == Status.DONE:
         # Check for any output file into the job directory
         output = self.job().getTheOutputStoragePath()
-        flist = glob.glob(output+"/"+getEnv("ORCHESTRA_JOB_COMPLETE_FILE"))
+
+        from orchestra import getConfig
+        config = getConfig()
+
+        flist = glob.glob(output+"/"+config["job_complete_file_name"])
         MSG_INFO(self, "The job with name (%s) finished with %d files into the output directory: %s", self.__jobname, len(flist), output)
         return Status.FAILED if len(flist)==0 else Status.DONE
       else:

@@ -1,13 +1,14 @@
 
-
+from orchestra import getConfig
 from orchestra.db.models import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 
-postgres_url = os.environ["ORCHESTRA_POSTGRES_URL"]
+config = getConfig()
 
-engine = create_engine(postgres_url)
+
+engine = create_engine(config["postgres"])
 
 Session = sessionmaker(bind=engine)
 session = Session()

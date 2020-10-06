@@ -3,7 +3,7 @@
 import sys, os
 import argparse
 from orchestra.db import OrchestraDB
-from orchestra.maestro import NodeParser, UserParser, DatasetParser, TaskParser
+from orchestra.maestro import PilotParser, NodeParser, UserParser, DatasetParser, TaskParser
 from orchestra.utils import getConfig
 
 
@@ -18,6 +18,7 @@ db  = OrchestraDB( config['postgres'] )
 
 
 engine = [
+            PilotParser(db, commands),
             UserParser(db, commands),
             NodeParser(db, commands),
             DatasetParser(db, commands),

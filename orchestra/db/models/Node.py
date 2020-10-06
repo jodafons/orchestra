@@ -2,7 +2,7 @@ __all__=['Node']
 
 
 
-from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from orchestra.db.models import Base
 
@@ -13,24 +13,24 @@ class Node (Base):
 
   __tablename__ = 'node'
 
-  id        = Column(Integer, primary_key = True)
-  
-  queueName = Column( String )
-  name      = Column(String)
-  jobs      = Column( Integer )
-  maxJobs   = Column( Integer )
+  id                = Column(Integer, primary_key = True)
+  queueName         = Column( String )
+  name              = Column(String)
+  enabledSlots      = Column( Integer )
+  maxNumberOfSlots  = Column( Integer )
+  isGPU             = Column( Boolean, default=False )
 
 
   def getName(self):
     return self.name
 
 
-  def getMaxJobs(self):
-    return self.maxJobs
+  def getMaxNumberOfSlots(self):
+    return self.maxNumberOfSlots
 
 
-  def getJobs(self):
-    return self.jobs
+  def getNumberOfEnabledSlots(self):
+    return self.enabledSlots
 
 
   def getQueueName(self):

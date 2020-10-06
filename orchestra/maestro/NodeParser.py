@@ -34,10 +34,12 @@ class NodeParser( Logger ):
                                   help = "The name of the node.")
       create_parser.add_argument('-q','--queue', action='store', dest='queue', required=True,
                                   help = "The name of the queue.")
-      create_parser.add_argument('-j','--jobs', action='store', dest='jobs', required=True,
-                                  help = "The number of jobs (slots).")
-      create_parser.add_argument('-m','--maxJobs', action='store', dest='maxJobs', required=True,
-                                  help = "The total number of jobs (slots) for this node.")
+      create_parser.add_argument('-e','--enabledSlots', action='store', dest='enabledSlots', required=True,
+                                  help = "The number of enabled slots.")
+      create_parser.add_argument('-m','--maxNumberOfSlots', action='store', dest='maxNumberOfSlots', required=True,
+                                  help = "The total number of slots for this node.")
+      create_parser.add_argument('-g','--gpu', action='store_true', dest='isGPU', required=False,
+                                  help = "Use GPU for this node")
 
 
 
@@ -51,9 +53,6 @@ class NodeParser( Logger ):
 
       # Delete dataset using the dataset CLI
       list_parser = argparse.ArgumentParser(description = 'List all users command lines.', add_help = False)
-      list_parser.add_argument('-q','--queue', action='store', dest='queue', required=False, default=None, 
-                                  help = "The name of the queue.")
- 
 
 
       parent = argparse.ArgumentParser(description = '',add_help = False)
@@ -71,7 +70,7 @@ class NodeParser( Logger ):
     # Dataset CLI
     if args.mode == 'node':
       if args.option == 'create':
-        status, answer = self.create(args.name, args.queue, args.jobs, args.maxJobs)
+        status, answer = self.create(args.name, args.queue, args.enabledSlots, args.maxNumberOfSlots, args.isGPU)
 
         if status.isFailure():
           MSG_FATAL(self, answer)
@@ -88,7 +87,7 @@ class NodeParser( Logger ):
           MSG_INFO(self, answer)
 
       elif args.option == 'list':
-        status, answer = self.list(args.queue)
+        status, answer = self.list()
 
         if status.isFailure():
           MSG_FATAL(self, answer)
@@ -104,26 +103,26 @@ class NodeParser( Logger ):
   #
   # List datasets
   #
-  def list( self, queuename=None ):
+  def list( self ):
 
-    t = PrettyTable([ Color.CGREEN2 + 'Queue'     + Color.CEND,
-                      Color.CGREEN2 + 'Node'      + Color.CEND,
-                      Color.CGREEN2 + 'Slots'     + Color.CEND,
-                      Color.CGREEN2 + 'Max slots' + Color.CEND,
+    t = PrettyTable([ Color.CGREEN2 + 'Queue'         + Color.CEND,
+                      Color.CGREEN2 + 'Node'          + Color.CEND,
+                      Color.CGREEN2 + 'Enabled Slots' + Color.CEND,
+                      Color.CGREEN2 + 'Max slots'     + Color.CEND,
                       ])
 
     # Loop over all datasets inside of the username
-    for node in self.__db.getAllNodes(queuename):
-      t.add_row(  [node.queueName, node.name, node.jobs, node.maxJobs] )
+    for node in self.__db.getAllNodes():
+      t.add_row(  [node.queueName, node.name, node.enabledSlots, node.maxNumberOfSlots] )
     return (StatusCode.SUCCESS, t)
 
 
   #
   # create a node
   #
-  def create( self, nodename, queuename, jobs, maxJobs ): 
+  def create( self, nodename, queuename, enabledSlots, maxNumberOfSlots, isGPU): 
 
-    if not self.__db.createNode( nodename, queuename, jobs, maxJobs ):
+    if not self.__db.createNode( nodename, queuename, enabledSlots, maxNumberOfSlots, isGPU ):
       return (StatusCode.FATAL, 'Failed to create the node into the database')
     
     return (StatusCode.SUCCESS, "Successfully created." )

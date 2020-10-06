@@ -121,14 +121,14 @@ class Slots( Logger ):
 
     if self.__gpu:
       # The node start enable flag as False. You must enable this in the first interation
-      self.__available_slots = [ GPUSlot(self.__node.getName(),idx) for idx in range(self.__node.getMaxJobs()) ]
+      self.__available_slots = [ GPUSlot(self.__node.getName(),idx) for idx in range(self.__node.getMaxNumberOfSlots()) ]
     else:
       # The node start enable flag as False. You must enable this in the first interation
-      self.__available_slots = [ CPUSlot(self.__node.getName()) for _ in range(self.__node.getMaxJobs()) ]
+      self.__available_slots = [ CPUSlot(self.__node.getName()) for _ in range(self.__node.getMaxNumberOfSlots()) ]
 
 
     # enable each machine node
-    for idx in range( self.__node.getJobs() ):
+    for idx in range( self.__node.getNumberOfEnabledSlots() ):
       try:
         self.__available_slots[idx].enable()
       except:
@@ -139,7 +139,7 @@ class Slots( Logger ):
       for slot in self.__available_slots:
         MSG_INFO( self, "Creating a GPU Slot(%s) with device %d. This slot is enable? %s", self.__node.getName(), slot.device(), slot.isEnable() )
     else:
-      MSG_INFO( self, "Creating a CPU Slot(%s) with %d/%d", self.__node.getName(), self.__node.getJobs(), self.__node.getMaxJobs() )
+      MSG_INFO( self, "Creating a CPU Slot(%s) with %d/%d", self.__node.getName(), self.__node.getNumberOfEnabledSlots(), self.__node.getMaxNumberOfSlots() )
 
 
     # Count the number of enable slots
@@ -249,7 +249,7 @@ class Slots( Logger ):
     
     # enable each machine node
     for idx, slot in enumerate(self.__available_slots):
-      if idx < self.__node.getJobs():
+      if idx < self.__node.getNumberOfEnabledSlots():
         slot.enable(); total+=1
       else:
         slot.disable()
@@ -263,7 +263,7 @@ class Slots( Logger ):
         for slot in self.__available_slots:
           MSG_INFO( self, "Updating a GPU Slot(%s) with device %d. This slot is enable? %s", self.__node.getName(), slot.device(), slot.isEnable() )
       else:
-        MSG_INFO( self, "Updating a CPU Slots(%s) with %d/%d", self.__node.getName(), self.__node.getJobs(), self.__node.getMaxJobs() )
+        MSG_INFO( self, "Updating a CPU Slots(%s) with %d/%d", self.__node.getName(), self.__node.getNumberOfEnabledSlots(), self.__node.getMaxNumberOfSlots() )
 
       MSG_INFO( self, "Creating cluster stack with %d slots", self.size() )
 

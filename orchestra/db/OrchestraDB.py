@@ -205,11 +205,15 @@ class OrchestraDB(Logger):
 
 
 
-  def getAllNodes(self, queueName=None):
+  def getAllNodes(self, nodename=None, queuename=None):
     try:
-      if queueName:
+      if nodename and queuename:
+        return self.session().query(Node).filter(Node.name==nodename).filter(Node.queueName==queuename).all()
+      if nodename and queuename is None:
+        return self.session().query(Node).filter(Node.name==nodename).all()
+      if queuename and nodename is None:
         return self.session().query(Node).filter(Node.queueName==queueName).all()
-      else:
+      else: # None, None
         return self.session().query(Node).all()
     except Exception as e:
       MSG_ERROR(self, e)
@@ -282,11 +286,11 @@ class OrchestraDB(Logger):
 
 
 
-  def createNode( self, nodename, queuename, jobs, maxJobs ): 
+  def createNode( self, nodename, queuename, enabledSlots, maxNumberOfSlots, isGPU ): 
 
     try:
       if self.getNode(nodename, queuename) is None:
-        node = Node(queueName=queuename, name=nodename, jobs=jobs, maxJobs=maxJobs)
+        node = Node(queueName=queuename, name=nodename, enabledSlots=enabledSlots, maxNumberOfSlots=maxNumberOfSlots, isGPU=isGPU)
         self.session().add(node)
         self.commit()
         return True

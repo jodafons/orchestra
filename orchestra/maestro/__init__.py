@@ -16,6 +16,10 @@ from . import NodeParser
 __all__.extend( NodeParser.__all__ )
 from .NodeParser import *
 
+from . import PilotParser
+__all__.extend( PilotParser.__all__ )
+from .PilotParser import *
+
 
 
 
