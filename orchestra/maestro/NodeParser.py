@@ -82,10 +82,10 @@ class NodeParser( Logger ):
 
       elif args.option == 'delete':
         status, answer = self.delete(args.name)
-        if status.isFailure():
-          MSG_FATAL(self, answer)
+        if status.isfailure():
+          msg_fatal(self, answer)
         else:
-          MSG_INFO(self, answer)
+          msg_info(self, answer)
 
       elif args.option == 'list':
         status, answer = self.list()
@@ -93,6 +93,15 @@ class NodeParser( Logger ):
           MSG_FATAL(self, answer)
         else:
           print(answer)
+
+      elif args.option == 'stop':
+        status, answer = self.stop(args.name)
+        if status.isFailure():
+          msg_fatal(self, answer)
+        else:
+          msg_info(self, answer)
+
+
 
       else:
         MSG_FATAL(self, "Not valid option.")
@@ -160,10 +169,13 @@ class NodeParser( Logger ):
     node = self.__db.getNode(nodename)
     if node:
       node.setSignal("stop")
+      self.__db.commit()
     else:
       return (StatusCode.FATAL, 'The node (%s) does not exist into the database'%nodename)
 
     return (StatusCode.SUCCESS, "Successfully removed." )
+
+
 
 
 
