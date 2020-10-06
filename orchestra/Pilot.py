@@ -5,8 +5,9 @@ __all__ = ["Pilot"]
 from Gaugi import Logger, StatusCode
 from Gaugi.messenger.macros import *
 from orchestra.enums import *
+from orchestra.utils import Clock
 
-
+SECONDS = 1.
 
 
 class Pilot(Logger):
@@ -23,6 +24,7 @@ class Pilot(Logger):
     self.__db = db
     self.__queue = {}
 
+    self.__clock = Clock( 10*SECONDS )
 
 
   def __add__( self, slots ):
@@ -50,21 +52,25 @@ class Pilot(Logger):
 
     while True:
 
-      self.__schedule.execute()
+      if self.__clock():
 
-      # If in standalone mode, these slots will not in running mode. Only schedule will run.
-      for queue , slots in self.__queue.items():
-          
-        if slots.isAvailable():
-          njobs = slots.size() - slots.allocated()
+        self.__schedule.execute()
 
-          MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
-          jobs = self.__schedule.getQueue(njobs, queue)
+        # If in standalone mode, these slots will not in running mode. Only schedule will run.
+        for queue , slots in self.__queue.items():
+            
+          if slots.isAvailable():
+            njobs = slots.size() - slots.allocated()
 
-          while (slots.isAvailable()) and len(jobs)>0:
-            slots.push_back( jobs.pop() )
+            MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
+            jobs = self.__schedule.getQueue(njobs, queue)
 
-        slots.execute()
+            while (slots.isAvailable()) and len(jobs)>0:
+              slots.push_back( jobs.pop() )
+
+          slots.execute()
+
+        self.__clock.reset()
 
     return StatusCode.SUCCESS
 
