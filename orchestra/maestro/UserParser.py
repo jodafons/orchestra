@@ -8,6 +8,7 @@ from Gaugi import StatusCode, Color, expandFolders
 # Connect to DB
 from orchestra.db import Task,Dataset,File,Job
 from orchestra import Status, Signal, getStatus
+from orchestra.db.models import *
 from sqlalchemy import and_, or_
 from prettytable import PrettyTable
 
@@ -47,6 +48,7 @@ class UserParser( Logger ):
                                    help = "List all attributes for this user")
 
 
+      init_parser = argparse.ArgumentParser(description = 'Initialize the database.', add_help = False)
 
       parent = argparse.ArgumentParser(description = '',add_help = False)
       subparser = parent.add_subparsers(dest='option')
@@ -55,6 +57,7 @@ class UserParser( Logger ):
       subparser.add_parser('create', parents=[create_parser])
       subparser.add_parser('delete', parents=[delete_parser])
       subparser.add_parser('list', parents=[list_parser])
+      subparser.add_parser('init', parents=[init_parser])
       args.add_parser( 'user', parents=[parent] )
 
 
@@ -87,6 +90,13 @@ class UserParser( Logger ):
         else:
           print(answer)
 
+      elif args.option == 'init':
+        status, answer = self.init()
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+        
       else:
         MSG_FATAL(self, "Not valid option.")
 
@@ -122,6 +132,24 @@ class UserParser( Logger ):
 
     MSG_WARNING(self, "Not implemented yet." )
 
+
+  def init(self):
+
+    from orchestra import getConfig
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    
+    config = getConfig()
+    engine = create_engine(config["postgres"])
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    Base.metadata.create_all(engine)
+    session.commit()
+    session.close()
+
+
+    return (StatusCode.SUCCESS, "Successfully initialized." )
 
 
 
