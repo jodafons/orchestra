@@ -67,42 +67,28 @@ class PilotParser( Logger ):
     email = config['email']
     password = config['password']
     module_orchestra_path = os.path.dirname(orchestra.__file__)
-
-    #
-    # Create the schedule
-    #
-    schedule = Schedule()
-    
-    # Create the state machine
-    schedule.add_transiction( source=Status.REGISTERED, destination=Status.TESTING    , trigger=['all_jobs_are_registered', 'assigned_one_job_to_test']         )
-    schedule.add_transiction( source=Status.TESTING   , destination=Status.TESTING    , trigger='test_job_still_running'                                        )
-    schedule.add_transiction( source=Status.TESTING   , destination=Status.BROKEN     , trigger=['test_job_fail','broken_all_jobs','send_email_task_broken']    )
-    schedule.add_transiction( source=Status.BROKEN    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
-    schedule.add_transiction( source=Status.TESTING   , destination=Status.RUNNING    , trigger=['test_job_pass','assigned_all_jobs']                           )
-    schedule.add_transiction( source=Status.RUNNING   , destination=Status.DONE       , trigger=['all_jobs_are_done', 'send_email_task_done']                   )
-    schedule.add_transiction( source=Status.RUNNING   , destination=Status.FINALIZED  , trigger=['all_jobs_ran','send_email_task_finalized']                    )
-    schedule.add_transiction( source=Status.RUNNING   , destination=Status.KILL       , trigger='kill_all_jobs'                                                 )
-    schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_not_allow_job_status_in_running_state'                   )
-    schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING    , trigger='retry_all_failed_jobs'                                         )
-    schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed']               )
-    schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
-    schedule.add_transiction( source=Status.DONE      , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
-    
-
-
     
     # create the postman
     postman = Postman( email, password , module_orchestra_path+'/mailing/templates')
     
+    # get the standard schedule state machine
+    from orchestra import schedule
+
     # create the pilot
     pilot = Pilot(nodename, self.__db, schedule, postman)
    
+    
+    node = self.__db.getNode( nodename )
+    
+    if node is None:
+      return (StatusCode.FATAL, "Node (%s) is not available into the database"%nodename )
 
-    for node in self.__db.getAllNodes( nodename ):
-      MSG_INFO( self, "Adding node(%s) for queue(%s). GPU is %s.", node.name, node.queueName, 'True' if node.isGPU else 'False' )
-      pilot+=Slots(node.name, node.queueName , gpu=node.isGPU )
+
+    # create allways two slots (cpu and gpu) by default
+    pilot+=Slots(node, 'cpu' , gpu=False )
+    pilot+=Slots(node, 'gpu' , gpu=True  )
     
-    
+
     try:
       pilot.run()
     except Exception as e:

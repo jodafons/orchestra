@@ -15,10 +15,10 @@ class Pilot(Logger):
   #
   # Constructor
   #
-  def __init__(self, nodename, db, schedule,  postman):
+  def __init__(self, node, db, schedule,  postman):
 
     Logger.__init__(self)
-    self.__nodename = nodename
+    self.__node = node
     self.__schedule = schedule
     self.__postman = postman
     self.__db = db
@@ -42,7 +42,7 @@ class Pilot(Logger):
       slots.setDatabase( self.__db )
       slots.setPostman(self.__postman )
       if slots.initialize().isFailure():
-        MSG_FATAL( self, "Not possible to initialize the %s slot for %s node. abort", queue, self.__nodename )
+        MSG_FATAL( self, "Not possible to initialize the %s slot for %s node. abort", queue, self.__node.name )
 
     return StatusCode.SUCCESS
 
@@ -50,7 +50,7 @@ class Pilot(Logger):
 
   def execute(self):
 
-    while True:
+    while self.alive():
 
       if self.__clock():
 
@@ -92,6 +92,19 @@ class Pilot(Logger):
     self.execute()
     self.finalize()
     return StatusCode.SUCCESS
+
+
+
+  def alive(self):
+
+    if self.__node.getStatus() == 'stop':
+      self.__node.setStatus('waiting')
+      return False
+    else:
+      # tell to the database that this node is running (alive)
+      self.__node.ping()
+      return True
+
 
 
 

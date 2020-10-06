@@ -67,7 +67,7 @@ class Slots( Logger ):
   #
   # Constructor
   #
-  def __init__(self, nodename, queuename, db=None, gpu=False, postman=None):
+  def __init__(self, node, queuename, db=None, gpu=False, postman=None):
     Logger.__init__(self,name=queuename)
 
 
@@ -80,7 +80,7 @@ class Slots( Logger ):
 
     self.__db = db 
     self.__postman = postman
-    self.__node = None
+    self.__node = node
 
 
   def postman (self):
@@ -112,23 +112,16 @@ class Slots( Logger ):
 
     MSG_INFO(self,"Setup all slots into the queue with name: %s", self.__queuename)
     
-    # Get the node descriptor
-    self.__node = self.db().getNode(self.__nodename, self.__queuename)
-
-    if self.__node is None:
-      MSG_FATAL( self, "Node with name %s does not exist into the database. You must registered this first", self.__nodename)
-
-
     if self.__gpu:
       # The node start enable flag as False. You must enable this in the first interation
-      self.__available_slots = [ GPUSlot(self.__node.getName(),idx) for idx in range(self.__node.getMaxNumberOfSlots()) ]
+      self.__available_slots = [ GPUSlot(self.__node.getName(),idx) for idx in range(self.__node.getMaxNumberOfSlots( gpu=True )) ]
     else:
       # The node start enable flag as False. You must enable this in the first interation
       self.__available_slots = [ CPUSlot(self.__node.getName()) for _ in range(self.__node.getMaxNumberOfSlots()) ]
 
 
     # enable each machine node
-    for idx in range( self.__node.getNumberOfEnabledSlots() ):
+    for idx in range( self.__node.getNumberOfEnabledSlots( gpu=self.__gpu ) ):
       try:
         self.__available_slots[idx].enable()
       except:
@@ -249,7 +242,7 @@ class Slots( Logger ):
     
     # enable each machine node
     for idx, slot in enumerate(self.__available_slots):
-      if idx < self.__node.getNumberOfEnabledSlots():
+      if idx < self.__node.getNumberOfEnabledSlots( gpu=self.__gpu ):
         slot.enable(); total+=1
       else:
         slot.disable()

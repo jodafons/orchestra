@@ -32,23 +32,21 @@ class NodeParser( Logger ):
       create_parser = argparse.ArgumentParser(description = 'Node create command lines.' , add_help = False)
       create_parser.add_argument('-n', '--name', action='store', dest='name', required=True,
                                   help = "The name of the node.")
-      create_parser.add_argument('-q','--queue', action='store', dest='queue', required=True,
-                                  help = "The name of the queue.")
-      create_parser.add_argument('-e','--enabledSlots', action='store', dest='enabledSlots', required=True,
-                                  help = "The number of enabled slots.")
-      create_parser.add_argument('-m','--maxNumberOfSlots', action='store', dest='maxNumberOfSlots', required=True,
-                                  help = "The total number of slots for this node.")
-      create_parser.add_argument('-g','--gpu', action='store_true', dest='isGPU', required=False,
-                                  help = "Use GPU for this node")
+      create_parser.add_argument('-ec','--enabledCPUSlots', action='store', dest='enabledCPUSlots', required=True,
+                                  help = "The number of CPU enabled slots.")
+      create_parser.add_argument('-mc','--maxNumberOfCPUSlots', action='store', dest='maxNumberOfCPUSlots', required=True,
+                                  help = "The total number of CPU slots for this node.")
 
+      create_parser.add_argument('-eg','--enabledGPUSlots', action='store', dest='enabledGPUSlots', required=True,
+                                  help = "The number of GPU enabled slots.")
+      create_parser.add_argument('-mg','--maxNumberOfGPUSlots', action='store', dest='maxNumberOfGPUSlots', required=True,
+                                  help = "The total number of GPU  slots for this node.")
 
 
 
       delete_parser = argparse.ArgumentParser(description = 'Node remove command lines.', add_help = False)
       delete_parser.add_argument('-n', '--name', action='store', dest='name', required=True,
                                    help = "The dataset name to be removed")
-      delete_parser.add_argument('-q','--queue', action='store', dest='queue', required=True,
-                                  help = "The name of the queue.")
  
 
       # Delete dataset using the dataset CLI
@@ -70,17 +68,14 @@ class NodeParser( Logger ):
     # Dataset CLI
     if args.mode == 'node':
       if args.option == 'create':
-        status, answer = self.create(args.name, args.queue, args.enabledSlots, args.maxNumberOfSlots, args.isGPU)
-
+        status, answer = self.create(args.name, args.enabledCPUSlots, args.maxNumberOfCPUSlots, args.enabledGPUSlots, args.maxNumberOfGPUSlots)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
           MSG_INFO(self, answer)
 
-
       elif args.option == 'delete':
-        status, answer = self.delete(args.name, args.queue)
-
+        status, answer = self.delete(args.name)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -88,7 +83,6 @@ class NodeParser( Logger ):
 
       elif args.option == 'list':
         status, answer = self.list()
-
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -105,33 +99,51 @@ class NodeParser( Logger ):
   #
   def list( self ):
 
-    t = PrettyTable([ Color.CGREEN2 + 'Queue'         + Color.CEND,
-                      Color.CGREEN2 + 'Node'          + Color.CEND,
-                      Color.CGREEN2 + 'Enabled Slots' + Color.CEND,
-                      Color.CGREEN2 + 'Max slots'     + Color.CEND,
+    t = PrettyTable([ 
+                      Color.CGREEN2 + 'Node'      + Color.CEND,
+                      Color.CGREEN2 + 'GPU Slots' + Color.CEND,
+                      Color.CGREEN2 + 'CPU slots' + Color.CEND,
+                      Color.CGREEN2 + 'Status'    + Color.CEND,
                       ])
 
     # Loop over all datasets inside of the username
     for node in self.__db.getAllNodes():
-      t.add_row(  [node.queueName, node.name, node.enabledSlots, node.maxNumberOfSlots] )
+
+      t.add_row(  [node.name, 
+                   '%d/%d'%(node.enabledGPUSlots, node.maxNumberGPUOfSlots),
+                   '%d/%d'%(node.enabledCPUSlots, node.maxNumberOfCPUSlots),
+                   'online' if node.isAlive() else 'offline',
+                  ] )
+
     return (StatusCode.SUCCESS, t)
+
 
 
   #
   # create a node
   #
-  def create( self, nodename, queuename, enabledSlots, maxNumberOfSlots, isGPU): 
+  def create( self, nodename, enabledCPUSlots, maxNumberOfCPUSlots, enabledGPUSlots, maxNumberOfGPUSlots): 
 
-    if not self.__db.createNode( nodename, queuename, enabledSlots, maxNumberOfSlots, isGPU ):
+    if not self.__db.createNode( nodename, enabledCPUSlots, maxNumberOfCPUSlots, enabledGPUSlots, maxNumberOfGPUSlots ):
       return (StatusCode.FATAL, 'Failed to create the node into the database')
     
     return (StatusCode.SUCCESS, "Successfully created." )
 
 
-  def delete( self, username ):
 
-    MSG_WARNING(self, "Not implemented yet." )
+  #
+  # Delete node
+  #
+  def delete( self, nodename ):
 
+    if self.__db.getNode( nodename ):
+      try:
+        self.session().query(Node).filter(Node.name==nodename).delete()
+      except Exception as e:
+        print(e)
+        return (StatusCode.FATAL, "Failed to remove the node into the database." )
+    else:
+      return (StatusCode.FATAL, 'The node (%s) does not exist into the database'%nodename)
 
-
+    return (StatusCode.SUCCESS, "Successfully removed." )
 

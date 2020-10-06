@@ -205,25 +205,18 @@ class OrchestraDB(Logger):
 
 
 
-  def getAllNodes(self, nodename=None, queuename=None):
+  def getAllNodes(self):
     try:
-      if nodename and queuename:
-        return self.session().query(Node).filter(Node.name==nodename).filter(Node.queueName==queuename).all()
-      if nodename and queuename is None:
-        return self.session().query(Node).filter(Node.name==nodename).all()
-      if queuename and nodename is None:
-        return self.session().query(Node).filter(Node.queueName==queueName).all()
-      else: # None, None
-        return self.session().query(Node).all()
+      return self.session().query(Node).all()
     except Exception as e:
       MSG_ERROR(self, e)
       return []
 
 
 
-  def getNode( self, nodeName, queueName):
+  def getNode( self, nodeName ):
     try:
-      return self.session().query(Node).filter(and_( Node.queueName==queueName, Node.name==nodeName)).first()
+      return self.session().query(Node).filter(Node.name==nodeName).first()
     except Exception as e:
       MSG_ERROR(self, e)
       return None
@@ -286,11 +279,16 @@ class OrchestraDB(Logger):
 
 
 
-  def createNode( self, nodename, queuename, enabledSlots, maxNumberOfSlots, isGPU ): 
+  def createNode( self, nodename, enabledCPUSlots, maxNumberOfCPUSlots, enabledGPUSlots, maxNumberOfGPUSlots ):
 
     try:
-      if self.getNode(nodename, queuename) is None:
-        node = Node(queueName=queuename, name=nodename, enabledSlots=enabledSlots, maxNumberOfSlots=maxNumberOfSlots, isGPU=isGPU)
+      if self.getNode(nodename) is None:
+        node = Node(name=nodename, 
+                    enabledCPUSlots=enabledCPUSlots, 
+                    maxNumberOfCPUSlots=maxNumberOfCPUSlots,
+                    enabledGPUSlots=enabledGPUSlots, 
+                    maxNumberOfGPUSlots=maxNumberOfGPUSlots,
+                    )
         self.session().add(node)
         self.commit()
         return True
