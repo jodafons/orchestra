@@ -97,9 +97,9 @@ class NodeParser( Logger ):
       elif args.option == 'stop':
         status, answer = self.stop(args.name)
         if status.isFailure():
-          msg_fatal(self, answer)
+          MSG_FATAL(self, answer)
         else:
-          msg_info(self, answer)
+          MSG_INFO(self, answer)
 
 
 

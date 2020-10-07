@@ -11,7 +11,7 @@ from subprocess import Popen, PIPE, STDOUT
 
 class Consumer( Logger ):
 
-  
+
   #
   # Constructor
   #
@@ -20,19 +20,19 @@ class Consumer( Logger ):
     self.__job = job
     self.__db = db
     self.__slot = slot
-    
+
     self.__pending=True
     self.__broken=False
     self.__killed=False
-    
+
     # compose the job name
     hash_object = hashlib.md5(str.encode(job.execArgs))
     self.__hash = hash_object.hexdigest()
     self.__namespace = job.getTask().getUser().getUserName()
     queuename = job.getQueueName()
     self.__jobname = (queuename+ '.user.' + self.__namespace + '.' + self.__hash).replace('_','-') # add protection name
-   
-    
+
+
     # process
     self.__proc = None
 
@@ -64,7 +64,7 @@ class Consumer( Logger ):
   def execute(self):
     try:
       dirname = self.job().getTheOutputStoragePath()
-      
+
       try:
         if os.path.exists(dirname):
           os.system('rm -rf %s'%dirname)
@@ -131,16 +131,16 @@ class Consumer( Logger ):
     elif self.broken():
       return Status.BROKEN
     else:
-      
+
       answer = Status.DONE
-      
+
       if self.__proc is not None:
         if not  self.__proc.poll() is None:
           if self.__proc.returncode != 0:
             answer =  Status.FAILED
         else:
           answer =  Status.RUNNING
-      
+
       if answer == Status.DONE:
         # Check for any output file into the job directory
         output = self.job().getTheOutputStoragePath()
@@ -176,13 +176,13 @@ class Consumer( Logger ):
     command = 'cd %s' % self.__job.getTheOutputStoragePath()
     #command+= ' && git clone https://github.com/jodafons/ringer.git'
     command+= ' && '+self.__job.execArgs
-    
+
     # Send the job configuration to cluster kube server
     MSG_INFO( self, "Launching job %s ...", self.__jobname)
 
     print(command)
-    #proc = Popen( command , env=env , shell=True)
-    self.__proc = Popen( command ,shell=True, stdout=PIPE, stderr=STDOUT, env=env )
+    self.__proc = Popen( command , env=env , shell=True)
+    #self.__proc = Popen( command ,shell=True, stdout=PIPE, stderr=STDOUT, env=env )
 
 
 
@@ -200,10 +200,10 @@ class Consumer( Logger ):
           for line in self.__proc.stdout: # b'\n'-separated lines
             sys.stdout.buffer.write(line) # pass bytes as is
             file.write(line)
-        
+
       except Exception as e:
         MSG_ERROR( self, "It's not possible to save the log file. %s", e )
-      
+
       # delete the process
       del self.__proc
 
