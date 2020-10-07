@@ -177,12 +177,13 @@ class Consumer( Logger ):
     #command+= ' && git clone https://github.com/jodafons/ringer.git'
     command+= ' && '+self.__job.execArgs
 
+    command+= ' &> %s/mylog.log'% self.__job.getTheOutputStoragePath()
     # Send the job configuration to cluster kube server
     MSG_INFO( self, "Launching job %s ...", self.__jobname)
 
     print(command)
-    #self.__proc = Popen( command , env=env , shell=True)
-    self.__proc = Popen( command ,shell=True, stdout=PIPE, stderr=STDOUT, env=env )
+    self.__proc = Popen( command , env=env , shell=True)
+    #self.__proc = Popen( command ,shell=True, stdout=PIPE, stderr=STDOUT, env=env )
 
 
 
