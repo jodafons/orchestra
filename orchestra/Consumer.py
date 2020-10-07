@@ -181,8 +181,8 @@ class Consumer( Logger ):
     MSG_INFO( self, "Launching job %s ...", self.__jobname)
 
     print(command)
-    self.__proc = Popen( command , env=env , shell=True)
-    #self.__proc = Popen( command ,shell=True, stdout=PIPE, stderr=STDOUT, env=env )
+    #self.__proc = Popen( command , env=env , shell=True)
+    self.__proc = Popen( command ,shell=True, stdout=PIPE, stderr=STDOUT, env=env )
 
 
 
