@@ -1,5 +1,0 @@
-FROM orchestra/base
-
-COPY run_web.sh /root/run_web.sh
-
-CMD ["/root/run_web.sh"]
