@@ -35,8 +35,8 @@ class TaskParser(Logger):
 
       # Create Task
       create_parser = argparse.ArgumentParser(description = '', add_help = False)
-      
-       
+
+
       create_parser.add_argument('-v','--volume', action='store', dest='volume', required=True,
                           help = "The volume")
       create_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
@@ -52,7 +52,7 @@ class TaskParser(Logger):
                           "--secondaryData='{'REF':'path/to/my/extra/data',...}'")
       create_parser.add_argument('--exec', action='store', dest='execCommand', required=True,
                           help = "The exec command")
-      create_parser.add_argument('--containerImage', action='store', dest='containerImage', required=True,
+      create_parser.add_argument('--containerImage', action='store', dest='containerImage', required=False, default="",
                           help = "The container image point to docker hub. The container must be public.")
       create_parser.add_argument('--queue', action='store', dest='queue', required=True, default='cpu_small',
                           help = "The cluste queue [cpu_small, nvidia or cpu_large]")
@@ -117,15 +117,15 @@ class TaskParser(Logger):
       # create task
       if args.option == 'create':
         status , answer = self.create(args.volume,
-                                      args.taskname, 
-                                      args.dataFile, 
-                                      args.configFile, 
+                                      args.taskname,
+                                      args.dataFile,
+                                      args.configFile,
                                       args.secondaryDS,
                                       args.execCommand,
                                       args.containerImage,
-                                      args.queue, 
-                                      args.bypass, 
-                                      args.dry_run, 
+                                      args.queue,
+                                      args.bypass,
+                                      args.dry_run,
                                       args.force_dummy)
 
         if status.isFailure():
@@ -193,7 +193,7 @@ class TaskParser(Logger):
   #
   # Create the new task
   #
-  def create( self, volume, 
+  def create( self, volume,
                     taskname,
                     dataFile,
                     configFile,
