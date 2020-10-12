@@ -10,16 +10,12 @@ except:
   pass
 
 
-
-
 import sys, os
 import argparse
 from orchestra.db import OrchestraDB
 from orchestra.maestro import PilotParser, NodeParser, UserParser, DatasetParser, TaskParser
 from orchestra.utils import getConfig
 
-from Gaugi import fixArgParser
-fixArgParser()
 
 parser = argparse.ArgumentParser()
 commands = parser.add_subparsers(dest='mode')
