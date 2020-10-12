@@ -193,12 +193,11 @@ class Schedule(Logger):
 
     try:
       user = task.getUser()
-      priority = user.getMaxPriority()
 
       if task.getSignal() == Signal.RETRY:
         for job in task.getAllJobs():
           if job.getStatus() == Status.FAILED:
-            job.setPriority(priority)
+            job.setPriority(1000)
             job.setStatus( Status.ASSIGNED )
         task.setSignal( Signal.WAITING )
         return True
@@ -552,4 +551,4 @@ schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING  
 schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed']               )
 schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
 schedule.add_transiction( source=Status.DONE      , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
- 
+

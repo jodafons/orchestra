@@ -177,7 +177,7 @@ class Consumer( Logger ):
     #command+= ' && git clone https://github.com/jodafons/ringer.git'
     command+= ' && '+self.__job.execArgs
 
-    command+= ' &> %s/mylog.log'% self.__job.getTheOutputStoragePath()
+    #command+= ' &> %s/mylog.log'% self.__job.getTheOutputStoragePath()
     # Send the job configuration to cluster kube server
     MSG_INFO( self, "Launching job %s ...", self.__jobname)
 
@@ -194,16 +194,16 @@ class Consumer( Logger ):
 
     if self.__proc is not None:
 
-      try:
-        # compose the log file name
-        logfile = self.__job.getTheOutputStoragePath()+'/mylog.log'
-        with open(logfile, 'ab') as file:
-          for line in self.__proc.stdout: # b'\n'-separated lines
-            sys.stdout.buffer.write(line) # pass bytes as is
-            file.write(line)
+      #try:
+      #  # compose the log file name
+      #  logfile = self.__job.getTheOutputStoragePath()+'/mylog.log'
+      #  with open(logfile, 'ab') as file:
+      #    for line in self.__proc.stdout: # b'\n'-separated lines
+      #      sys.stdout.buffer.write(line) # pass bytes as is
+      #      file.write(line)
 
-      except Exception as e:
-        MSG_ERROR( self, "It's not possible to save the log file. %s", e )
+      #except Exception as e:
+      #  MSG_ERROR( self, "It's not possible to save the log file. %s", e )
 
       # delete the process
       del self.__proc
