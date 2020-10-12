@@ -11,15 +11,13 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV TERM screen
 
+RUN ls
 RUN pip install --upgrade gaugi saphyra
-RUN mkdir /codes
-RUN cd /codes && git clone https://github.com/jodafons/orchestra.git
-RUN cd /codes && git clone https://github.com/jodafons/prometheus.git && cd prometheus && mkdir build && cd build && cmake .. && make
-RUN chmod -R 777 /codes
-
-COPY run_tuning.py /run_tuning.py
 COPY entrypoint.sh /entrypoint.sh
-
 RUN chmod 777 /setup_envs.sh
+
+
+
+
 ENTRYPOINT ["/bin/bash","entrypoint.sh"]
 
