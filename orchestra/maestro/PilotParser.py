@@ -17,7 +17,7 @@ import argparse
 import sys,os
 import hashlib
 
-
+import socket
 
 config = getConfig()
 
@@ -33,8 +33,14 @@ class PilotParser( Logger ):
       run_parser = argparse.ArgumentParser(description = 'Run pilot command lines.' , add_help = False)
 
       run_parser.add_argument('-n','--node', action='store',
-               dest='node', required = True, default = None,
+               dest='node', required = True, default = socket.gethostname() ,
                help = "The node name registered into the database.")
+      run_parser.add_argument('-m','--master', action='store_true',
+               dest='master', required = False ,
+               help = "This is a master branch. One node must be a master.")
+
+
+
 
       parent = argparse.ArgumentParser(description = '',add_help = False)
       subparser = parent.add_subparsers(dest='option')
@@ -47,7 +53,7 @@ class PilotParser( Logger ):
     # Dataset CLI
     if args.mode == 'pilot':
       if args.option == 'run':
-        status, answer = self.run( args.node )
+        status, answer = self.run( args.node, args.master )
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -62,7 +68,7 @@ class PilotParser( Logger ):
   #
   # List datasets
   #
-  def run( self, nodename ):
+  def run( self, nodename , master):
 
     email = config['email']
     password = config['password']
@@ -81,7 +87,7 @@ class PilotParser( Logger ):
 
 
     # create the pilot
-    pilot = Pilot(node, self.__db, schedule, postman)
+    pilot = Pilot(node, self.__db, schedule, postman, master)
 
     # create allways two slots (cpu and gpu) by default
     pilot+=Slots(node, 'cpu' , gpu=False )
