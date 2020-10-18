@@ -33,7 +33,7 @@ class PilotParser( Logger ):
       run_parser = argparse.ArgumentParser(description = 'Run pilot command lines.' , add_help = False)
 
       run_parser.add_argument('-n','--node', action='store',
-               dest='node', required = True, default = socket.gethostname() ,
+               dest='node', required = False, default = socket.gethostname() ,
                help = "The node name registered into the database.")
       run_parser.add_argument('-m','--master', action='store_true',
                dest='master', required = False ,
