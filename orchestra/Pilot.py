@@ -15,7 +15,7 @@ class Pilot(Logger):
   #
   # Constructor
   #
-  def __init__(self, node, db, schedule,  postman):
+  def __init__(self, node, db, schedule,  postman, master=True):
 
     Logger.__init__(self)
     self.__node = node
@@ -24,6 +24,7 @@ class Pilot(Logger):
     self.__db = db
     self.__queue = {}
 
+    self.__master = master
     self.__clock = Clock( 10*SECONDS )
 
 
@@ -54,7 +55,8 @@ class Pilot(Logger):
 
       if self.__clock():
 
-        self.__schedule.execute()
+        if self.__master:
+          self.__schedule.execute()
 
         # If in standalone mode, these slots will not in running mode. Only schedule will run.
         for queue , slots in self.__queue.items():
