@@ -90,7 +90,9 @@ RUN pip install future \
                 prettytable \
                 sqlalchemy_utils \
                 psycopg2-binary \
-                ansi2html
+                ansi2html \
+                sklearn
+
 
 
 
@@ -101,6 +103,8 @@ RUN ln -snf /usr/share/zoneinfo/Etc/UTC /etc/localtime \
     && apt-get upgrade -y \
     && apt-get install texlive-latex-base texlive-latex-extra texlive-fonts-recommended xzdec -y \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip install pandas
 
 COPY test_gpu.py /test_gpu.py
 COPY setup_envs.sh /
