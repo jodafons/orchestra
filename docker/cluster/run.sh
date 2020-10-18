@@ -1,1 +1,1 @@
-singularity run --nv --writable-tmpfs docker://jodafons/orchestra:latest
+singularity run --nv --writable-tmpfs docker://jodafons/orchestra:cluster
