@@ -82,8 +82,12 @@ class Schedule(Logger):
   #
   def getQueue( self, njobs , queuename):
     try:
+      #jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
+      #  Job.queueName==queuename) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
+
       jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-        Job.queueName==queuename) ).order_by(desc(Job.priority)).limit(njobs).with_for_update().all()
+        Job.queueName==queuename) ).order_by(Job.id).limit(njobs).with_for_update().all()
+
       jobs.reverse()
       return jobs
     except Exception as e:
@@ -121,7 +125,7 @@ class Schedule(Logger):
         # Execute all triggers into this state
         for trigger in triggers:
           passed = getattr(self, trigger)(task)
-          MSG_INFO(self, trigger +  ' = ' + str(passed) )
+          #MSG_INFO(self, trigger +  ' = ' + str(passed) )
           if not passed:
             break
         if passed:
