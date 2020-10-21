@@ -10,6 +10,8 @@ from orchestra import Status
 from orchestra.Consumer import Consumer
 from orchestra import Postman
 
+# import tensorflow to retrieve the number of GPUs devices
+import tensorflow as tf; 
 
 
 class SingleSlot( object ):
@@ -107,6 +109,17 @@ class Slots( Logger ):
     # check if db exist
     if not self.db():
       MSG_FATAL( self, "Database object not passed to slot." )
+
+
+
+    # Check if we have GPUs in the current node
+    if self.__gpu and (self.__node.getNumberOfSlots( gpu=True) > 0):
+      ngpus = len(tf.config.experimental.list_physical_devices('GPU'))
+      MSG_INFO( self, "Number of GPUs found in %s: %d", self.__node.getName(), ngpus)
+      if ngpus==0:
+        return StatusCode.FATAL
+
+
 
 
     MSG_INFO(self,"Setup all slots into the queue with name: %s", self.__queuename)
