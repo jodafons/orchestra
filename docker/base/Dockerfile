@@ -10,10 +10,8 @@ ENV TERM screen
 USER root
 SHELL [ "/bin/bash", "-c" ]
 
-
-RUN apt-get update --fix-missing
-RUN apt-get install -y git 
-
+RUN apt-get update
+RUN apt-get install -y git vim 
 
 
 # Install Gaugi
