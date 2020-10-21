@@ -113,7 +113,7 @@ class Slots( Logger ):
 
 
     # Check if we have GPUs in the current node
-    if self.__gpu and (self.__node.getNumberOfSlots( gpu=True) > 0):
+    if self.__gpu and (self.__node.getMaxNumberOfSlots( gpu=True) > 0):
       ngpus = len(tf.config.experimental.list_physical_devices('GPU'))
       MSG_INFO( self, "Number of GPUs found in %s: %d", self.__node.getName(), ngpus)
       if ngpus==0:
