@@ -23,6 +23,8 @@ class Node (Base):
 
   maxNumberOfCPUSlots  = Column( Integer )
   maxNumberOfGPUSlots  = Column( Integer )
+  
+  master               = Column( Boolean, default=False )
 
 
   timer = Column(DateTime)
@@ -51,7 +53,7 @@ class Node (Base):
     if self.timer is None:
       return False
     else:
-      return True  if (datetime.datetime.now() - self.timer).total_seconds() < 30 else False
+      return True  if (datetime.datetime.now() - self.timer).total_seconds() < 60 else False
 
 
   def getSignal(self):
@@ -59,4 +61,16 @@ class Node (Base):
 
   def setSignal(self, value):
     self.signal = value
+
+
+
+  def setThisNodeAsMaster( self ):
+    self.master=True
+
+  def setThisNodeAsSlave( self ):
+    self.master=False
+
+  def isMaster(self):
+    return self.master
+
 

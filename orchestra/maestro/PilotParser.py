@@ -82,12 +82,17 @@ class PilotParser( Logger ):
 
     node = self.__db.getNode( nodename )
 
+    if master:
+      node.setThisNodeAsMaster()
+    else:
+      node.setThisNodeAsSlave()
+
     if node is None:
       return (StatusCode.FATAL, "Node (%s) is not available into the database"%nodename )
 
 
     # create the pilot
-    pilot = Pilot(node, self.__db, schedule, postman, master)
+    pilot = Pilot(node, self.__db, schedule, postman, node.isMaster() )
 
     # create allways two slots (cpu and gpu) by default
     pilot+=Slots(node, 'cpu' , gpu=False )

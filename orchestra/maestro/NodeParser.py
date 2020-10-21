@@ -118,7 +118,9 @@ class NodeParser( Logger ):
                       Color.CGREEN2 + 'Node'      + Color.CEND,
                       Color.CGREEN2 + 'GPU Slots' + Color.CEND,
                       Color.CGREEN2 + 'CPU slots' + Color.CEND,
+                      Color.CGREEN2 + 'Type'      + Color.CEND,
                       Color.CGREEN2 + 'Status'    + Color.CEND,
+                      
                       ])
 
     # Loop over all datasets inside of the username
@@ -127,6 +129,7 @@ class NodeParser( Logger ):
       t.add_row(  [node.name,
                    '%d/%d'%(node.enabledGPUSlots, node.maxNumberOfGPUSlots),
                    '%d/%d'%(node.enabledCPUSlots, node.maxNumberOfCPUSlots),
+                   'master' if node.isMaster() else 'slave',
                    'online' if node.isAlive() else 'offline',
                   ] )
 
