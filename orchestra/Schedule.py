@@ -56,6 +56,7 @@ class Schedule(Logger):
 
     self.treatRunningJobsNotAlive()
     self.calculate()
+    self.db().commit()
     return StatusCode.SUCCESS
 
 

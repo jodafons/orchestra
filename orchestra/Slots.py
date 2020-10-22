@@ -11,7 +11,7 @@ from orchestra.Consumer import Consumer
 from orchestra import Postman
 
 # import tensorflow to retrieve the number of GPUs devices
-import tensorflow as tf; 
+import tensorflow as tf;
 
 
 class SingleSlot( object ):
@@ -208,8 +208,8 @@ class Slots( Logger ):
         consumer.slot().unlock()
         self.__slots.remove(consumer)
 
-
-    self.db().commit()
+      # update the current consumer
+      self.db().commit()
 
     return StatusCode.SUCCESS
 
