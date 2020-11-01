@@ -643,9 +643,6 @@ class TaskParser(Logger):
 
         tunedFiles =  expandFolders( self.__db.getUser(username).getTask(old_taskname).getTheOutputStoragePath() )
 
-
-        print(tunedFiles)
-
         _dataFile = self.__db.getDataset(username, dataFile).getAllFiles()[0].getPath()
 
         _secondaryDS = {}
