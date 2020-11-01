@@ -154,7 +154,7 @@ class TaskParser(Logger):
 
       # create task
       elif args.option == 'repro':
-        status , answer = self.create(args.volume,
+        status , answer = self.repro(args.volume,
                                       args.new_taskname,
                                       args.dataFile,
                                       args.old_taskname,
