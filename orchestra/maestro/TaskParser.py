@@ -105,8 +105,8 @@ class TaskParser(Logger):
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
       list_parser.add_argument('-u','--user', action='store', dest='username', required=False, default=config['username']
                     help = "The username.")
-      list_parser.add_argument('-d','--skip_dones', action='store_true', dest='skip_dones', required=False,
-                    help = "Skip all done tasks.")
+      list_parser.add_argument('-a','--all', action='store_true', dest='all', required=False,
+                    help = "List all tasks.")
 
 
 
@@ -197,7 +197,7 @@ class TaskParser(Logger):
 
       # list all tasks
       elif args.option == 'list':
-        status, answer = self.list(args.username, args.skip_dones)
+        status, answer = self.list(args.username, args.all)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -418,7 +418,7 @@ class TaskParser(Logger):
 
 
 
-  def list( self, username, skip_dones ):
+  def list( self, username, list_all ):
 
     if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
       return (StatusCode.FATAL, 'The username does not exist into the database.' )
@@ -451,7 +451,7 @@ class TaskParser(Logger):
 
     for task in tasks:
       jobs = task.getAllJobs()
-      if task.status == 'done':
+      if not list_all and (task.status == 'done'):
         continue
       queue         = task.queueName
       taskName      = task.taskName
