@@ -18,6 +18,8 @@ import argparse
 import sys,os
 import hashlib
 
+from orchestra.utils import getConfig
+config = getConfig()
 
 
 #
@@ -101,8 +103,14 @@ class TaskParser(Logger):
 
 
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
-      list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
+      list_parser.add_argument('-u','--user', action='store', dest='username', required=False, default=config['username']
                     help = "The username.")
+      list_parser.add_argument('-d','--skip_dones', action='store_true', dest='skip_dones', required=False,
+                    help = "Skip all done tasks.")
+
+
+
+
 
 
       kill_parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -189,7 +197,7 @@ class TaskParser(Logger):
 
       # list all tasks
       elif args.option == 'list':
-        status, answer = self.list(args.username)
+        status, answer = self.list(args.username, args.skip_dones)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -410,7 +418,7 @@ class TaskParser(Logger):
 
 
 
-  def list( self, username ):
+  def list( self, username, skip_dones ):
 
     if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
       return (StatusCode.FATAL, 'The username does not exist into the database.' )
@@ -443,6 +451,8 @@ class TaskParser(Logger):
 
     for task in tasks:
       jobs = task.getAllJobs()
+      if task.status == 'done':
+        continue
       queue         = task.queueName
       taskName      = task.taskName
       registered    = count( jobs, Status.REGISTERED)
