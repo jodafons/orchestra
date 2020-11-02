@@ -103,7 +103,7 @@ class TaskParser(Logger):
 
 
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
-      list_parser.add_argument('-u','--user', action='store', dest='username', required=False, default=config['username']
+      list_parser.add_argument('-u','--user', action='store', dest='username', required=False, default=config['username'],
                     help = "The username.")
       list_parser.add_argument('-a','--all', action='store_true', dest='all', required=False,
                     help = "List all tasks.")
