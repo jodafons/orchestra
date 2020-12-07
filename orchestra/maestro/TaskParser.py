@@ -18,6 +18,8 @@ import argparse
 import sys,os
 import hashlib
 
+from orchestra.utils import getConfig
+config = getConfig()
 
 
 #
@@ -52,16 +54,37 @@ class TaskParser(Logger):
                           "--secondaryData='{'REF':'path/to/my/extra/data',...}'")
       create_parser.add_argument('--exec', action='store', dest='execCommand', required=True,
                           help = "The exec command")
-      create_parser.add_argument('--containerImage', action='store', dest='containerImage', required=False, default="",
-                          help = "The container image point to docker hub. The container must be public.")
-      create_parser.add_argument('--queue', action='store', dest='queue', required=True, default='cpu_small',
-                          help = "The cluste queue [cpu_small, nvidia or cpu_large]")
+      create_parser.add_argument('--queue', action='store', dest='queue', required=True, default='gpu',
+                          help = "The cluste queue [gpu or cpu]")
       create_parser.add_argument('--dry_run', action='store_true', dest='dry_run', required=False, default=False,
                           help = "Use this as debugger.")
       create_parser.add_argument('--bypass', action='store_true', dest='bypass', required=False, default=False,
                           help = "Bypass the job test.")
-      create_parser.add_argument('--force_dummy', action='store_true', dest='force_dummy', required=False,
-                          help = "The data input is a dummy dataset. ignore the DATA")
+
+
+      
+      # Create Task
+      repro_parser = argparse.ArgumentParser(description = '', add_help = False)
+
+
+      repro_parser.add_argument('-v','--volume', action='store', dest='volume', required=True,
+                         help = "The volume")
+      repro_parser.add_argument('--new_task', action='store', dest='new_taskname', required=True,
+                         help = "The new task name after the reprocessing phase")
+      repro_parser.add_argument('--old_task', action='store', dest='old_taskname', required = True,
+                         help = "The old task name that will be used into the reprocessing phase")
+      repro_parser.add_argument('-d','--dataFile', action='store', dest='dataFile', required = True,
+                         help = "The data/target file used to train the model.")
+      repro_parser.add_argument('--sd','--secondaryDS', action='store', dest='secondaryDS', required=False,  default="{}",
+                         help = "The secondary datasets to be append in the --exec command. This should be:" +
+                         "--secondaryData='{'REF':'path/to/my/extra/data',...}'")
+      repro_parser.add_argument('--exec', action='store', dest='execCommand', required=True,
+                         help = "The exec command")
+      repro_parser.add_argument('--queue', action='store', dest='queue', required=True, default='gpu',
+                         help = "The cluste queue [gpu or cpu]")
+      repro_parser.add_argument('--dry_run', action='store_true', dest='dry_run', required=False, default=False,
+                         help = "Use this as debugger.")
+
 
 
 
@@ -80,19 +103,24 @@ class TaskParser(Logger):
 
 
       list_parser = argparse.ArgumentParser(description = '', add_help = False)
-      list_parser.add_argument('-u','--user', action='store', dest='username', required=True,
+      list_parser.add_argument('-u','--user', action='store', dest='username', required=False, default=config['username'],
                     help = "The username.")
+      list_parser.add_argument('-a','--all', action='store_true', dest='all', required=False,
+                    help = "List all tasks.")
+
+
+
+
+
 
       kill_parser = argparse.ArgumentParser(description = '', add_help = False)
       kill_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
                     help = "The taskname to be killed.")
 
+
       queue_parser = argparse.ArgumentParser(description = '', add_help = False)
       queue_parser.add_argument('-n','--name', action='store', dest='name', required=False,
                     help = "The queue name")
-
-
-
 
 
       parent = argparse.ArgumentParser(description = '', add_help = False)
@@ -100,6 +128,7 @@ class TaskParser(Logger):
 
       # Datasets
       subparser.add_parser('create', parents=[create_parser])
+      subparser.add_parser('repro', parents=[repro_parser])
       subparser.add_parser('retry', parents=[retry_parser])
       subparser.add_parser('delete', parents=[delete_parser])
       subparser.add_parser('list', parents=[list_parser])
@@ -122,16 +151,32 @@ class TaskParser(Logger):
                                       args.configFile,
                                       args.secondaryDS,
                                       args.execCommand,
-                                      args.containerImage,
                                       args.queue,
                                       args.bypass,
-                                      args.dry_run,
-                                      args.force_dummy)
+                                      args.dry_run)
 
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
           MSG_INFO(self, answer)
+
+      # create task
+      elif args.option == 'repro':
+        status , answer = self.repro(args.volume,
+                                      args.new_taskname,
+                                      args.dataFile,
+                                      args.old_taskname,
+                                      args.secondaryDS,
+                                      args.execCommand,
+                                      args.queue,
+                                      args.dry_run)
+
+        if status.isFailure():
+          MSG_FATAL(self, answer)
+        else:
+          MSG_INFO(self, answer)
+
+
 
 
       # retry option
@@ -152,7 +197,7 @@ class TaskParser(Logger):
 
       # list all tasks
       elif args.option == 'list':
-        status, answer = self.list(args.username)
+        status, answer = self.list(args.username, args.all)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -199,8 +244,7 @@ class TaskParser(Logger):
                     configFile,
                     secondaryDS,
                     execCommand,
-                    containerImage,
-                    queue='cpu_small',
+                    queue='gpu',
                     bypass=False,
                     dry_run=False,
                     force_dummy=False):
@@ -240,10 +284,10 @@ class TaskParser(Logger):
     #
     # check exec command policy
     #
-    if (not force_dummy) and (not '%DATA' in execCommand):
+    if (not '%DATA' in execCommand):
       return (StatusCode.FATAL,"The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
 
-    if (not force_dummy) and (not '%IN' in execCommand):
+    if (not '%IN' in execCommand):
       return (StatusCode.FATAL,"The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
 
     if not '%OUT' in execCommand:
@@ -277,8 +321,7 @@ class TaskParser(Logger):
         user = self.__db.getUser( username )
 
 
-        task = self.__db.createTask( user, taskname, configFile, dataFile, outputFile,
-                                     containerImage,
+        task = self.__db.createTask( user, taskname, configFile, dataFile, outputFile, "" ,
                                      secondaryDataPath=secondaryDS,
                                      templateExecArgs=execCommand,
                                      queueName=queue)
@@ -375,7 +418,7 @@ class TaskParser(Logger):
 
 
 
-  def list( self, username ):
+  def list( self, username, list_all ):
 
     if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
       return (StatusCode.FATAL, 'The username does not exist into the database.' )
@@ -408,6 +451,8 @@ class TaskParser(Logger):
 
     for task in tasks:
       jobs = task.getAllJobs()
+      if not list_all and (task.status == 'done'):
+        continue
       queue         = task.queueName
       taskName      = task.taskName
       registered    = count( jobs, Status.REGISTERED)
@@ -509,6 +554,134 @@ class TaskParser(Logger):
 
 
 
+
+
+
+  #
+  # Create the new task
+  #
+  def repro( self, volume,
+                    new_taskname,
+                    dataFile,
+                    old_taskname,
+                    secondaryDS,
+                    execCommand,
+                    queue='gpu',
+                    dry_run=False):
+
+
+
+    # check task policy (user.username)
+    if new_taskname.split('.')[0] != 'user':
+      return (StatusCode.FATAL, 'The task name must starts with user.$USER.taskname.')
+
+    # check task policy (username must exist into the database)
+    username = new_taskname.split('.')[1]
+    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+      return (StatusCode.FATAL,'The username does not exist into the database.')
+
+    if self.__db.getUser(username).getTask(new_taskname) is not None:
+      return (StatusCode.FATAL, "The task exist into the database. Abort.")
+
+
+    #
+    # Check if all datasets are registered into the database
+    #
+
+    if self.__db.getDataset(username, dataFile) is None:
+      return (StatusCode.FATAL, "The file (%s) does not exist into the database. Should be registry first."%dataFile)
+
+    if self.__db.getUser(username).getTask(old_taskname) is None:
+      return (StatusCode.FATAL, "The task file (%s) does not exist into the database."%old_taskname)
+
+
+    secondaryDS = eval(secondaryDS)
+    for key in secondaryDS.keys():
+      if self.__db.getDataset(username, secondaryDS[key]) is None:
+        return (StatusCode.FATAL , "The secondary data file (%s) does not exist into the database. Should be registry first."% secondaryDS[key] )
+
+
+    #
+    # check exec command policy
+    #
+    if (not '%DATA' in execCommand):
+      return (StatusCode.FATAL,"The exec command must include '%DATA' into the string. This will substitute to the dataFile when start.")
+
+    if (not '%IN' in execCommand):
+      return (StatusCode.FATAL,"The exec command must include '%IN' into the string. This will substitute to the configFile when start.")
+
+    if not '%OUT' in execCommand:
+      return (StatusCode.FATAL, "The exec command must include '%OUT' into the string. This will substitute to the outputFile when start.")
+
+    for key in secondaryDS.keys():
+      if not key in execCommand:
+        return (StatusCode.FATAL,  ("The exec command must include %s into the string. This will substitute to %s when start")%(key, secondaryDS[key]) )
+
+
+
+    #
+    # Create the output file
+    #
+    outputFile = volume +'/'+new_taskname
+
+    if os.path.exists(outputFile):
+      MSG_WARNING(self, "The task dir exist into the storage. Beware!")
+    else:
+      # create the task dir
+      MSG_INFO(self, "Creating the task dir in %s", outputFile)
+      os.system( 'mkdir -p %s '%(outputFile) )
+
+
+
+    #
+    # create the task into the database
+    #
+    if not dry_run:
+      try:
+        user = self.__db.getUser( username )
+
+
+        task = self.__db.createTask( user, new_taskname, old_taskname, dataFile, outputFile, "",
+                                     secondaryDataPath=secondaryDS,
+                                     templateExecArgs=execCommand,
+                                     queueName=queue)
+
+
+        task.setSignal(Signal.WAITING)
+        task.setStatus(Status.HOLD)
+
+
+        tunedFiles =  expandFolders( self.__db.getUser(username).getTask(old_taskname).getTheOutputStoragePath() )
+
+        _dataFile = self.__db.getDataset(username, dataFile).getAllFiles()[0].getPath()
+
+        _secondaryDS = {}
+
+        for key in secondaryDS.keys():
+          _secondaryDS[key] = self.__db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
+
+
+        for idx, _tunedFile in enumerate(tunedFiles):
+
+          _outputFile = outputFile+ '/job_configId_%d'%idx
+
+          command = execCommand
+          command = command.replace( '%DATA' , _dataFile  )
+          command = command.replace( '%IN'   , _tunedFile)
+          command = command.replace( '%OUT'  , _outputFile)
+
+          for key in _secondaryDS:
+            command = command.replace( key  , _secondaryDS[key])
+
+          job = self.__db.createJob( task, _tunedFile, idx, execArgs=command, priority=-1 )
+
+        task.setStatus('registered')
+        self.__db.commit()
+      except Exception as e:
+        MSG_ERROR(self,e)
+        return (StatusCode.FATAL, "Unknown error.")
+
+    return (StatusCode.SUCCESS, "Succefully created.")
 
 
 
