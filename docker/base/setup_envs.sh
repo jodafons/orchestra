@@ -8,7 +8,7 @@ temp=$PWD
 
 git clone https://github.com/jodafons/saphyra.git
 git clone https://github.com/jodafons/Gaugi.git
-git clone https://github.com/jodafons/ringer.git
+git clone https://github.com/jodafons/ringer_tunings.git
 git clone https://github.com/jodafons/orchestra.git
 
 echo "=========================================================="
@@ -20,7 +20,7 @@ echo "setup orchestra..."
 cd $temp/orchestra && source setup.sh
 echo "=========================================================="
 echo "setup ringer scripts..."
-cd $temp/ringer && git pull && source setup.sh
+cd $temp/ringer_tunings && git pull && source setup.sh
 echo "=========================================================="
 
 cd $current
