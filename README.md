@@ -1,32 +1,81 @@
 # Orchestra  
 
-This package is used to manager tasks and jobs inside the cluster. This tools uses the kubernetes as backend
-to create and remove jobs (or pods) inside of the cluster. The schedule is responsible to check the task
-status, calculate the job priority and append or remove jobs from the queue. After calculate and get the 
-queue ordered by job priority, the pilot send the jobs to the slot. If the slot is available, then one
-job will be move to inside of slot and the kubernetes will take care to launch and manager all cluster
-resources to alocate this.
+
+## Setup your own cluster:
+
+If you do not run these steps below before, please follow this section. Before we starts you must set your email to send automatic messanges using external APIs. This messages will be very important to monitoring your job status.
+
+**NOTE**: All steps here must be run into the LPS cluster.
+
+After that, let's create your orchestra configuration file. First, go to your home dir and create the file `.orchestra.json` with these attributes:
+
+```
+{
+ "postgres":""postgres://db_username:db_password@db.lps.ufrj.br:5432/your_db_name"
+ "email":"your_email@lps.ufrj.br"
+ "password":"your_email_password"
+ "job_complete_file_name":".complete"
+}
+```
+and save it.
+
+### Download the container:
+
+Donwload the image:
+```
+singularity pull docker://jodafons/orchestra:base
+```
+Run it!
+```
+singularity run orchestra_base.sif
+```
+
+and setup all orchstra envs inside of the container:
+```
+source /setup_envs.sh
+```
+
+### Create your database:
+
+Setup the database:
+```
+maestro.py user init
+```
+
+and create your user:
+```
+maestro.py user create -n username -e username@lps.ufrj.br
+```
+
+### Setup all available nodes:
+
+Let's create one node with name `caloba21` with 2 `gpus` slots and none `cpu` slots.
+```
+maestro.py node create -ec 0 -mc 0 -eg 2 -mc 2 -n caloba21
+```
+
+Now, let's create one node with name `caloba51` with 40 `cpus` slots and none `gpus` slots.
+```
+maestro.py node create -ec 40 -mc 40 -eg 0 -mc 0 -n caloba51
+```
+
+
+## Upload your files:
+
+In this section we will registry some files into the database manager (`castor`). First, let's create some files into your home dir to keep everything organized.
+
+```
+cd ~
+mkdir tasks
+mkdir data
+```
 
 
 
-### Rules
-
-- The job calculation is happing every 5 minutes;
-- When a task is registered into the database, the schedule will take one job and send to the cluster.
-If this job return success than the task will be swith to running state and all jobs will be assigned;
-
-### Known Bugs:
-
-- There is a bug into the priority calculation (LCGRule or schedule calc.);
 
 
-### Requirements (python packages):
-- python 3;
-- sqlalchemy;
-- kubernetes;
-- benedict;
-- numpy
-- Gaugi (pip3 install gaugi)
+
+
 
 ### Setup:
 
