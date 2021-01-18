@@ -1,4 +1,4 @@
-FROM jodafons/orchestra:base
+FROM jodafons/ringer:base
 
 
 LABEL maintainer "Joao Victor da Fonseca Pinto <jodafons@lps.ufrj.br>"
