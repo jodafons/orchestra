@@ -92,9 +92,23 @@ class TaskParser(Logger):
       retry_parser = argparse.ArgumentParser(description = '', add_help = False)
       retry_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
                     help = "The task name to be retry")
+
+
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
-      delete_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
-                    help = "The task name to be remove")
+
+      delete_parser.add_argument('--id', action='store', nargs='+', dest='id_list', required=False, default=None,
+                    help = "All ids to be removed", type=int)
+
+      delete_parser.add_argument('--id_min', action='store',  dest='id_min', required=False,
+                    help = "", type=int, default=None)
+
+      delete_parser.add_argument('--id_max', action='store',  dest='id_max', required=False,
+                    help = "", type=int, default=None)
+
+
+   
+
+
       delete_parser.add_argument('--remove', action='store_true', dest='remove', required=False,
                     help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
       delete_parser.add_argument('--force', action='store_true', dest='force', required=False,
@@ -189,7 +203,15 @@ class TaskParser(Logger):
 
       # delete option
       elif args.option == 'delete':
-        status , answer = self.delete(args.taskname, remove=args.remove, force=args.force)
+
+
+        if args.id_list:
+          id_list = args.id_list
+        elif args.id_min and args.id_max:
+          id_list = list( range( args.id_min, args.id_max+1 ) )
+        else:
+          MSG_FATAL(self, "Invalid input.")
+        status , answer = self.delete(id_list, remove=args.remove, force=args.force)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -368,48 +390,50 @@ class TaskParser(Logger):
 
 
 
-  def delete( self, taskname, remove=False, force=False ):
+  def delete( self, id_list, remove=False, force=False ):
+
+    print(id_list)
+
+    #if taskname.split('.')[0] != 'user':
+    #  return (StatusCode.FATAL, 'The task name must starts with user.$USER.taskname.')
+
+    #username = taskname.split('.')[1]
+
+    #if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
+    #  return (StatusCode.FATAL, 'The username does not exist into the database.')
+
+    for id in id_list:
+       
+
+        # Get task by id
+        task = self.__db.session().query(Task).filter(Task.id==id).first()
+        if not task:
+          return (StatusCode.FATAL, "The task with id (%d) does not exist into the data base"%id )
+
+        MSG_INFO( self, 'Delete task (%d) with name: %s', id, task.taskName)
+        # Check possible status before continue
+        if not force:
+          if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE]:
+            return (StatusCode.FATAL, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status."% task.getStatus() )
+
+        # remove all jobs that allow to this task
+        try:
+          self.__db.session().query(Job).filter(Job.taskId==id).delete()
+          self.__db.commit()
+        except Exception as e:
+          MSG_WARNING(self,e)
 
 
-    if taskname.split('.')[0] != 'user':
-      return (StatusCode.FATAL, 'The task name must starts with user.$USER.taskname.')
-
-    username = taskname.split('.')[1]
-
-    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
-      return (StatusCode.FATAL, 'The username does not exist into the database.')
-
-
-    task = self.__db.getTask( taskname )
-    if not task:
-      return (StatusCode.FATAL, "The task name (%s) does not exist into the data base"%taskname )
-
-
-    # Check possible status before continue
-    if not force:
-      if not task.getStatus() in [Status.BROKEN, Status.KILLED, Status.FINALIZED, Status.DONE]:
-        return (StatusCode.FATAL, "The task with current status %s can not be deleted. The task must be in done, finalized, killed or broken status."% task.getStatus() )
-
-
-    id = task.id
-
-    # remove all jobs that allow to this task
-    try:
-      self.__db.session().query(Job).filter(Job.taskId==id).delete()
-      self.__db.commit()
-    except Exception as e:
-      MSG_WARNING(self,e)
-
-
-    # remove the task table
-    try:
-      self.__db.session().query(Task).filter(Task.id==id).delete()
-      self.__db.commit()
-    except Exception as e:
-      MSG_WARNING(self,e)
+        # remove the task table
+        try:
+          self.__db.session().query(Task).filter(Task.id==id).delete()
+          self.__db.commit()
+        except Exception as e:
+          MSG_WARNING(self,e)
 
 
     return (StatusCode.SUCCESS, "Succefully deleted.")
+
 
 
 
@@ -426,6 +450,7 @@ class TaskParser(Logger):
 
     t = PrettyTable([
                       Color.CGREEN2 + 'Queue'       + Color.CEND,
+                      Color.CGREEN2 + 'ID'          + Color.CEND,
                       Color.CGREEN2 + 'Taskname'    + Color.CEND,
                       Color.CGREEN2 + 'Registered'  + Color.CEND,
                       Color.CGREEN2 + 'Assigned'    + Color.CEND,
@@ -454,6 +479,7 @@ class TaskParser(Logger):
       if not list_all and (task.status == 'done'):
         continue
       queue         = task.queueName
+      id            = task.id
       taskName      = task.taskName
       registered    = count( jobs, Status.REGISTERED)
       assigned      = count( jobs, Status.ASSIGNED  )
@@ -465,7 +491,7 @@ class TaskParser(Logger):
       killed        = count( jobs, Status.KILLED    )
       broken        = count( jobs, Status.BROKEN    )
       status        = task.status
-      t.add_row(  [queue, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
+      t.add_row(  [queue, task.id, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
 
     return (StatusCode.SUCCESS, t)
 
