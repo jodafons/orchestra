@@ -90,25 +90,26 @@ class TaskParser(Logger):
 
 
       retry_parser = argparse.ArgumentParser(description = '', add_help = False)
-      retry_parser.add_argument('-t','--task', action='store', dest='taskname', required=True,
-                    help = "The task name to be retry")
+      retry_parser.add_argument('--id', action='store', nargs='+', dest='id_list', required=False, default=None,
+                    help = "All task ids to be removed", type=int)
+
+      retry_parser.add_argument('--id_min', action='store',  dest='id_min', required=False,
+                    help = "Down taks id limit to apply on the loop", type=int, default=None)
+
+      retry_parser.add_argument('--id_max', action='store',  dest='id_max', required=False,
+                    help = "Upper task id limit to apply on the loop", type=int, default=None)
+
 
 
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
-
       delete_parser.add_argument('--id', action='store', nargs='+', dest='id_list', required=False, default=None,
-                    help = "All ids to be removed", type=int)
+                    help = "All task ids to be removed", type=int)
 
       delete_parser.add_argument('--id_min', action='store',  dest='id_min', required=False,
-                    help = "", type=int, default=None)
+                    help = "Down taks id limit to apply on the loop", type=int, default=None)
 
       delete_parser.add_argument('--id_max', action='store',  dest='id_max', required=False,
-                    help = "", type=int, default=None)
-
-
-   
-
-
+                    help = "Upper task id limit to apply on the loop", type=int, default=None)
       delete_parser.add_argument('--remove', action='store_true', dest='remove', required=False,
                     help = "Remove all files for this task into the storage. Beware when use this flag becouse you will lost your data too.")
       delete_parser.add_argument('--force', action='store_true', dest='force', required=False,
@@ -128,8 +129,13 @@ class TaskParser(Logger):
 
 
       kill_parser = argparse.ArgumentParser(description = '', add_help = False)
-      kill_parser.add_argument('-t','--task', action='store', dest='taskname', required=False,
-                    help = "The taskname to be killed.")
+      kill_parser.add_argument('--id', action='store', nargs='+', dest='id_list', required=False, default=None,
+                    help = "All task ids to be removed", type=int)
+      kill_parser.add_argument('--id_min', action='store',  dest='id_min', required=False,
+                    help = "Down taks id limit to apply on the loop", type=int, default=None)
+      kill_parser.add_argument('--id_max', action='store',  dest='id_max', required=False,
+                    help = "Upper task id limit to apply on the loop", type=int, default=None)
+
 
 
       queue_parser = argparse.ArgumentParser(description = '', add_help = False)
@@ -154,6 +160,16 @@ class TaskParser(Logger):
 
 
   def compile( self, args ):
+
+    def get_task_ids( _args ):
+      if _args.id_list:
+        id_list = _args.id_list
+      elif _args.id_min and _args.id_max:
+        id_list = list( range( _args.id_min, _args.id_max+1 ) )
+      else:
+        MSG_FATAL(self, "Invalid input.")
+
+
     # Task CLI
     if args.mode == 'task':
 
@@ -195,7 +211,8 @@ class TaskParser(Logger):
 
       # retry option
       elif args.option == 'retry':
-        status, answer = self.retry(args.taskname)
+        task_id_list = get_task_ids(args)
+        status, answer = self.retry(task_id_list)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -203,15 +220,8 @@ class TaskParser(Logger):
 
       # delete option
       elif args.option == 'delete':
-
-
-        if args.id_list:
-          id_list = args.id_list
-        elif args.id_min and args.id_max:
-          id_list = list( range( args.id_min, args.id_max+1 ) )
-        else:
-          MSG_FATAL(self, "Invalid input.")
-        status , answer = self.delete(id_list, remove=args.remove, force=args.force)
+        task_id_list = get_task_ids(args)
+        status , answer = self.delete(task_id_list, remove=args.remove, force=args.force)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -227,7 +237,8 @@ class TaskParser(Logger):
 
       # kill option
       elif args.option == 'kill':
-        status, answer = self.kill(args.taskname)
+        task_id_list = get_task_ids(args)
+        status, answer = self.kill(task_id_list)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -390,19 +401,10 @@ class TaskParser(Logger):
 
 
 
-  def delete( self, id_list, remove=False, force=False ):
+  def delete( self, task_id_list, remove=False, force=False ):
 
-    print(id_list)
 
-    #if taskname.split('.')[0] != 'user':
-    #  return (StatusCode.FATAL, 'The task name must starts with user.$USER.taskname.')
-
-    #username = taskname.split('.')[1]
-
-    #if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
-    #  return (StatusCode.FATAL, 'The username does not exist into the database.')
-
-    for id in id_list:
+    for id in task_id_list:
        
 
         # Get task by id
@@ -449,9 +451,10 @@ class TaskParser(Logger):
 
 
     t = PrettyTable([
-                      Color.CGREEN2 + 'Queue'       + Color.CEND,
-                      Color.CGREEN2 + 'ID'          + Color.CEND,
+
+                      Color.CGREEN2 + 'TaskID'      + Color.CEND,
                       Color.CGREEN2 + 'Taskname'    + Color.CEND,
+                      Color.CGREEN2 + 'Queue'       + Color.CEND,
                       Color.CGREEN2 + 'Registered'  + Color.CEND,
                       Color.CGREEN2 + 'Assigned'    + Color.CEND,
                       Color.CGREEN2 + 'Testing'     + Color.CEND,
@@ -478,9 +481,9 @@ class TaskParser(Logger):
       jobs = task.getAllJobs()
       if not list_all and (task.status == 'done'):
         continue
-      queue         = task.queueName
       id            = task.id
       taskName      = task.taskName
+      queue         = task.queueName
       registered    = count( jobs, Status.REGISTERED)
       assigned      = count( jobs, Status.ASSIGNED  )
       testing       = count( jobs, Status.TESTING   )
@@ -491,7 +494,7 @@ class TaskParser(Logger):
       killed        = count( jobs, Status.KILLED    )
       broken        = count( jobs, Status.BROKEN    )
       status        = task.status
-      t.add_row(  [queue, task.id, taskName, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
+      t.add_row(  [task.id, taskName, queue, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
 
     return (StatusCode.SUCCESS, t)
 
@@ -500,50 +503,40 @@ class TaskParser(Logger):
 
 
 
-  def kill( self, taskname ):
+  def kill( self, task_id_list ):
 
-    if taskname.split('.')[0] != 'user':
-      return ( StatusCode.FATAL , 'The task name must starts with: user.%USER.taskname.' )
-
-    username = taskname.split('.')[1]
-    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
-      return ( StatusCode.FATAL, 'The username does not exist into the database.')
-
-    try:
-      task = self.__db.getTask( taskname )
-      if task is None:
-        return (StatusCode.FATAL, "Task does not exist into the database.")
-      # Send kill signal to the task
-      task.setSignal( Signal.KILL )
-      self.__db.commit()
-    except Exception as e:
-      MSG_ERROR(self,e)
-      return (StatusCode.FATAL, "Unknown error." )
+    for id in task_id_list:
+      try:
+        # Get task by id
+        task = self.__db.session().query(Task).filter(Task.id==id).first()
+        if not task:
+            return (StatusCode.FATAL, "The task with id (%d) does not exist into the data base"%id )
+        MSG_INFO( self, 'Kill task (%d) with name: %s', id, task.taskName)
+        # Send kill signal to the task
+        task.setSignal( Signal.KILL )
+        self.__db.commit()
+      except Exception as e:
+        MSG_ERROR(self,e)
+        return (StatusCode.FATAL, "Unknown error." )
 
     return (StatusCode.SUCCESS, "Succefully killed.")
 
 
 
 
-  def retry( self, taskname ):
+  def retry( self, task_id_list ):
 
-    if taskname.split('.')[0] != 'user':
-      return (StatusCode.FATAL, 'The task name must starts with: user.%USER.taskname.')
-
-    username = taskname.split('.')[1]
-    if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
-      return  (StatusCode.FATAL, 'The username does not exist into the database.')
-
-    try:
-      task = self.__db.getTask( taskname )
-      if task is None:
-        return (StatusCode.FATAL, "The task does not exist into the database.")
-      # Send retry signal to the task
-      task.setSignal( Signal.RETRY )
-      self.__db.commit()
-    except Exception as e:
-      MSG_ERROR(self, e)
-      return (StatusCode.FATAL, "Unknown error." )
+    for id in task_id_list:
+      try:
+        task = self.__db.session().query(Task).filter(Task.id==id).first()
+        if not task:
+            return (StatusCode.FATAL, "The task with id (%d) does not exist into the data base"%id )
+        MSG_INFO( self, 'Retry task (%d) with name: %s', id, task.taskName)
+        task.setSignal( Signal.RETRY )
+        self.__db.commit()
+      except Exception as e:
+        MSG_ERROR(self, e)
+        return (StatusCode.FATAL, "Unknown error." )
 
     return (StatusCode.SUCCESS, "Succefully retry.")
 
