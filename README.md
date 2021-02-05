@@ -60,55 +60,7 @@ maestro.py node create -ec 40 -mc 40 -eg 0 -mc 0 -n caloba51
 ```
 
 
-## Upload your files:
-
-In this section we will registry some files into the database manager (`castor`). First, let's create some files into your home dir to keep everything organized.
-
-```
-cd ~
-mkdir tasks
-mkdir data
-```
-
-
-
-
-
-
-
-
-### Setup:
-
-Download the orchestra repository into your directory and setup unsing the follow commands:
-
-```bash
-source setup_modules.sh
-source setup_modules.sh --head
-source setup.sh
-```
- The `setup.sh` will set the orchestra to the python path and call the `setup_envs.sh` scripts. If you don't have rights to download the `partiture` package (maybe you are not a LPS admin) you will need to setup some envs by hand just like this:
- 
- ```
- export CLUSTER_POSTGRES_URL="postgres://suaurl@postgres:password"
- export CLUSTER_API_PORT="port_to_external_all_maestro_services"
- export CLUSTER_RANCHER_CREDENTIALS="path_to_rancher_credentials.yaml"
- ```
-
-
-# Usage
-
-It's possible to use the orchestra with maestro api on your local machine. To do this you must have an account (LPS).
-
-- To install the API on your local machine: pip3 install lps_maestro
-- The documentation can be found here: https://maestro-lps.readthedocs.io/en/latest/
-
-
 ### Task Creation:
-
-
-After organize your user directory into the storage with the data/configuration files into the `files` directory you will be able to create a task. This command must run inside of your user directory (here, into the `/mnt/cluster-volume/jodafons/`).
-The task name must follow the same rule defined in the dataset policy name.
-
 
 ```bash
 maestro.py task create \
@@ -118,7 +70,7 @@ maestro.py task create \
     --containerImage $USER/my_orchestra_tutorial \
     --exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT" \
     --bypass \
-    --queue nvidia
+    --queue gpu
 ```
 
 The `--exec` command contruction must follow some rules to work:
@@ -134,15 +86,14 @@ The `--exec` command contruction must follow some rules to work:
 - `--exec "python3 /job_tuning.py -d %DATA -c %IN -o %OUT && python3 /after_job.py"`, run the `after_job.py` script if you need to do some other things in the end;
 
 **NOTE**: The cluster support multiple queues. The queue name can be:
-- `nvidia`: For GPU only;
-- `cpu_small`: Jobs with low CPU cost. One node can run more the one cpu slot;
-- `cpu_large`: Dedicated jobs with higher cpu consume. Usually one node is allocated to run the job.
+- `gpu`: For GPU only;
+- `cpu`: Dedicated jobs with higher cpu consume. Usually one node is allocated to run the job.
 
 
 ### Print All Tasks:
 
 ```bash
-maestro.py task list -u jodafons
+maestro.py task list
 ```
 
 
@@ -151,20 +102,14 @@ maestro.py task list -u jodafons
 This command will remove the task from the orchestra database.
 
 ```bash
-maestro.py task delete -t user.jodafons.my_first_task
+maestro.py task delete --id 0
 ```
 
 ### Retry Task:
 
 ```bash
-maestro.py task retry -t user.jodafons.my_first_task
+maestro.py task retry --id 0
 ```
 
-
-
-### References:
-- Docker;
-- kubernetes;
-- Rancher
 
 
