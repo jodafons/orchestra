@@ -168,7 +168,7 @@ class TaskParser(Logger):
         id_list = list( range( _args.id_min, _args.id_max+1 ) )
       else:
         MSG_FATAL(self, "Invalid input.")
-
+      return id_list
 
     # Task CLI
     if args.mode == 'task':
