@@ -18,6 +18,9 @@ import argparse
 import sys,os
 import hashlib
 
+from orchestra.utils import getConfig
+config = getConfig()
+
 
 
 
@@ -42,7 +45,7 @@ class DatasetParser( Logger ):
 
       # Delete dataset using the dataset CLI
       list_parser = argparse.ArgumentParser(description = 'Dataset List command lines.', add_help = False)
-      list_parser.add_argument('-u', '--user', action='store', dest='username', required=True,
+      list_parser.add_argument('-u', '--user', action='store', dest='username', required=False, default=config['username'],
                                    help = "List all datasets for a selected user.")
 
 
