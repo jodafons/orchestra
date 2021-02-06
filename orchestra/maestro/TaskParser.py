@@ -508,14 +508,18 @@ class TaskParser(Logger):
     
     if interactive:
         from orchestra.utils import Clock
+        from orchestra.maestro import NodeParser
         SECONDS=1.
         clock = Clock(10*SECONDS)
+        nodes = NodeParser(self.__db)
         while True:
             if clock():
                 import os
-                t = get_table(username, list_all)
+                _, t_nodes = nodes.list()
+                t_tasks = get_table(username, list_all)
                 os.system("clear")
-                print(t)
+                print(t_nodes)
+                print(t_tasks)
     else:
         t = get_table(username, list_all)
         return (StatusCode.SUCCESS, t)
