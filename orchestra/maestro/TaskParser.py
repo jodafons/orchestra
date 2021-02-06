@@ -372,6 +372,8 @@ class TaskParser(Logger):
         for key in secondaryDS.keys():
           _secondaryDS[key] = self.__db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
 
+        offset_job_id = self.__db.generateId(Job)
+        
         for idx, file in progressbar( enumerate(configFiles), len(configFiles), prefix='Creating...' ):
 
           _outputFile = outputFile+ '/job_configId_%d'%idx
@@ -386,7 +388,7 @@ class TaskParser(Logger):
           for key in _secondaryDS:
             command = command.replace( key  , _secondaryDS[key])
 
-          job = self.__db.createJob( task, _configFile, idx, execArgs=command, priority=-1 )
+          job = self.__db.createJob( task, _configFile, idx, execArgs=command, priority=-1, id = offset_job_id+idx )
           job.setStatus('assigned' if bypass else 'registered')
 
 

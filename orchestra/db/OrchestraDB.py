@@ -68,11 +68,11 @@ class OrchestraDB(Logger):
 
 
 
-  def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}" ):
+  def createJob( self, task, configFilePath, configId, priority=1000, execArgs="{}", id=None ):
 
     try:
       job = Job(
-        id=self.generateId(Job),
+        id=self.generateId(Job) if id is None else id,
         configFilePath=configFilePath,
         containerImage=task.containerImage,
         configId=configId,
