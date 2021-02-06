@@ -122,6 +122,9 @@ class TaskParser(Logger):
                     help = "The username.")
       list_parser.add_argument('-a','--all', action='store_true', dest='all', required=False,
                     help = "List all tasks.")
+      list_parser.add_argument('-i','--interactive', action='store_true', dest='interactive', required=False,
+                    help = "List all tasks interactive mode.")
+
 
 
 
@@ -229,7 +232,7 @@ class TaskParser(Logger):
 
       # list all tasks
       elif args.option == 'list':
-        status, answer = self.list(args.username, args.all)
+        status, answer = self.list(args.username, args.all, args.interactive)
         if status.isFailure():
           MSG_FATAL(self, answer)
         else:
@@ -445,59 +448,77 @@ class TaskParser(Logger):
 
 
 
-  def list( self, username, list_all ):
+  def list( self, username, list_all, interactive=True ):
+
+
+    def count( jobs ):
+      status_list = [Status.REGISTERED, Status.ASSIGNED, Status.TESTING, Status.RUNNING, Status.DONE, Status.FAILED, Status.KILL, Status.KILLED, Status.BROKEN]
+      total = { str(key):0 for key in status_list }
+      for job in jobs:
+        for s in status_list:
+          if job.status==s: total[str(s)]+=1
+      return total
+
+    def get_table( username, list_all ):
+      user = self.__db.getUser(username)
+      tasks = user.getAllTasks()
+      t = PrettyTable([
+
+                        Color.CGREEN2 + 'TaskID'      + Color.CEND,
+                        Color.CGREEN2 + 'Taskname'    + Color.CEND,
+                        Color.CGREEN2 + 'Queue'       + Color.CEND,
+                        Color.CGREEN2 + 'Registered'  + Color.CEND,
+                        Color.CGREEN2 + 'Assigned'    + Color.CEND,
+                        Color.CGREEN2 + 'Testing'     + Color.CEND,
+                        Color.CGREEN2 + 'Running'     + Color.CEND,
+                        Color.CRED2   + 'Failed'      + Color.CEND,
+                        Color.CGREEN2 + 'Done'        + Color.CEND,
+                        Color.CRED2   + 'kill'        + Color.CEND,
+                        Color.CRED2   + 'killed'      + Color.CEND,
+                        Color.CRED2   + 'broken'      + Color.CEND,
+                        Color.CGREEN2 + 'Status'      + Color.CEND,
+                        ])
+
+      for task in tasks:
+        jobs = task.getAllJobs()
+        if not list_all and (task.status == 'done'):
+          continue
+        total = count(jobs)
+        id            = task.id
+        taskName      = task.taskName
+        queue         = task.queueName
+        registered    = total[ Status.REGISTERED]
+        assigned      = total[ Status.ASSIGNED  ] 
+        testing       = total[ Status.TESTING   ] 
+        running       = total[ Status.RUNNING   ] 
+        done          = total[ Status.DONE      ] 
+        failed        = total[ Status.FAILED    ] 
+        kill          = total[ Status.KILL      ] 
+        killed        = total[ Status.KILLED    ] 
+        broken        = total[ Status.BROKEN    ] 
+        status        = task.status
+        t.add_row(  [task.id, taskName, queue, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
+      return t
+
 
     if not username in [ user.getUserName() for user in self.__db.getAllUsers() ]:
       return (StatusCode.FATAL, 'The username does not exist into the database.' )
 
 
-    t = PrettyTable([
-
-                      Color.CGREEN2 + 'TaskID'      + Color.CEND,
-                      Color.CGREEN2 + 'Taskname'    + Color.CEND,
-                      Color.CGREEN2 + 'Queue'       + Color.CEND,
-                      Color.CGREEN2 + 'Registered'  + Color.CEND,
-                      Color.CGREEN2 + 'Assigned'    + Color.CEND,
-                      Color.CGREEN2 + 'Testing'     + Color.CEND,
-                      Color.CGREEN2 + 'Running'     + Color.CEND,
-                      Color.CRED2   + 'Failed'      + Color.CEND,
-                      Color.CGREEN2 + 'Done'        + Color.CEND,
-                      Color.CRED2   + 'kill'        + Color.CEND,
-                      Color.CRED2   + 'killed'      + Color.CEND,
-                      Color.CRED2   + 'broken'      + Color.CEND,
-                      Color.CGREEN2 + 'Status'      + Color.CEND,
-                      ])
-
-    user = self.__db.getUser(username)
-    tasks = user.getAllTasks()
-
-    def count( jobs, status ):
-      total=0
-      for job in jobs:
-        if job.status==status:  total+=1
-      return total
-
-
-    for task in tasks:
-      jobs = task.getAllJobs()
-      if not list_all and (task.status == 'done'):
-        continue
-      id            = task.id
-      taskName      = task.taskName
-      queue         = task.queueName
-      registered    = count( jobs, Status.REGISTERED)
-      assigned      = count( jobs, Status.ASSIGNED  )
-      testing       = count( jobs, Status.TESTING   )
-      running       = count( jobs, Status.RUNNING   )
-      done          = count( jobs, Status.DONE      )
-      failed        = count( jobs, Status.FAILED    )
-      kill          = count( jobs, Status.KILL      )
-      killed        = count( jobs, Status.KILLED    )
-      broken        = count( jobs, Status.BROKEN    )
-      status        = task.status
-      t.add_row(  [task.id, taskName, queue, registered,  assigned, testing, running, failed,  done, kill, killed, broken, getStatus(status)] )
-
-    return (StatusCode.SUCCESS, t)
+    
+    if interactive:
+        from orchestra.utils import Clock
+        SECONDS=1.
+        clock = Clock(10*SECONDS)
+        while True:
+            if clock():
+                import os
+                t = get_table(username, list_all)
+                os.system("clear")
+                print(t)
+    else:
+        t = get_table(username, list_all)
+        return (StatusCode.SUCCESS, t)
 
 
 
