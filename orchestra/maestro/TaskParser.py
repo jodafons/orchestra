@@ -3,7 +3,7 @@ __all__ = ["TaskParser"]
 
 from Gaugi.messenger import LoggingLevel, Logger
 from Gaugi.messenger.macros import *
-from Gaugi import StatusCode, Color, expandFolders
+from Gaugi import StatusCode, Color, expandFolders, progressbar
 
 # Connect to DB
 from orchestra.db import Task,Dataset,File,Job
@@ -372,8 +372,7 @@ class TaskParser(Logger):
         for key in secondaryDS.keys():
           _secondaryDS[key] = self.__db.getDataset(username, secondaryDS[key]).getAllFiles()[0].getPath()
 
-
-        for idx, file in enumerate(configFiles):
+        for idx, file in progressbar( enumerate(configFiles), len(configFiles), prefix='Creating...' ):
 
           _outputFile = outputFile+ '/job_configId_%d'%idx
 
