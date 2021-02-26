@@ -15,7 +15,7 @@ class Consumer( Logger ):
   #
   # Constructor
   #
-  def __init__(self, job, slot, db ):
+  def __init__(self, job, slot, db, extra_envs={} ):
     Logger.__init__(self)
     self.__job = job
     self.__db = db
@@ -35,7 +35,7 @@ class Consumer( Logger ):
 
     # process
     self.__proc = None
-
+    self.__extra_envs = extra_envs
     MSG_INFO(self, "Create consumer with name: %s for namespace: %s", self.__jobname, self.__namespace)
 
 
@@ -180,6 +180,7 @@ class Consumer( Logger ):
     #command+= ' &> %s/mylog.log'% self.__job.getTheOutputStoragePath()
     # Send the job configuration to cluster kube server
     MSG_INFO( self, "Launching job %s ...", self.__jobname)
+    env.update( self.__extra_envs )
 
     print(command)
     self.__proc = Popen( command , env=env , shell=True)

@@ -396,7 +396,13 @@ class TaskParser(Logger):
 
 
         task.setStatus('registered')
-        self.__db.commit()
+
+        # Test locally before send to the database
+        if self.__test_job_locally( task.getAllJobs()[0] ):
+            self.__db.commit()
+        else:
+            return (StatusCode.FATAL, "Local test failed.")
+
       except Exception as e:
         MSG_ERROR(self,e)
         return (StatusCode.FATAL, "Unknown error.")
@@ -729,4 +735,32 @@ class TaskParser(Logger):
     return (StatusCode.SUCCESS, "Succefully created.")
 
 
+
+
+
+  def __test_job_locally( self, job ):
+
+    from orchestra.Slots import CPUSlot
+    from orchestra import Consumer
+    slot = CPUSlot( "temp_slot")
+
+    extra_envs = {'LOCAL_TEST':'1'}
+    consumer = Consumer( job, slot, None, extra_envs=extra_envs )
+    consumer.initialize()
+
+    while True:
+        if consumer.status() == Status.PENDING:
+            if consumer.execute().isFailure():
+                consumer.finalize()
+                return False
+        elif consumer.status() == Status.FAILED:
+            consumer.finalize()
+            return False
+        elif consumer.status() == Status.RUNNING:
+            continue
+        elif consumer.status() == Status.DONE:
+            consumer.finalize()
+            return True
+        else:
+            continue
 
