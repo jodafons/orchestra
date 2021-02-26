@@ -563,6 +563,10 @@ class TaskParser(Logger):
         task = self.__db.session().query(Task).filter(Task.id==id).first()
         if not task:
             return (StatusCode.FATAL, "The task with id (%d) does not exist into the data base"%id )
+        
+        if task.status == Status.DONE:
+            return (StatusCode.FATAL, "The task with id (%d) is in DONE status. Can not retry."%id )
+
         MSG_INFO( self, 'Retry task (%d) with name: %s', id, task.taskName)
         task.setSignal( Signal.RETRY )
         self.__db.commit()
