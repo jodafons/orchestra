@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MY_USER=jodafons
+MY_USER=$USER
 current=$PWD
 
 cd $(mktemp -d)
@@ -13,6 +13,8 @@ git clone https://github.com/ringer-softwares/kolmov.git
 git clone https://github.com/ringer-softwares/pybeamer.git
 git clone https://github.com/ringer-softwares/saphyra.git
 git clone https://github.com/ringer-softwares/orchestra.git
+git clone https://github.com/ringer-softwares/$MY_USER.git
+
 
 echo "=========================================================="
 echo "update all necessary packages..."
@@ -27,10 +29,7 @@ cd $temp/orchestra && source setup.sh
 echo "=========================================================="
 echo "setup ringer scripts... "
 echo $MY_USER
-git clone https://github.com/ringer-softwares/$MY_USER.git
-
-
-cd $temp/$MY_USER && git pull && source scripts/setup.sh
+cd $temp/$MY_USER && source scripts/setup.sh
 echo "=========================================================="
 
 cd $current
