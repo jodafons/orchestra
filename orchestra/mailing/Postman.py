@@ -1,7 +1,7 @@
 __all__ = ['Postman']
 
 from Gaugi import Logger
-from Gaugi.messenger.macros import *
+from Gaugi.macros import *
 
 from smtplib import SMTP
 from email.mime.application import MIMEApplication

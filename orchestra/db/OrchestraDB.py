@@ -2,7 +2,7 @@
 __all__ = ["OrchestraDB"]
 
 from Gaugi import Logger, StatusCode
-from Gaugi.messenger.macros import *
+from Gaugi.macros import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from orchestra.db.models import *

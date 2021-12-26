@@ -3,7 +3,7 @@ __all__ = ["Consumer"]
 
 
 from Gaugi import Logger, StatusCode
-from Gaugi.messenger.macros import *
+from Gaugi.macros import *
 from orchestra import Status, getEnv
 import os, glob, hashlib, sys
 

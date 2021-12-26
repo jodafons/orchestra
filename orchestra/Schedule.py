@@ -3,7 +3,7 @@ __all__ = ["schedule"]
 
 
 from Gaugi import Logger, StatusCode
-from Gaugi.messenger.macros import *
+from Gaugi.macros import *
 
 from sqlalchemy import and_, or_, desc
 

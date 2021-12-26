@@ -3,7 +3,7 @@ __all__ = ["Slots"]
 
 
 from Gaugi import Logger
-from Gaugi.messenger.macros import *
+from Gaugi.macros import *
 from Gaugi import StatusCode
 from collections import deque
 from orchestra import Status

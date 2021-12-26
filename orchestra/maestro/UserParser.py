@@ -1,9 +1,9 @@
 
 __all__ = ["UserParser"]
 
-from Gaugi.messenger import LoggingLevel, Logger
-from Gaugi.messenger.macros import *
-from Gaugi import StatusCode, Color, expandFolders
+from Gaugi import LoggingLevel, Logger
+from Gaugi.macros import *
+from Gaugi import StatusCode, Color, expand_folders
 
 # Connect to DB
 from orchestra.db import Task,Dataset,File,Job

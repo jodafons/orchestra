@@ -3,7 +3,7 @@ __all__ = ["Pilot"]
 
 
 from Gaugi import Logger, StatusCode
-from Gaugi.messenger.macros import *
+from Gaugi.macros import *
 from orchestra.enums import *
 from orchestra.utils import Clock
 
