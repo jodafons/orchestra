@@ -183,7 +183,7 @@ class DatasetParser( Logger ):
 
       # Loop over files
       desired_id = self.__db.generateId(File)+1
-      for idx, subpath in enumerate(expandFolders(path)):
+      for idx, subpath in enumerate(expand_folders(path)):
         MSG_INFO( self, "Registry %s into %s", subpath,datasetname)
         file= File(path=subpath,id=desired_id+idx)
         ds.addFile(file)
