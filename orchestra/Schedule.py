@@ -199,7 +199,7 @@ class Schedule(Logger):
     try:
       user = task.getUser()
       for job in task.getAllJobs():
-        if job.getStatus() != Status.FAILED:
+        if job.getStatus() != Status.DONE:
           job.setPriority(1000)
           job.setStatus( Status.ASSIGNED )
       task.setSignal( Signal.WAITING )
