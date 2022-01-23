@@ -73,7 +73,7 @@ class Schedule(Logger):
   def calculate(self):
 
     max_running_tasks = 2
-
+    count=0
     for user in self.db().getAllUsers():
       for task in user.getAllTasks():
         self.run(task)
