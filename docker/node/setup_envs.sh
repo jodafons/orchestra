@@ -11,6 +11,7 @@ git clone https://github.com/ringer-softwares/kepler.git
 git clone https://github.com/ringer-softwares/kolmov.git
 git clone https://github.com/ringer-softwares/pybeamer.git
 git clone https://github.com/ringer-softwares/saphyra.git
+git clone https://github.com/ringer-softwares/rootplotlib.git
 git clone https://github.com/ringer-softwares/orchestra.git
 #git clone https://github.com/ringer-softwares/$MY_USER.git
 
@@ -19,9 +20,11 @@ echo "=========================================================="
 echo "update all necessary packages..."
 source /setup_root.sh
 cd $temp/gaugi && source scripts/setup.sh
+cd $temp/rootplotlib && source scripts/setup.sh
 cd $temp/saphyra && source scripts/setup.sh
 cd $temp/kepler && source scripts/setup.sh
 cd $temp/pybeamer && source scripts/setup.sh
+
 
 echo "=========================================================="
 echo "setup orchestra..."
