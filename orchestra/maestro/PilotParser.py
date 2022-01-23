@@ -18,6 +18,7 @@ import sys,os
 import hashlib
 import traceback
 import socket
+import time
 
 config = getConfig()
 
@@ -108,10 +109,11 @@ class PilotParser( Logger ):
         print(e)
         subject = "[Cluster LPS] (ALARM) Orchestra stop"
         message=traceback.format_exc()
-        for user in self.__db.getAllUsers():
-          postman.send( user.email,subject,message)
+
+        #for user in self.__db.getAllUsers():
+        #  postman.send( user.email,subject,message)
         print(message)
-      
+        time.sleep(10)
 
     return (StatusCode.SUCCESS, "success..")
 
