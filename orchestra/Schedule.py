@@ -72,9 +72,16 @@ class Schedule(Logger):
   #
   def calculate(self):
 
+    max_running_tasks = 2
+
     for user in self.db().getAllUsers():
       for task in user.getAllTasks():
         self.run(task)
+        if task.getStatus()==Status.RUNNING:
+          count+=1
+        
+        if count>max_running_tasks:
+          break
     return StatusCode.SUCCESS
 
 
@@ -199,9 +206,14 @@ class Schedule(Logger):
     try:
       user = task.getUser()
       for job in task.getAllJobs():
-        if job.getStatus() != Status.DONE:
-          job.setPriority(1000)
-          job.setStatus( Status.ASSIGNED )
+        if job.getStatus() == Status.FAILED:
+          if job.retry < 3:
+            job.setPriority(1000)
+            job.retry+=1
+            job.setStatus( Status.ASSIGNED )
+          else:
+            # this is a HACK
+            job.setStatus( Status.DONE )
       task.setSignal( Signal.WAITING )
       return True
       #if task.getSignal() == Signal.RETRY:
