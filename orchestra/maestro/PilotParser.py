@@ -16,7 +16,7 @@ import numpy as np
 import argparse
 import sys,os
 import hashlib
-
+import traceback
 import socket
 
 config = getConfig()
@@ -99,17 +99,19 @@ class PilotParser( Logger ):
     pilot+=Slots(node, 'gpu' , gpu=True  )
 
 
-    try:
-      pilot.run()
-    except Exception as e:
-      print(e)
-      subject = "[Cluster LPS] (ALARM) Orchestra stop"
-      message=traceback.format_exc()
-      for user in self.__db.getAllUsers():
-        postman.send( user.email,subject,message)
-      print(message)
-      return (StatusCode.FATAL, "fatal...")
 
+    while True:
+      
+      try:
+        pilot.run()
+      except Exception as e:
+        print(e)
+        subject = "[Cluster LPS] (ALARM) Orchestra stop"
+        message=traceback.format_exc()
+        for user in self.__db.getAllUsers():
+          postman.send( user.email,subject,message)
+        print(message)
+      
 
     return (StatusCode.SUCCESS, "success..")
 
