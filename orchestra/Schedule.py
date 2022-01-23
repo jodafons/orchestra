@@ -421,9 +421,10 @@ class Schedule(Logger):
     try:
       exist_registered_jobs = False
       for job in task.getAllJobs():
-        if job.getStatus()==Status.REGISTERED:
+        if job.getStatus()==Status.REGISTERED or job.getStatus()==Status.PENDING: 
           job.setStatus(Status.ASSIGNED)
           exist_registered_jobs=True
+
       return exist_registered_jobs
     except Exception as e:
 
