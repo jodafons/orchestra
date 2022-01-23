@@ -88,15 +88,15 @@ for queue in args.cpu.split(','):
 for queue in args.cpu.split(','):
   pilot+=Slots(args.nodename, queue, gpu=True)
 
-
-try:
-  pilot.run()
-except Exception as e:
-  print(e)
-  subject = "[Cluster LPS] (ALARM) Orchestra stop"
-  message=traceback.format_exc()
-  for user in db.getAllUsers():
-    postman.send( user.email,subject,message)
-  print(message)
-
+while True:
+  try:
+    pilot.run()
+  except Exception as e:
+    print(e)
+    subject = "[Cluster LPS] (ALARM) Orchestra stop"
+    message=traceback.format_exc()
+    for user in db.getAllUsers():
+      postman.send( user.email,subject,message)
+    print(message)
+    
 

@@ -60,6 +60,8 @@ class TaskParser(Logger):
                           help = "Use this as debugger.")
       create_parser.add_argument('--bypass', action='store_true', dest='bypass', required=False, default=False,
                           help = "Bypass the job test.")
+      create_parser.add_argument('--bypass_local_test', action='store_true', dest='bypass_local_test', required=False, default=False,
+                          help = "Bypass the local job test.")
 
 
       
@@ -186,7 +188,8 @@ class TaskParser(Logger):
                                       args.execCommand,
                                       args.queue,
                                       args.bypass,
-                                      args.dry_run)
+                                      args.dry_run,
+                                      bypass_local_test=args.bypass_local_test)
 
         if status.isFailure():
           MSG_FATAL(self, answer)
@@ -283,7 +286,8 @@ class TaskParser(Logger):
                     queue='gpu',
                     bypass=False,
                     dry_run=False,
-                    force_dummy=False):
+                    force_dummy=False,
+                    bypass_local_test=False):
 
 
 
@@ -398,11 +402,14 @@ class TaskParser(Logger):
 
         task.setStatus('registered')
 
-        # Test locally before send to the database
-        if self.__test_job_locally( task.getAllJobs()[0] ):
-            self.__db.commit()
+        if not bypass_local_test:
+          # Test locally before send to the database
+          if self.__test_job_locally( task.getAllJobs()[0] ):
+              self.__db.commit()
+          else:
+              return (StatusCode.FATAL, "Local test failed.")
         else:
-            return (StatusCode.FATAL, "Local test failed.")
+          self.__db.commit()
 
       except Exception as e:
         MSG_ERROR(self,e)

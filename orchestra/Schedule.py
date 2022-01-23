@@ -198,16 +198,21 @@ class Schedule(Logger):
 
     try:
       user = task.getUser()
-
-      if task.getSignal() == Signal.RETRY:
-        for job in task.getAllJobs():
-          if job.getStatus() == Status.FAILED:
-            job.setPriority(1000)
-            job.setStatus( Status.ASSIGNED )
-        task.setSignal( Signal.WAITING )
-        return True
-      else:
-        return False
+      for job in task.getAllJobs():
+        if job.getStatus() != Status.FAILED:
+          job.setPriority(1000)
+          job.setStatus( Status.ASSIGNED )
+      task.setSignal( Signal.WAITING )
+      return True
+      #if task.getSignal() == Signal.RETRY:
+      #  for job in task.getAllJobs():
+      #    if job.getStatus() == Status.FAILED:
+      #      job.setPriority(1000)
+      #      job.setStatus( Status.ASSIGNED )
+      #  task.setSignal( Signal.WAITING )
+      #  return True
+      #else:
+      #  return False
     except Exception as e:
 
       MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
