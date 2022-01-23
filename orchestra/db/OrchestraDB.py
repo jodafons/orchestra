@@ -20,8 +20,20 @@ class OrchestraDB(Logger):
   def __init__( self, url):
 
     Logger.__init__(self)
+    self.url=url
     try:
       self.__engine = create_engine(url)
+      Session= sessionmaker(bind=self.__engine)
+      self.__session = Session()
+    except Exception as e:
+      MSG_FATAL( self, e )
+
+
+
+  def reset(self):
+    self.close()
+    try:
+      self.__engine = create_engine(self.url)
       Session= sessionmaker(bind=self.__engine)
       self.__session = Session()
     except Exception as e:
