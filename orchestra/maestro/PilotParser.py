@@ -114,6 +114,13 @@ class PilotParser( Logger ):
         #  postman.send( user.email,subject,message)
         print(message)
         time.sleep(10)
+        from orchestra.utils import getConfig
+        from orchestra.db import OrchestraDB
+        config = getConfig()
+        # create the database manager
+        self.__db.close()
+        self.__db  = OrchestraDB( config['postgres'] )
+
 
     return (StatusCode.SUCCESS, "success..")
 
