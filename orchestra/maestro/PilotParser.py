@@ -72,50 +72,50 @@ class PilotParser( Logger ):
   #
   def run( self, nodename , master):
 
-    email = config['email']
-    password = config['password']
-    module_orchestra_path = os.path.dirname(orchestra.__file__)
-
-    # create the postman
-    postman = Postman( email, password , module_orchestra_path+'/mailing/templates')
-
-    # get the standard schedule state machine
-    from orchestra import schedule
-
-    node = self.__db.getNode( nodename )
-
-    if master:
-      node.setThisNodeAsMaster()
-    else:
-      node.setThisNodeAsSlave()
-
-    if node is None:
-      return (StatusCode.FATAL, "Node (%s) is not available into the database"%nodename )
-
-
-    # create the pilot
-    pilot = Pilot(node, self.__db, schedule, postman, node.isMaster() )
-
-    # create allways two slots (cpu and gpu) by default
-    pilot+=Slots(node, 'cpu' , gpu=False )
-    pilot+=Slots(node, 'gpu' , gpu=True  )
-
-
 
     while True:
-      
+
       try:
+
+        email = config['email']
+        password = config['password']
+        module_orchestra_path = os.path.dirname(orchestra.__file__)
+
+        self.__db.reset()
+
+        # create the postman
+        postman = Postman( email, password , module_orchestra_path+'/mailing/templates')
+
+        # get the standard schedule state machine
+        from orchestra import schedule
+        node = self.__db.getNode( nodename )
+
+        if master:
+          node.setThisNodeAsMaster()
+        else:
+          node.setThisNodeAsSlave()
+
+        if node is None:
+          return (StatusCode.FATAL, "Node (%s) is not available into the database"%nodename )
+
+
+        # create the pilot
+        pilot = Pilot(node, self.__db, schedule, postman, node.isMaster() )
+
+        # create allways two slots (cpu and gpu) by default
+        pilot+=Slots(node, 'cpu' , gpu=False )
+        pilot+=Slots(node, 'gpu' , gpu=True  )
         pilot.run()
       except Exception as e:
-        print(e)
-        subject = "[Cluster LPS] (ALARM) Orchestra stop"
-        message=traceback.format_exc()
+            print(e)
+            subject = "[Cluster LPS] (ALARM) Orchestra stop"
+            message=traceback.format_exc()
+            #for user in self.__db.getAllUsers():
+            #  postman.send( user.email,subject,message)
+            print(message)
+            time.sleep(10)
 
-        #for user in self.__db.getAllUsers():
-        #  postman.send( user.email,subject,message)
-        print(message)
-        time.sleep(10)
-        self.__db.reset()
+           
 
 
     return (StatusCode.SUCCESS, "success..")
