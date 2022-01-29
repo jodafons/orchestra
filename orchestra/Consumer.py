@@ -65,15 +65,16 @@ class Consumer( Logger ):
     try:
       dirname = self.job().getTheOutputStoragePath()
 
-      try:
-        if os.path.exists(dirname):
-          os.system('rm -rf %s'%dirname)
-      except Exception as e:
-        MSG_ERROR(self,e)
-        MSG_ERROR(self, "It's not possible to remove the job config directory.")
+      #try:
+      #  if os.path.exists(dirname):
+      #    os.system('rm -rf %s'%dirname)
+      #except Exception as e:
+      #  MSG_ERROR(self,e)
+      #  MSG_ERROR(self, "It's not possible to remove the job config directory.")
 
       try: # create the empty directory
-        os.system('mkdir -p %s'%dirname)
+        if not os.path.exists(dirname):
+          os.system('mkdir -p %s'%dirname)
       except Exception as e:
         MSG_ERROR(self,e)
         MSG_ERROR(self,"It's not possible to create the output directory into the storage.")

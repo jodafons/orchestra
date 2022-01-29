@@ -13,6 +13,7 @@ git clone https://github.com/ringer-softwares/pybeamer.git
 git clone https://github.com/ringer-softwares/saphyra.git
 git clone https://github.com/ringer-softwares/rootplotlib.git
 git clone https://github.com/ringer-softwares/orchestra.git
+git clone https://github.com/bric-tb-softwares/rxwgan.git
 #git clone https://github.com/ringer-softwares/$MY_USER.git
 
 
@@ -24,6 +25,7 @@ cd $temp/rootplotlib && source scripts/setup.sh
 cd $temp/saphyra && source scripts/setup.sh
 cd $temp/kepler && source scripts/setup.sh
 cd $temp/pybeamer && source scripts/setup.sh
+cd $temp/rxwgan && source scripts/setup.sh
 
 
 echo "=========================================================="
