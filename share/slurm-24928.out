@@ -1,0 +1,53 @@
+caloba24
+caloba24
+Cloning into 'gaugi'...
+Cloning into 'kepler'...
+Cloning into 'kolmov'...
+Cloning into 'pybeamer'...
+Cloning into 'saphyra'...
+Cloning into 'rootplotlib'...
+Cloning into 'orchestra'...
+==========================================================
+update all necessary packages...
+==========================================================
+setup root...
+==========================================================
+setup gaugi by hand...
+setup rootplotlib by hand...
+setup saphyra by hand...
+setup kepler by hand...
+setup pybeamer by hand...
+==========================================================
+setup orchestra...
+==========================================================
+2022-02-03 18:02:25.677569: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+Using all sub packages with ROOT dependence
+2022-02-03 18:02:27,424 | Py.Slots                                INFO Setup all slots into the queue with name: cpu
+2022-02-03 18:02:27,424 | Py.Slots                                INFO Creating a CPU Slot(caloba24) with 0/4
+2022-02-03 18:02:27,424 | Py.Slots                                INFO Creating cluster stack with 0 slots
+2022-02-03 18:02:27.427345: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcuda.so.1
+2022-02-03 18:02:28.319165: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.319563: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:28.319632: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.320002: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 1 with properties: 
+pciBusID: 0000:03:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:28.320057: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:28.346113: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcublas.so.10
+2022-02-03 18:02:28.358859: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcufft.so.10
+2022-02-03 18:02:28.363428: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcurand.so.10
+2022-02-03 18:02:28.390844: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusolver.so.10
+2022-02-03 18:02:28.395925: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusparse.so.10
+2022-02-03 18:02:28.442341: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudnn.so.7
+2022-02-03 18:02:28.442472: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.442907: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.443398: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.443809: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.444157: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1858] Adding visible gpu devices: 0, 1
+2022-02-03 18:02:28,444 | Py.Slots                                INFO Number of GPUs found in caloba24: 2
+2022-02-03 18:02:28,444 | Py.Slots                                INFO Setup all slots into the queue with name: gpu
+2022-02-03 18:02:28,444 | Py.Slots                                INFO Creating a GPU Slot(caloba24) with device 0. This slot is enable? True
+2022-02-03 18:02:28,444 | Py.Slots                                INFO Creating a GPU Slot(caloba24) with device 1. This slot is enable? True
+2022-02-03 18:02:28,444 | Py.Slots                                INFO Creating cluster stack with 2 slots
