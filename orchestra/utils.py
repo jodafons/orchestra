@@ -1,5 +1,6 @@
 
-__all__ = ["Clock", "getStatus", "getEnv", "getConfig"]
+__all__ = ["Clock", "getStatus", "getEnv", "getConfig",
+           "start", "complete", "fail", "is_test_job"]
 
 from Gaugi import Color
 import time, os
@@ -84,6 +85,23 @@ def getConfig():
     print("Could not open/read file: %s" % fname)
 
 
+def start():
+  basepath = os.getcwd()
+  if os.path.exists(basepath+'/.complete'):
+    os.remove(basepath+'/.complete')
+  if os.path.exists(basepath+'/.failed'):
+    os.remove(basepath+'/.failed')
+  
+def complete():
+  basepath = os.getcwd()
+  with open(basepath+'/.complete','w') as f:
+    f.write('complete')
 
+def fail():
+  basepath = os.getcwd()
+  with open(output+'/.failed','w') as f:
+    f.write('failed')
 
+def is_test_job():
+  return True if os.getenv('LOCAL_TEST') else False
 
