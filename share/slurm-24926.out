@@ -1,0 +1,251 @@
+caloba21
+caloba21
+Cloning into 'gaugi'...
+Cloning into 'kepler'...
+Cloning into 'kolmov'...
+Cloning into 'pybeamer'...
+Cloning into 'saphyra'...
+Cloning into 'rootplotlib'...
+Cloning into 'orchestra'...
+==========================================================
+update all necessary packages...
+==========================================================
+setup root...
+==========================================================
+setup gaugi by hand...
+setup rootplotlib by hand...
+setup saphyra by hand...
+setup kepler by hand...
+setup pybeamer by hand...
+==========================================================
+setup orchestra...
+==========================================================
+2022-02-03 18:02:25.910917: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+Using all sub packages with ROOT dependence
+2022-02-03 18:02:27,681 | Py.Slots                                INFO Setup all slots into the queue with name: cpu
+2022-02-03 18:02:27,681 | Py.Slots                                INFO Creating a CPU Slot(caloba21) with 0/4
+2022-02-03 18:02:27,681 | Py.Slots                                INFO Creating cluster stack with 0 slots
+2022-02-03 18:02:27.684222: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcuda.so.1
+2022-02-03 18:02:28.579236: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.579628: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:28.579668: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.580025: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 1 with properties: 
+pciBusID: 0000:03:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:28.580045: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:28.606692: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcublas.so.10
+2022-02-03 18:02:28.619510: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcufft.so.10
+2022-02-03 18:02:28.624098: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcurand.so.10
+2022-02-03 18:02:28.651620: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusolver.so.10
+2022-02-03 18:02:28.656758: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusparse.so.10
+2022-02-03 18:02:28.703276: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudnn.so.7
+2022-02-03 18:02:28.703404: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.703889: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.704310: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.704800: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:28.705224: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1858] Adding visible gpu devices: 0, 1
+2022-02-03 18:02:28,705 | Py.Slots                                INFO Number of GPUs found in caloba21: 2
+2022-02-03 18:02:28,705 | Py.Slots                                INFO Setup all slots into the queue with name: gpu
+2022-02-03 18:02:28,705 | Py.Slots                                INFO Creating a GPU Slot(caloba21) with device 0. This slot is enable? True
+2022-02-03 18:02:28,705 | Py.Slots                                INFO Creating a GPU Slot(caloba21) with device 1. This slot is enable? True
+2022-02-03 18:02:28,705 | Py.Slots                                INFO Creating cluster stack with 2 slots
+2022-02-03 18:02:38,720 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:02:38,720 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:02:38,720 | Py.Schedule                             INFO Current status is: registered
+2022-02-03 18:02:38,744 | Py.Consumer                             INFO Create consumer with name: gpu.user.jodafons.a426b4e94412b7f99b843313549aea5c for namespace: jodafons
+2022-02-03 18:02:38,746 | Py.Consumer                             INFO Launching job gpu.user.jodafons.a426b4e94412b7f99b843313549aea5c ...
+Cloning into 'rxcore'...
+Cloning into 'rxcnn'...
+2022-02-03 18:02:40.268625: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:41.136179: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-02-03 18:02:41.166030: I tensorflow/core/platform/profile_utils/cpu_utils.cc:104] CPU Frequency: 2899885000 Hz
+2022-02-03 18:02:41.166860: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x53118b0 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2022-02-03 18:02:41.166874: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2022-02-03 18:02:41.168435: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcuda.so.1
+2022-02-03 18:02:41.280731: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:41.281186: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x5780ba0 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2022-02-03 18:02:41.281205: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): NVIDIA GeForce RTX 2080 SUPER, Compute Capability 7.5
+2022-02-03 18:02:41.282341: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:41.282786: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:41.282814: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:41.283829: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcublas.so.10
+2022-02-03 18:02:41.284783: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcufft.so.10
+2022-02-03 18:02:41.285068: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcurand.so.10
+2022-02-03 18:02:41.286026: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusolver.so.10
+2022-02-03 18:02:41.286575: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusparse.so.10
+2022-02-03 18:02:41.288564: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudnn.so.7
+2022-02-03 18:02:41.288630: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:41.289094: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:41.289527: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1858] Adding visible gpu devices: 0
+2022-02-03 18:02:41.290618: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:42.662892: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1257] Device interconnect StreamExecutor with strength 1 edge matrix:
+2022-02-03 18:02:42.662919: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1263]      0 
+2022-02-03 18:02:42.662924: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1276] 0:   N 
+2022-02-03 18:02:42.665897: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:42.666366: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:42.666808: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1402] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 7256 MB memory) -> physical GPU (device: 0, name: NVIDIA GeForce RTX 2080 SUPER, pci bus id: 0000:01:00.0, compute capability: 7.5)
+2022-02-03 18:02:43.003314: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.003769: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:43.003796: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:43.003812: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcublas.so.10
+2022-02-03 18:02:43.003821: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcufft.so.10
+2022-02-03 18:02:43.003832: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcurand.so.10
+2022-02-03 18:02:43.003844: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusolver.so.10
+2022-02-03 18:02:43.003857: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusparse.so.10
+2022-02-03 18:02:43.003866: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudnn.so.7
+2022-02-03 18:02:43.003908: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.004359: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.004782: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1858] Adding visible gpu devices: 0
+2022-02-03 18:02:43.005292: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.005694: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: NVIDIA GeForce RTX 2080 SUPER computeCapability: 7.5
+coreClock: 1.815GHz coreCount: 48 deviceMemorySize: 7.79GiB deviceMemoryBandwidth: 462.00GiB/s
+2022-02-03 18:02:43.005707: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
+2022-02-03 18:02:43.005716: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcublas.so.10
+2022-02-03 18:02:43.005724: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcufft.so.10
+2022-02-03 18:02:43.005731: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcurand.so.10
+2022-02-03 18:02:43.005740: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusolver.so.10
+2022-02-03 18:02:43.005755: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcusparse.so.10
+2022-02-03 18:02:43.005764: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudnn.so.7
+2022-02-03 18:02:43.005795: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.006335: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.006780: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1858] Adding visible gpu devices: 0
+2022-02-03 18:02:43.006801: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1257] Device interconnect StreamExecutor with strength 1 edge matrix:
+2022-02-03 18:02:43.006811: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1263]      0 
+2022-02-03 18:02:43.006817: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1276] 0:   N 
+2022-02-03 18:02:43.006866: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.007327: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:982] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2022-02-03 18:02:43.007857: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1402] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 7256 MB memory) -> physical GPU (device: 0, name: NVIDIA GeForce RTX 2080 SUPER, pci bus id: 0000:01:00.0, compute capability: 7.5)
+WARNING:tensorflow:From rxcnn/versions/v1/job_tuning.py:138: Model.fit_generator (from tensorflow.python.keras.engine.training) is deprecated and will be removed in a future version.
+Instructions for updating:
+Please use Model.fit, which supports generators.
+cd /home/jodafons/public/brics_models/Shenzhen/tasks/user.jodafons.task.Shenzhen.model_cnn.v1/job_configId_0 && (rm -rf .complete || true) && (rm -rf rxcore || true) && (rm -rf rxcnn || true) && git clone https://github.com/bric-tb-softwares/rxcore.git && git clone https://github.com/bric-tb-softwares/rxcnn.git && cd rxcore && export PYTHONPATH=/home/jodafons/git_repos/brics/rxwgan:/home/jodafons/git_repos/brics/orchestra:/opt/root/buildthis/lib:/home/jodafons/git_repos/brics/rxwgan:/home/jodafons/git_repos/brics/rxwgan:/home/jodafons/git_repos/brics/orchestra:/home/jodafons/git_repos/brics/gaugi:/home/jodafons/git_repos/brics/rxcore/rxcore:/home/jodafons/git_repos/brics/rxcnn/rxcnn:/home/jodafons/git_repos/brics/rxcnn/rxcnn:/home/jodafons/git_repos/brics/rxcnn:/home/jodafons/git_repos/brics/rxcore:/home/jodafons/git_repos/brics/gaugi:/home/jodafons/git_repos/brics/rxcore:/home/jodafons/public/brics_models/Shenzhen/tasks/rxcore && cd .. && cd rxcnn && export PYTHONPATH=/home/jodafons/git_repos/brics/rxwgan:/home/jodafons/git_repos/brics/orchestra:/opt/root/buildthis/lib:/home/jodafons/git_repos/brics/rxwgan:/home/jodafons/git_repos/brics/rxwgan:/home/jodafons/git_repos/brics/orchestra:/home/jodafons/git_repos/brics/gaugi:/home/jodafons/git_repos/brics/rxcore/rxcore:/home/jodafons/git_repos/brics/rxcnn/rxcnn:/home/jodafons/git_repos/brics/rxcnn/rxcnn:/home/jodafons/git_repos/brics/rxcnn:/home/jodafons/git_repos/brics/rxcore:/home/jodafons/git_repos/brics/gaugi:/home/jodafons/git_repos/brics/rxcore:/home/jodafons/public/brics_models/Shenzhen/tasks/rxcnn && cd .. && python rxcnn/versions/v1/job_tuning.py -j /home/jodafons/public/brics_models/Shenzhen/jobs/job.Shenzhen.model_cnn.v1.10tests.10sorts/job.test_0.sort_0.json -i /home/jodafons/public/brics_data/Shenzhen/raw/Shenzhen_table_from_raw.csv -v /home/jodafons/public/brics_models/Shenzhen/tasks/user.jodafons.task.Shenzhen.model_cnn.v1/job_configId_0 && rm -rf rxwgan && rm -rf rxcore
+2022-02-03 18:02:48,759 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:02:48,760 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:02:48,760 | Py.Schedule                             INFO Current status is: testing
+2022-02-03 18:02:50.534530: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudnn.so.7
+2022-02-03 18:02:52.644289: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcublas.so.10
+Model: "functional_1"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_1 (InputLayer)         [(None, 128, 128, 1)]     0         
+_________________________________________________________________
+conv2d (Conv2D)              (None, 64, 64, 256)       6656      
+_________________________________________________________________
+activation (Activation)      (None, 64, 64, 256)       0         
+_________________________________________________________________
+dropout (Dropout)            (None, 64, 64, 256)       0         
+_________________________________________________________________
+conv2d_1 (Conv2D)            (None, 32, 32, 128)       819328    
+_________________________________________________________________
+activation_1 (Activation)    (None, 32, 32, 128)       0         
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 32, 32, 128)       0         
+_________________________________________________________________
+conv2d_2 (Conv2D)            (None, 16, 16, 64)        204864    
+_________________________________________________________________
+activation_2 (Activation)    (None, 16, 16, 64)        0         
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 16, 16, 64)        0         
+_________________________________________________________________
+flatten (Flatten)            (None, 16384)             0         
+_________________________________________________________________
+dense (Dense)                (None, 64)                1048640   
+_________________________________________________________________
+dense_1 (Dense)              (None, 1)                 65        
+=================================================================
+Total params: 2,079,553
+Trainable params: 2,079,553
+Non-trainable params: 0
+_________________________________________________________________
+Found 535 validated image filenames.
+Found 60 validated image filenames.
+Epoch 1/1000
+1/9 [==>...........................] - ETA: 0s - loss: 1.0641 - acc: 0.5156 - sp: 0.62492/9 [=====>........................] - ETA: 0s - loss: 3.6466 - acc: 0.5547 - sp: 0.57303/9 [=========>....................] - ETA: 6s - loss: 5.2262 - acc: 0.5208 - sp: 0.50352022-02-03 18:02:58,776 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:02:58,776 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:02:58,776 | Py.Schedule                             INFO Current status is: testing
+4/9 [============>.................] - ETA: 7s - loss: 5.7764 - acc: 0.5195 - sp: 0.48025/9 [===============>..............] - ETA: 5s - loss: 6.0696 - acc: 0.5090 - sp: 0.46736/9 [===================>..........] - ETA: 5s - loss: 6.3229 - acc: 0.5102 - sp: 0.45017/9 [======================>.......] - ETA: 3s - loss: 6.4588 - acc: 0.5135 - sp: 0.43602022-02-03 18:03:08,790 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:08,790 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:08,790 | Py.Schedule                             INFO Current status is: testing
+8/9 [=========================>....] - ETA: 2s - loss: 6.4276 - acc: 0.5244 - sp: 0.42679/9 [==============================] - ETA: 0s - loss: 6.7192 - acc: 0.5121 - sp: 0.41062022-02-03 18:03:18,804 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:18,804 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:18,804 | Py.Schedule                             INFO Current status is: testing
+9/9 [==============================] - 26s 3s/step - loss: 6.7192 - acc: 0.5121 - sp: 0.4106 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+Epoch 2/1000
+1/9 [==>...........................] - ETA: 0s - loss: 7.9062 - acc: 0.4844 - sp: 0.0000e+002/9 [=====>........................] - ETA: 10s - loss: 7.0677 - acc: 0.5391 - sp: 0.0000e+002022-02-03 18:03:28,818 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:28,818 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:28,818 | Py.Schedule                             INFO Current status is: testing
+3/9 [=========>....................] - ETA: 12s - loss: 7.6666 - acc: 0.5000 - sp: 0.0000e+004/9 [============>.................] - ETA: 11s - loss: 7.7265 - acc: 0.4961 - sp: 0.0000e+005/9 [===============>..............] - ETA: 9s - loss: 7.4750 - acc: 0.5125 - sp: 0.0000e+00 6/9 [===================>..........] - ETA: 6s - loss: 7.6890 - acc: 0.4985 - sp: 0.0000e+002022-02-03 18:03:38,832 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:38,832 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:38,832 | Py.Schedule                             INFO Current status is: testing
+7/9 [======================>.......] - ETA: 4s - loss: 7.6101 - acc: 0.5037 - sp: 0.0000e+008/9 [=========================>....] - ETA: 2s - loss: 7.4876 - acc: 0.5117 - sp: 0.0000e+009/9 [==============================] - ETA: 0s - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+009/9 [==============================] - 25s 3s/step - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+00 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+2022-02-03 18:03:48,847 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:48,847 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:48,847 | Py.Schedule                             INFO Current status is: testing
+Epoch 3/1000
+1/9 [==>...........................] - ETA: 0s - loss: 8.3854 - acc: 0.4531 - sp: 0.0000e+002/9 [=====>........................] - ETA: 10s - loss: 8.0260 - acc: 0.4766 - sp: 0.0000e+003/9 [=========>....................] - ETA: 11s - loss: 8.0659 - acc: 0.4740 - sp: 0.0000e+004/9 [============>.................] - ETA: 8s - loss: 7.8449 - acc: 0.4884 - sp: 0.0000e+00 2022-02-03 18:03:58,861 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:58,861 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:03:58,861 | Py.Schedule                             INFO Current status is: testing
+5/9 [===============>..............] - ETA: 8s - loss: 7.7491 - acc: 0.4946 - sp: 0.0000e+006/9 [===================>..........] - ETA: 6s - loss: 7.8678 - acc: 0.4869 - sp: 0.0000e+007/9 [======================>.......] - ETA: 4s - loss: 7.6478 - acc: 0.5012 - sp: 0.0000e+002022-02-03 18:04:08,875 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:08,875 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:08,875 | Py.Schedule                             INFO Current status is: testing
+8/9 [=========================>....] - ETA: 2s - loss: 7.5201 - acc: 0.5096 - sp: 0.0000e+009/9 [==============================] - ETA: 0s - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+009/9 [==============================] - 25s 3s/step - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+00 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+2022-02-03 18:04:18,889 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:18,889 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:18,889 | Py.Schedule                             INFO Current status is: testing
+Epoch 4/1000
+1/9 [==>...........................] - ETA: 0s - loss: 7.6666 - acc: 0.5000 - sp: 0.0000e+002/9 [=====>........................] - ETA: 10s - loss: 7.6666 - acc: 0.5000 - sp: 0.0000e+003/9 [=========>....................] - ETA: 11s - loss: 7.6666 - acc: 0.5000 - sp: 0.0000e+004/9 [============>.................] - ETA: 11s - loss: 7.4869 - acc: 0.5117 - sp: 0.0000e+002022-02-03 18:04:28,903 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:28,903 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:28,903 | Py.Schedule                             INFO Current status is: testing
+5/9 [===============>..............] - ETA: 9s - loss: 7.8104 - acc: 0.4906 - sp: 0.0000e+00 6/9 [===================>..........] - ETA: 6s - loss: 7.7784 - acc: 0.4927 - sp: 0.0000e+007/9 [======================>.......] - ETA: 4s - loss: 7.7231 - acc: 0.4963 - sp: 0.0000e+008/9 [=========================>....] - ETA: 2s - loss: 7.7480 - acc: 0.4947 - sp: 0.0000e+002022-02-03 18:04:38,917 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:38,918 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:38,918 | Py.Schedule                             INFO Current status is: testing
+9/9 [==============================] - ETA: 0s - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+009/9 [==============================] - 25s 3s/step - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+00 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+Epoch 5/1000
+1/9 [==>...........................] - ETA: 0s - loss: 7.4270 - acc: 0.5156 - sp: 0.0000e+002022-02-03 18:04:48,933 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:48,933 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:48,933 | Py.Schedule                             INFO Current status is: testing
+2/9 [=====>........................] - ETA: 11s - loss: 7.1875 - acc: 0.5312 - sp: 0.0000e+003/9 [=========>....................] - ETA: 12s - loss: 7.2673 - acc: 0.5260 - sp: 0.0000e+004/9 [============>.................] - ETA: 9s - loss: 7.2031 - acc: 0.5302 - sp: 0.0000e+00 5/9 [===============>..............] - ETA: 8s - loss: 7.3644 - acc: 0.5197 - sp: 0.0000e+002022-02-03 18:04:58,948 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:58,948 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:04:58,948 | Py.Schedule                             INFO Current status is: testing
+6/9 [===================>..........] - ETA: 6s - loss: 7.3313 - acc: 0.5219 - sp: 0.0000e+007/9 [======================>.......] - ETA: 4s - loss: 7.6478 - acc: 0.5012 - sp: 0.0000e+008/9 [=========================>....] - ETA: 2s - loss: 7.5527 - acc: 0.5074 - sp: 0.0000e+002022-02-03 18:05:08,962 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:08,962 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:08,962 | Py.Schedule                             INFO Current status is: testing
+9/9 [==============================] - ETA: 0s - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+009/9 [==============================] - 25s 3s/step - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+00 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+Epoch 6/1000
+1/9 [==>...........................] - ETA: 0s - loss: 7.4270 - acc: 0.5156 - sp: 0.0000e+002/9 [=====>........................] - ETA: 3s - loss: 7.2260 - acc: 0.5287 - sp: 0.0000e+002022-02-03 18:05:18,977 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:18,977 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:18,977 | Py.Schedule                             INFO Current status is: testing
+3/9 [=========>....................] - ETA: 8s - loss: 7.5143 - acc: 0.5099 - sp: 0.0000e+004/9 [============>.................] - ETA: 8s - loss: 7.5596 - acc: 0.5070 - sp: 0.0000e+005/9 [===============>..............] - ETA: 7s - loss: 7.4193 - acc: 0.5161 - sp: 0.0000e+002022-02-03 18:05:28,991 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:28,991 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:28,992 | Py.Schedule                             INFO Current status is: testing
+6/9 [===================>..........] - ETA: 6s - loss: 7.0184 - acc: 0.5423 - sp: 0.0000e+007/9 [======================>.......] - ETA: 4s - loss: 7.3464 - acc: 0.5209 - sp: 0.0000e+008/9 [=========================>....] - ETA: 2s - loss: 7.4550 - acc: 0.5138 - sp: 0.0000e+009/9 [==============================] - ETA: 0s - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+002022-02-03 18:05:39,006 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:39,006 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:39,006 | Py.Schedule                             INFO Current status is: testing
+9/9 [==============================] - 25s 3s/step - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+00 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+Epoch 7/1000
+1/9 [==>...........................] - ETA: 0s - loss: 7.4270 - acc: 0.5156 - sp: 0.0000e+002/9 [=====>........................] - ETA: 10s - loss: 8.2656 - acc: 0.4609 - sp: 0.0000e+002022-02-03 18:05:49,021 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:49,021 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:49,021 | Py.Schedule                             INFO Current status is: testing
+3/9 [=========>....................] - ETA: 12s - loss: 7.4270 - acc: 0.5156 - sp: 0.0000e+004/9 [============>.................] - ETA: 11s - loss: 7.3671 - acc: 0.5195 - sp: 0.0000e+005/9 [===============>..............] - ETA: 9s - loss: 7.8104 - acc: 0.4906 - sp: 0.0000e+00 6/9 [===================>..........] - ETA: 6s - loss: 7.8678 - acc: 0.4869 - sp: 0.0000e+002022-02-03 18:05:59,036 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:59,036 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:05:59,036 | Py.Schedule                             INFO Current status is: testing
+7/9 [======================>.......] - ETA: 4s - loss: 7.7231 - acc: 0.4963 - sp: 0.0000e+008/9 [=========================>....] - ETA: 2s - loss: 7.5201 - acc: 0.5096 - sp: 0.0000e+009/9 [==============================] - ETA: 0s - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+002022-02-03 18:06:09,050 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:06:09,050 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:06:09,050 | Py.Schedule                             INFO Current status is: testing
+9/9 [==============================] - 25s 3s/step - loss: 7.5376 - acc: 0.5084 - sp: 0.0000e+00 - val_loss: 7.6666 - val_acc: 0.5000 - val_sp: 0.0000e+00
+Epoch 8/1000
+1/9 [==>...........................] - ETA: 0s - loss: 7.9062 - acc: 0.4844 - sp: 0.0000e+002/9 [=====>........................] - ETA: 10s - loss: 7.6666 - acc: 0.5000 - sp: 0.0000e+003/9 [=========>....................] - ETA: 12s - loss: 7.6666 - acc: 0.5000 - sp: 0.0000e+002022-02-03 18:06:19,064 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:06:19,064 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:06:19,064 | Py.Schedule                             INFO Current status is: testing
+4/9 [============>.................] - ETA: 11s - loss: 7.3072 - acc: 0.5234 - sp: 0.0000e+005/9 [===============>..............] - ETA: 9s - loss: 7.5708 - acc: 0.5063 - sp: 0.0000e+00 6/9 [===================>..........] - ETA: 7s - loss: 7.7066 - acc: 0.4974 - sp: 0.0000e+002022-02-03 18:06:29,078 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:06:29,078 | Py.Schedule                             INFO Current status is: done
+2022-02-03 18:06:29,078 | Py.Schedule                             INFO Current status is: testing
