@@ -14,12 +14,13 @@ class Job (Base):
     __tablename__ = 'job'
 
     # Local
-    id      = Column(Integer, primary_key = True)
-    command = Column(String , default="")
-    state   = Column(String , default="registered")
-    retry   = Column(Integer, default=0)
-    jobid   = Column(Integer)
-
+    id        = Column(Integer, primary_key = True)
+    command   = Column(String , default="")
+    state     = Column(String , default="registered")
+    retry     = Column(Integer, default=0)
+    jobid     = Column(Integer)
+    jobname   = Column(String)
+    inputfile = Column(String)
 
     # Foreign
     task    = relationship("Task", back_populates="jobs")
@@ -29,7 +30,7 @@ class Job (Base):
 
 
     def volume(self):
-      return self.task.volume + "/" + "job." + str(self.id).zfill(6)
+      return self.task.volume + "/" + self.jobname
 
 
     def ping(self):

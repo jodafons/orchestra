@@ -19,6 +19,12 @@ from orchestra.utils import get_config
 config = get_config()
 
 
+def remove_extension(f, extensions="json|h5|pic|gz|tgz|csv"):
+      for ext in extensions.split("|"):
+        if f.endswith('.'+ext):
+          return f.replace('.'+ext)
+      return f
+
 #
 # Task parser
 #
@@ -213,7 +219,9 @@ class TaskParser:
       for idx, file in tqdm( enumerate(inputfiles) ,  desc= 'Creating... ', ncols=100):
         command = execCommand
         command = command.replace( '%IN'   , file)
-        job = self.__db.create_job( task, command, id=offset+idx, jobid=idx )
+        jobname = remove_extension( file.split('/')[-1] )
+    
+        job = self.__db.create_job( task, jobname, file, command, id=offset+idx )
         job.state = 'registered'
 
       task.state = 'registered'

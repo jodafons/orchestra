@@ -71,14 +71,14 @@ class Database:
       return None
 
 
-
-  def create_job( self, task, command, jobid , state='registered', id=None):
+  def create_job( self, task, jobname, inputfile, command, state='registered', id=None):
 
     try:
       job = Job(
         id=self.generateId(Job) if id is None else id,
         command=command,
-        jobid = jobid,
+        jobname = jobname,
+        inputfile=inputfile,
         state=state
       )
       task+=job
