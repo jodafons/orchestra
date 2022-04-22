@@ -84,7 +84,9 @@ class Consumer:
       self.broken=False
       command = 'cd %s' % self.volume + ' && '
       command+= self.command
-      print(Back.RED + Fore.WHITE + command)
+
+      print(Fore.YELLOW +'Lauching job...')
+      print(Fore.GREEN + command)
       #tic = datetime.datetime.now()
       self.__proc = subprocess.Popen(command, env=self.env, shell=True)
       time.sleep(2)
