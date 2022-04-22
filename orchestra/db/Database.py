@@ -5,6 +5,7 @@ __all__ = ["Database"]
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from orchestra.db import Task, Job, Device
+from orchestra.utils import *
 import traceback
 
 
@@ -16,6 +17,7 @@ class Database:
 
     self.url=url
     try:
+      MSG_INFO(url)
       self.__engine = create_engine(url)
       Session= sessionmaker(bind=self.__engine)
       self.__session = Session()
