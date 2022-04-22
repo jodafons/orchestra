@@ -1,107 +1,73 @@
 
-__all__ = ["Clock", "getStatus", "getEnv", "getConfig",
-           "start", "complete", "fail", "is_test_job"]
+__all__ = ['MSG_INFO',
+           'MSG_WARNING',
+           'MSG_ERROR',
+           'MSG_FATAL',
+           'get_config',
+           'test_job_locally',
+           ]
 
-from Gaugi import Color
-import time, os
+import time, os, json
+from colorama import init, Back, Fore
+
+init(autoreset=True)
 
 
-class Clock(object):
+def MSG_INFO(message):
+  print(Fore.GREEN + message)
 
-  def __init__( self , maxseconds ):
-    self.__maxseconds=maxseconds
-    self.__then = None
+def MSG_WARNING(message):
+  print(Fore.YELLOW + message)
 
+def MSG_ERROR(message):
+  print(Fore.RED + message)
 
-  def __call__( self ):
-
-    # Always return false since we considere that the current
-    # time never will go to the end (infinite)
-    if self.__maxseconds is None:
-      return False
-
-    if not self.__then:
-      self.__then = time.time()
-      return False
-    else:
-      now = time.time()
-      if (now-self.__then) > self.__maxseconds:
-        # reset the time
-        self.__then = None
-        return True
-    return False
-
-  def reset(self):
-    self.__then=None
+def MSG_FATAL(message):
+  print(Back.RED + Fore.WHITE + message)
 
 
 
-def getStatus(status):
-  if status == 'registered':
-    return Color.CWHITE2+"REGISTERED"+Color.CEND
-  elif status == 'assigned':
-    return Color.CWHITE2+"ASSIGNED"+Color.CEND
-  elif status == 'testing':
-    return Color.CGREEN2+"TESTING"+Color.CEND
-  elif status == 'running':
-    return Color.CGREEN2+"RUNNING"+Color.CEND
-  elif status == 'done':
-    return Color.CGREEN2+"DONE"+Color.CEND
-  elif status == 'failed':
-    return Color.CGREEN2+"DONE"+Color.CEND
-  elif status == 'killed':
-    return Color.CRED2+"KILLED"+Color.CEND
-  elif status == 'finalized':
-    return Color.CRED2+"FINALIZED"+Color.CEND
-  elif status == 'broken':
-    return Color.CRED2+"BROKEN"+Color.CEND
-  elif status == 'hold':
-    return Color.CRED2+"HOLD"+Color.CEND
-  elif status == 'removed':
-    return Color.CRED2+"REMOVED"+Color.CEND
-  elif status == 'to_be_removed':
-    return Color.CRED2+"REMOVING"+Color.CEND
-  elif status == 'to_be_removed_soon':
-    return Color.CRED2+"REMOVING"+Color.CEND
 
-
-
-def getEnv( name ):
-  return os.environ[name]
-
-
-
-def getConfig():
-
+def get_config():
   # default
-  fname = getEnv("HOME")+'/.orchestra.json'
-  import json
-  try:
-    with open(fname,'r') as f:
-      data = json.load(f)
-      return data
-  except OSError as e:
-    print(e)
-    print("Could not open/read file: %s" % fname)
+  #fname = os.environ['HOME']+'/.orchestra.json'
+  config = {
+    "postgres"    : "postgresql://postgres:postgres@localhost:5432/postgres",
+    "from_email"  : "cluster@lps.ufrj.br",
+    "password"    : "@LPS_Cluster#2020",
+    "to_email"    : "jodafons@lps.ufrj.br",
+  }
+  return config
+
+  #try:
+  #  with open(fname,'r') as f:
+  #    data = json.load(f)
+  #    return data
+  #except OSError as e:
+  #  print(e)
+  #  MSG_ERROR("Could not open/read file: %s" % fname)
 
 
-def start():
-  basepath = os.getcwd()
-  if os.path.exists(basepath+'/.complete'):
-    os.remove(basepath+'/.complete')
-  if os.path.exists(basepath+'/.failed'):
-    os.remove(basepath+'/.failed')
-  
-def complete():
-  basepath = os.getcwd()
-  with open(basepath+'/.complete','w') as f:
-    f.write('complete')
 
-def fail():
-  basepath = os.getcwd()
-  with open(output+'/.failed','w') as f:
-    f.write('failed')
 
-def is_test_job():
-  return True if os.getenv('LOCAL_TEST') else False
 
+def test_job_locally( job ):
+  from orchestra.core import Slot, Consumer
+  from orchestra.enums import State
+  slot = Slot('test')
+  slot.enable()
+  consumer = Consumer( job, slot, extra_envs={'LOCAL_TEST':'1'})
+  job.state = State.PENDING
+  while True:
+      if consumer.state() == State.PENDING:
+          if not consumer.run():
+            return False
+      elif consumer.state() == State.FAILED:
+          return False
+      elif consumer.state() == State.RUNNING:
+          continue
+      elif consumer.state() == State.DONE:
+          job.state='registered'
+          return True
+      else:
+          continue

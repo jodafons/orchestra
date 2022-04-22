@@ -1,21 +1,21 @@
 __all__ = ['Postman']
 
-from Gaugi import Logger
-from Gaugi.macros import *
+
 
 from smtplib import SMTP
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
+import traceback
 
 import os, sys
 
-class Postman (Logger):
+class Postman:
 
-  def __init__ (self, email, password,  templates):
-    Logger.__init__(self)
+  def __init__ (self, email, password, toEmail, templates ):
     self.__myEmail = email
+    self.__toEmail = toEmail
     self.__myPassword = password
     self.__smtpServer = 'smtp.gmail.com'
     self.__smtpPort = 587
@@ -48,14 +48,15 @@ class Postman (Logger):
       # Quitting
       server.quit()
     except Exception as e:
-      MSG_WARNING(self, e)
+      traceback.print_exc()
+      
 
 
-  def send (self, to_email, subject, message):
+  def send (self, subject, message):
     template = self.__env.get_template('templates/task_notification.html')
     data = {}
     data['message'] = message
     output = template.render(data=data)
-    self.__send(to_email, subject, output)
+    self.__send(self.__toEmail, subject, output)
 
 

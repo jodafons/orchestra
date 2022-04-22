@@ -1,164 +1,117 @@
 
-__all__ = ["schedule"]
 
+__all__ = ["compile", "Schedule"]
 
-from Gaugi import Logger, StatusCode
-from Gaugi.macros import *
-
-from sqlalchemy import and_, or_, desc
+from sqlalchemy import and_
 
 from orchestra.enums import *
-from orchestra.db.models import *
-
-import time
-
-
-#
-# Schedule
-#
-class Schedule(Logger):
-
-  #
-  # Constructor
-  #
-  def __init__(self):
-    Logger.__init__(self)
-    self.__states = []
+from orchestra.db import *
+from orchestra.utils import *
+import traceback
 
 
-  def setDatabase(self, db):
+
+
+class Schedule:
+
+  def __init__(self, db, postman, max_running_tasks=2):
+
+
     self.__db = db
+    self.__postman = postman 
+    self.__states = []
+    self.__max_running_tasks = max_running_tasks
 
 
-  def setPostman(self, postman):
-    self.__postman = postman
-
-
-  def db(self):
-    return self.__db
-
-
-  def postman(self):
-    return self.__postman
+  def init(self):
+    pass
 
 
   #
-  # initialize
+  # Add Transiction and state into the schedule machine
   #
-  def initialize(self):
-    return StatusCode.SUCCESS
+  def transition( self, source, destination, trigger ):
+    if type(trigger) is not list:
+      trigger=[trigger]
+    self.__states.append( (source, trigger, destination) )
+
 
 
   #
   # execute
   #
-  def execute(self):
+  def run(self):
 
-    self.treatRunningJobsNotAlive()
-    self.calculate()
-    self.db().commit()
-    return StatusCode.SUCCESS
+    self.treat_running_jobs_not_alive()
+    count = 0
+    for task in self.__db.tasks():
+      self.trigger(task)
+      #if task.state == State.RUNNING:
+      #  count+=1
+      #if count>self.__max_running_tasks:
+      #  break
 
-
-  #
-  # finalize
-  #
-  def finalize(self):
-    return StatusCode.SUCCESS
-
-
-  #
-  # run state machine for eacj task
-  #
-  def calculate(self):
-
-    max_running_tasks = 2
-    count=0
-    for user in self.db().getAllUsers():
-      for task in user.getAllTasks():
-        self.run(task)
-        if task.getStatus()==Status.RUNNING:
-          count+=1
-        
-        if count>max_running_tasks:
-          break
-    return StatusCode.SUCCESS
-
-
-  #
-  # Get the list of jobs ordered by the priority for CPU
-  #
-  def getQueue( self, njobs , queuename):
-    try:
-      #jobs = self.db().session().query(Job).filter(  and_( Job.status==Status.ASSIGNED ,
-      #  Job.queueName==queuename) ).order_by(Job.id).limit(njobs).with_for_update().all()
- 
-      jobs = self.db().session().query(Job).filter(  Job.status==Status.ASSIGNED  ).order_by(Job.id).limit(njobs).with_for_update().all()
-
-
-      jobs.reverse()
-      return jobs
-    except Exception as e:
-      MSG_ERROR(self,e)
-      return []
-
-
-  #
-  # Get all running jobs into the job list
-  #
-  def getAllRunningJobs(self):
-    try:
-      return self.db().session().query(Job).filter( and_( Job.status==Status.RUNNING) ).with_for_update().all()
-    except Exception as e:
-      MSG_ERROR(self,e)
-      return []
-
+    self.__db.commit()
+    return True
 
 
 
   #
   # Execute the correct state machine for this task
   #
-  def run(self, task):
+  def trigger(self, task):
 
     # Get the current state information
-    current_state = task.getStatus()
+    current_state = task.state
     # Run all state triggers to find the correct transiction
     for source, triggers, destination in self.__states:
-
       # Check if the current state is equal than this state
       if source == current_state:
         passed = True
-        MSG_INFO( self,  "Current status is: %s"%current_state )
         # Execute all triggers into this state
         for trigger in triggers:
           passed = getattr(self, trigger)(task)
-          #MSG_INFO(self, trigger +  ' = ' + str(passed) )
           if not passed:
             break
         if passed:
-          task.setStatus( destination )
+          task.state = destination
           break
 
 
-  def treatRunningJobsNotAlive(self):
 
-    jobs = self.getAllRunningJobs()
+
+  def get_jobs(self, njobs):
+
+    try:
+      jobs = self.__db.session().query(Job).filter(  Job.state==State.ASSIGNED  ).order_by(Job.id).limit(njobs).with_for_update().all()
+      jobs.reverse()
+      return jobs
+    except Exception as e:
+      traceback.print_exc()
+      print(e)
+      return []
+
+
+
+  #
+  # Get all running jobs into the job list
+  #
+  def get_all_running_jobs(self):
+    try:
+      return self.__db.session().query(Job).filter( and_( Job.state==State.RUNNING) ).with_for_update().all()
+    except Exception as e:
+      MSG_ERROR(self,e)
+      return []
+
+
+  def treat_running_jobs_not_alive(self):
+    jobs = self.get_all_running_jobs()
     for job in jobs:
-      if not job.isAlive():
-        job.setStatus( Status.ASSIGNED )
+      if not job.is_alive():
+        job.state = State.ASSIGNED
 
 
-
-  #
-  # Add Transiction and state into the schedule machine
-  #
-  def add_transiction( self, source, destination, trigger ):
-    if type(trigger) is not list:
-      trigger=[trigger]
-    self.__states.append( (source, trigger, destination) )
-
-
+ 
 
 
   #
@@ -167,13 +120,13 @@ class Schedule(Logger):
   def broken_all_jobs( self, task ):
 
     try:
-      for job in task.getAllJobs():
-        job.setStatus( Status.BROKEN )
-      task.setSignal( Signal.WAITING )
+      for job in task.jobs:
+        job.state = State.BROKEN
+      task.signal = Signal.WAITING
       return True
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -184,74 +137,61 @@ class Schedule(Logger):
   def retry_all_jobs( self, task ):
 
     try:
-      if task.getSignal() == Signal.RETRY:
-        for job in task.getAllJobs():
-          job.setStatus( Status.REGISTERED )
-        task.setSignal( Signal.WAITING )
+      if task.signal == Signal.RETRY:
+        for job in task.jobs:
+          job.state = State.REGISTERED
+        task.signal = Signal.WAITING
         return True
       else:
         return False
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
 
   #
-  # Retry all jobs with failed status after the user sent the retry signal to the task db
+  # Retry all jobs with failed state after the user sent the retry signal to the task db
   #
   def retry_all_failed_jobs( self, task ):
 
     try:
-      user = task.getUser()
-      for job in task.getAllJobs():
-        if job.getStatus() == Status.FAILED:
+      for job in task.jobs:
+        if job.state == State.FAILED:
           if job.retry < 3:
-            job.setPriority(1000)
             job.retry+=1
-            job.setStatus( Status.ASSIGNED )
-          else:
-            # this is a HACK
-            job.setStatus( Status.DONE )
-      task.setSignal( Signal.WAITING )
+            job.state =  State.ASSIGNED
+      task.signal = Signal.WAITING
       return True
-      #if task.getSignal() == Signal.RETRY:
-      #  for job in task.getAllJobs():
-      #    if job.getStatus() == Status.FAILED:
-      #      job.setPriority(1000)
-      #      job.setStatus( Status.ASSIGNED )
-      #  task.setSignal( Signal.WAITING )
-      #  return True
-      #else:
-      #  return False
+     
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
 
 
   #
-  # Send kill status for all jobs after the user sent the kill singal to the task db
+  # Send kill state for all jobs after the user sent the kill singal to the task db
   #
   def kill_all_jobs( self, task ):
 
     try:
-      if task.getSignal() == Signal.KILL:
-        for job in task.getAllJobs():
-          if job.getStatus() != Status.RUNNING:
-            job.setStatus( Status.KILLED )
+      if task.signal == Signal.KILL:
+        for job in task.jobs:
+          if job.state != State.RUNNING:
+            job.state =  State.KILLED
           else:
-            job.setStatus( Status.KILL )
-        task.setSignal( Signal.WAITING )
+            job.state = State.KILL
+        task.signal = Signal.WAITING
         return True
       else:
         return False
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -263,14 +203,14 @@ class Schedule(Logger):
   def all_jobs_were_killed( self, task ):
 
     try:
-      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-      if ( len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.KILLED ) ).all()) == total ):
+      total = len(self.__db.session().query(Job).filter( Job.taskid==task.id ).all())
+      if ( len(self.__db.session().query(Job).filter( and_ ( Job.taskid==task.id, Job.state==State.KILLED ) ).all()) == total ):
         return True
       else:
         return False
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -282,14 +222,14 @@ class Schedule(Logger):
 
     try:
       # Get the first job from the list of jobs into this task
-      job = task.getAllJobs()[0]
-      if job.getStatus() == Status.DONE:
+      job = task.jobs[0]
+      if job.state == State.DONE:
         return True
       else:
         return False
     except Exception as e:
 
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -301,14 +241,14 @@ class Schedule(Logger):
 
     try:
       # Get the first job from the list of jobs into this task
-      job = task.getAllJobs()[0]
-      if job.getStatus() == Status.RUNNING:
+      job = task.jobs[0]
+      if job.state == State.RUNNING:
         return True
       else:
         return False
     except Exception as e:
 
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -319,32 +259,32 @@ class Schedule(Logger):
 
     try:
       # Get the first job from the list of jobs into this task
-      job = task.getAllJobs()[0]
-      if job.getStatus() == Status.FAILED or job.getStatus() == Status.BROKEN:
+      job = task.jobs[0]
+      if job.state == State.FAILED or job.state == State.BROKEN:
         return True
       else:
         return False
     except Exception as e:
 
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
 
   #
-  # Check if all jobs into this taks is in registered status
+  # Check if all jobs into this taks is in registered state
   #
   def all_jobs_are_registered( self, task ):
 
     try:
-      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-      if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.REGISTERED ) ).all()) == total:
+      total = len(self.__db.session().query(Job).filter( Job.taskid==task.id ).all())
+      if len(self.__db.session().query(Job).filter( and_ ( Job.taskid==task.id, Job.state==State.REGISTERED ) ).all()) == total:
         return True
       else:
         return False
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -355,17 +295,12 @@ class Schedule(Logger):
   def assigned_one_job_to_test( self, task ):
 
     try:
-      # Get the user from the task
-      user = task.getUser()
-      priority = 1000
-      # Get the first job from the list of jobs into this task
-      job = task.getAllJobs()[0]
-      job.setPriority( priority )
-      job.setStatus( Status.ASSIGNED )
+      job = task.jobs[0]
+      job.state =  State.ASSIGNED
       return True
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -376,31 +311,30 @@ class Schedule(Logger):
   def assigned_all_jobs( self, task ):
 
     try:
-      for job in task.getAllJobs():
-        if job.getStatus() != Status.DONE:
-          job.setPriority(-1)
-          job.setStatus( Status.ASSIGNED )
+      for job in task.jobs:
+        if job.state != State.DONE:
+          job.state =  State.ASSIGNED
       return True
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
 
   #
-  # Check if all jobs into this task are in done status
+  # Check if all jobs into this task are in done state
   def all_jobs_are_done( self, task ):
 
     try:
-      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-      if len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.DONE ) ).all()) == total:
+      total = len(self.__db.session().query(Job).filter( Job.taskid==task.id ).all())
+      if len(self.__db.session().query(Job).filter( and_ ( Job.taskid==task.id, Job.state==State.DONE ) ).all()) == total:
         return True
       else:
         return False
     except Exception as e:
-
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      traceback.print_exc()
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
@@ -410,10 +344,10 @@ class Schedule(Logger):
   #
   def all_jobs_ran( self, task ):
 
-    try:
-      total = len(self.db().session().query(Job).filter( Job.taskId==task.id ).all())
-      total_done = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.DONE ) ).all())
-      total_failed = len(self.db().session().query(Job).filter( and_ ( Job.taskId==task.id, Job.status==Status.FAILED ) ).all())
+    try:                                                                                                                                                                 
+      total = len(self.__db.session().query(Job).filter( Job.taskid==task.id ).all())
+      total_done = len(self.__db.session().query(Job).filter( and_ ( Job.taskid==task.id, Job.state==State.DONE ) ).all())
+      total_failed = len(self.__db.session().query(Job).filter( and_ ( Job.taskid==task.id, Job.state==State.FAILED ) ).all())
 
       if (total_done + total_failed) == total:
         return True
@@ -421,94 +355,28 @@ class Schedule(Logger):
         return False
     except Exception as e:
 
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
 
   #
   # Check if all jobs into this task ran
   #
-  def check_not_allow_job_status_in_running_state( self, task ):
+  def check_not_allow_job_state_in_running_state( self, task ):
 
     try:
       exist_registered_jobs = False
-      for job in task.getAllJobs():
-        if job.getStatus()==Status.REGISTERED or job.getStatus()==Status.PENDING: 
-          job.setStatus(Status.ASSIGNED)
+      for job in task.jobs:
+        if job.state==State.REGISTERED or job.state==State.PENDING: 
+          job.state = State.ASSIGNED
           exist_registered_jobs=True
 
       return exist_registered_jobs
     except Exception as e:
 
-      MSG_ERROR( "Exception raise in state %s for this task %s :",task.getStatus(), task.taskName, e )
+      MSG_ERROR( "Exception raise in state %s for this task %s"%(task.state, task.taskname) )
       return False
 
-
-
-  #
-  # Notify the user
-  #
-  def send_email_task_done( self, task ):
-
-    try:
-      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("The task with name %s was assigned with DONE status.")%(task.taskName)
-      self.__postman.send(task.getUser().email, subject, message)
-      return True
-    except Exception as e:
-      MSG_ERROR(self, e)
-      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
-      return True
-
-
-
-  #
-  # Notify the user
-  #
-  def send_email_task_broken( self, task ):
-
-    try:
-      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("Your task with name %s was set to BROKEN status.")%(task.taskName)
-      self.__postman.send(task.getUser().email, subject, message)
-      return True
-    except:
-
-      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
-      return True
-
-
-  #
-  # Notify the user
-  #
-  def send_email_task_finalized( self, task ):
-
-    try:
-      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("The task with name %s was assigned with FINALIZED status.")%(task.taskName)
-      self.__postman.send(task.getUser().email, subject, message)
-      return True
-    except:
-
-      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
-      return True
-
-
-
-  #
-  # Notify the user
-  #
-  def send_email_task_killed( self, task ):
-
-    try:
-      subject = ("[LPS Cluster] Notification for taskID %d")%(task.id)
-      message = ("The task with name %s was assigned with KILLED status.")%(task.taskName)
-      self.__postman.send(task.getUser().email, subject, message)
-      return True
-    except:
-
-      MSG_ERROR(self, "It's not possible to send the email to the username %s", task.getUser().getUserName())
-      return True
 
 
   #
@@ -526,7 +394,7 @@ class Schedule(Logger):
   #
   def send_delete_signal(self, task):
 
-    task.setSignal(Signal.DELETE)
+    task.signal =Signal.DELETE
     return True
 
 
@@ -535,17 +403,17 @@ class Schedule(Logger):
   #
   def remove_this_task(self, task):
 
-    if task.getSignal() == Signal.DELETE:
+    if task.signal == Signal.DELETE:
       try:
-        from orchestra.maestro.parsers import TaskParser
-        helper = TaskParser(self.db())
-        helper.delete(task.taskName,False)
+        from orchestra.parsers import TaskParser
+        helper = TaskParser(self.__db)
+        helper.delete(task.taskname,False)
         return True
       except Exception as e:
-        task.setSignal(Signal.WAITING)
-        task.setStatus(Status.REMOVED)
+        task.signal =Signal.WAITING
+        task.state = State.REMOVED
         MSG_ERROR(self, e)
-        MSG_ERROR(self, "It's not possible to delete this task with name %s", task.taskName)
+        MSG_ERROR(self, "It's not possible to delete this task with name %s", task.taskname)
         return False
     else:
       return False
@@ -553,29 +421,87 @@ class Schedule(Logger):
 
 
 
+  #
+  #
+  # Email notification
+  #
+  #
+
+
+  def send_email_task_done( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for task id %d")%(task.id)
+      message = ("The task with name %s was assigned with DONE State.")%(task.taskname)
+      self.__postman.send(subject, message)
+      return True
+    except Exception as e:
+      traceback.print_exc()
+      MSG_ERROR(self, "It's not possible to send the email to %s", self.__postman.email)
+      return True
+
+
+  def send_email_task_broken( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for task id %d")%(task.id)
+      message = ("Your task with name %s was set to BROKEN State.")%(task.taskname)
+      self.__postman.send(subject, message)
+      return True
+    except Exception as e:
+      traceback.print_exc()
+      MSG_ERROR(self, "It's not possible to send the email to %s", self.__postman.email)
+      return True
+
+
+  def send_email_task_finalized( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for task id %d")%(task.id)
+      message = ("The task with name %s was assigned with FINALIZED State.")%(task.taskname)
+      self.__postman.send(subject, message)
+      return True
+    except Exception as e:
+      traceback.print_exc()
+      MSG_ERROR(self, "It's not possible to send the email to %s", self.__postman.email)
+      return True
+
+
+  def send_email_task_killed( self, task ):
+
+    try:
+      subject = ("[LPS Cluster] Notification for task id %d")%(task.id)
+      message = ("The task with name %s was assigned with KILLED State.")%(task.taskname)
+      self.__postman.send(subject, message)
+      return True
+    except Exception as e:
+      traceback.print_exc()
+      MSG_ERROR(self, "It's not possible to send the email to %s", self.__postman.email)
+      return True
+
+
+
 
 
 #
-# Create the schedule
+# Compile the state machine
 #
-schedule = Schedule()
+def compile(schedule):
 
-# Create the state machine
-#schedule.add_transiction( source=Status.REGISTERED, destination=Status.TESTING    , trigger=['all_jobs_are_registered', 'assigned_one_job_to_test']         )
-schedule.add_transiction( source=Status.REGISTERED, destination=Status.TESTING    , trigger=['all_jobs_are_registered']         )
-#schedule.add_transiction( source=Status.TESTING   , destination=Status.TESTING    , trigger='test_job_still_running'                                        )
-#schedule.add_transiction( source=Status.TESTING   , destination=Status.BROKEN     , trigger=['test_job_fail','broken_all_jobs','send_email_task_broken']    )
-#schedule.add_transiction( source=Status.TESTING   , destination=Status.RUNNING    , trigger=['test_job_pass','assigned_all_jobs']                           )
-schedule.add_transiction( source=Status.TESTING   , destination=Status.RUNNING    , trigger=['assigned_all_jobs']                                           )
-
-
-schedule.add_transiction( source=Status.BROKEN    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
-schedule.add_transiction( source=Status.RUNNING   , destination=Status.DONE       , trigger=['all_jobs_are_done', 'send_email_task_done']                   )
-schedule.add_transiction( source=Status.RUNNING   , destination=Status.FINALIZED  , trigger=['all_jobs_ran','send_email_task_finalized']                    )
-schedule.add_transiction( source=Status.RUNNING   , destination=Status.KILL       , trigger='kill_all_jobs'                                                 )
-schedule.add_transiction( source=Status.RUNNING   , destination=Status.RUNNING    , trigger='check_not_allow_job_status_in_running_state'                   )
-schedule.add_transiction( source=Status.FINALIZED , destination=Status.RUNNING    , trigger='retry_all_failed_jobs'                                         )
-schedule.add_transiction( source=Status.KILL      , destination=Status.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed']               )
-schedule.add_transiction( source=Status.KILLED    , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
-schedule.add_transiction( source=Status.DONE      , destination=Status.REGISTERED , trigger='retry_all_jobs'                                                )
+  # Create the state machine
+  #schedule.transition( source=State.REGISTERED, destination=State.TESTING    , trigger=['all_jobs_are_registered', 'assigned_one_job_to_test']         )
+  schedule.transition( source=State.REGISTERED, destination=State.TESTING    , trigger=['all_jobs_are_registered']         )
+  #schedule.transition( source=State.TESTING   , destination=State.TESTING    , trigger='test_job_still_running'                                        )
+  #schedule.transition( source=State.TESTING   , destination=State.BROKEN     , trigger=['test_job_fail','broken_all_jobs','send_email_task_broken']    )
+  #schedule.transition( source=State.TESTING   , destination=State.RUNNING    , trigger=['test_job_pass','assigned_all_jobs']                           )
+  schedule.transition( source=State.TESTING   , destination=State.RUNNING    , trigger=['assigned_all_jobs']                                           )
+  schedule.transition( source=State.BROKEN    , destination=State.REGISTERED , trigger='retry_all_jobs'                                                )
+  schedule.transition( source=State.RUNNING   , destination=State.DONE       , trigger=['all_jobs_are_done', 'send_email_task_done']                   )
+  schedule.transition( source=State.RUNNING   , destination=State.FINALIZED  , trigger=['all_jobs_ran','send_email_task_finalized']                    )
+  schedule.transition( source=State.RUNNING   , destination=State.KILL       , trigger='kill_all_jobs'                                                 )
+  schedule.transition( source=State.RUNNING   , destination=State.RUNNING    , trigger='check_not_allow_job_state_in_running_state'                    )
+  schedule.transition( source=State.FINALIZED , destination=State.RUNNING    , trigger='retry_all_failed_jobs'                                         )
+  schedule.transition( source=State.KILL      , destination=State.KILLED     , trigger=['all_jobs_were_killed','send_email_task_killed']               )
+  schedule.transition( source=State.KILLED    , destination=State.REGISTERED , trigger='retry_all_jobs'                                                )
+  schedule.transition( source=State.DONE      , destination=State.REGISTERED , trigger='retry_all_jobs'                                                )
 

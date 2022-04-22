@@ -1,10 +1,30 @@
-__all__ = []
 
-from . import models
-__all__.extend( models.__all__ )
-from .models import *
+__all__ = ["Base"]
 
-from . import OrchestraDB
-__all__.extend( OrchestraDB.__all__ )
-from .OrchestraDB import *
+
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
+
+from . import Task
+__all__.extend( Task.__all__ )
+from .Task import *
+
+from . import Job
+__all__.extend( Job.__all__ )
+from .Job import *
+
+from . import Device
+__all__.extend( Device.__all__ )
+from .Device import *
+
+from . import Database
+__all__.extend( Database.__all__ )
+from .Database import *
+
+
+
+
+
+
+
 

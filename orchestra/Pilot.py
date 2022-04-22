@@ -1,111 +1,82 @@
 
-__all__ = ["Pilot"]
 
+__all__ = ['Pilot']
 
-from Gaugi import Logger, StatusCode
-from Gaugi.macros import *
+from orchestra.core import Devices
 from orchestra.enums import *
-from orchestra.utils import Clock
-
-SECONDS = 1.
+import time
 
 
-class Pilot(Logger):
+class Clock(object):
+
+  def __init__( self , maxseconds ):
+    self.__maxseconds=maxseconds
+    self.__then = None
+
+
+  def __call__( self ):
+    if self.__maxseconds is None:
+      return False
+    if not self.__then:
+      self.__then = time.time()
+      return False
+    else:
+      now = time.time()
+      if (now-self.__then) > self.__maxseconds:
+        # reset the time
+        self.__then = None
+        return True
+    return False
+
+  def reset(self):
+    self.__then=None
+
+
+
+
+
+class Pilot:
 
   #
   # Constructor
   #
-  def __init__(self, node, db, schedule,  postman, master=True):
+  def __init__(self, nodename, db, schedule, postman, master=True):
 
-    Logger.__init__(self)
-    self.__node = node
-    self.__schedule = schedule
+    #self.__nodename = nodename
     self.__postman = postman
-    self.__db = db
-    self.__queue = {}
-
+    self.__schedule = schedule
     self.__master = master
-    self.__clock = Clock( 10*SECONDS )
+    self.__clock = Clock( 1 )
+    self.__devices = Devices(nodename, db)
 
 
-  def __add__( self, slots ):
-    self.__queue[slots.getQueueName()] = slots
-    return self
-
-
-
-  def initialize(self):
-
-    self.__schedule.setDatabase( self.__db )
-    self.__schedule.setPostman( self.__postman )
-
-    for queue , slots in self.__queue.items():
-      slots.setDatabase( self.__db )
-      slots.setPostman(self.__postman )
-      if slots.initialize().isFailure():
-        MSG_FATAL( self, "Not possible to initialize the %s slot for %s node. abort", queue, self.__node.name )
-
-    return StatusCode.SUCCESS
-
-
-
-  def execute(self):
-
-    while self.alive():
-
-      if self.__clock():
-
-        if self.__master:
-          self.__schedule.execute()
-
-        # If in standalone mode, these slots will not in running mode. Only schedule will run.
-        for queue , slots in self.__queue.items():
-
-          if slots.isAvailable():
-            njobs = slots.size() - slots.allocated()
-
-            MSG_DEBUG(self,"There are slots available. Retrieving the first %d jobs from the CPU queue",njobs )
-            jobs = self.__schedule.getQueue(njobs, queue)
-
-            while (slots.isAvailable()) and len(jobs)>0:
-              slots.push_back( jobs.pop() )
-
-          slots.execute()
-
-        self.__clock.reset()
-
-    return StatusCode.SUCCESS
-
-
-
-  def finalize(self):
-
-    self.__db.finalize()
-    self.__schedule.finalize()
-    for queue , slots in self.__queue.items():
-      slots.finalize()
-    return StatusCode.SUCCESS
+  def init(self):
+    self.__devices.init()
+    self.__schedule.init()
+    #self.__postman.init()
 
 
 
   def run(self):
 
-    self.initialize()
-    self.execute()
-    self.finalize()
-    return StatusCode.SUCCESS
+    while True:
+      if self.__clock():
+        if self.__master:
+          self.__schedule.run()
+        if self.__devices.available():
+          njobs = self.__devices.size() - self.__devices.allocated()
+          print('NJOBS is')
+          print(njobs)
+          jobs = self.__schedule.get_jobs(njobs)
+          print(jobs)
+          while (self.__devices.available() and len(jobs)>0):
+            self.__devices.push_back(jobs.pop())
+
+        self.__devices.run()
+        self.__clock.reset()
 
 
 
-  def alive(self):
-
-    if self.__node.getSignal() == 'stop':
-      self.__node.setSignal('waiting')
-      return False
-    else:
-      # tell to the database that this node is running (alive)
-      self.__node.ping()
-      return True
 
 
 

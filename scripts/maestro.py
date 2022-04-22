@@ -12,26 +12,24 @@ except:
 
 import sys, os
 import argparse
-from orchestra.db import OrchestraDB
-from orchestra.maestro import PilotParser, NodeParser, UserParser, DatasetParser, TaskParser
-from orchestra.utils import getConfig
+from orchestra.db import Database
+from orchestra.parsers import PilotParser, DeviceParser, TaskParser
+from orchestra.utils import get_config
 
 
 parser = argparse.ArgumentParser()
 commands = parser.add_subparsers(dest='mode')
 
 
-config = getConfig()
+config = get_config()
 
 # create the database manager
-db  = OrchestraDB( config['postgres'] )
+db  = Database( config['postgres'] )
 
 
 engine = [
             PilotParser(db, commands),
-            UserParser(db, commands),
-            NodeParser(db, commands),
-            DatasetParser(db, commands),
+            DeviceParser(db, commands),
             TaskParser(db, commands),
           ]
 

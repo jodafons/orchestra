@@ -1,13 +1,14 @@
 
-__all__ = [ "Status" , "Signal" ]
+__all__ = [ "State" , "Signal" ]
 
-from Gaugi import EnumStringification
+
+
 
 
 #
 # job status
 #
-class Status ( EnumStringification ):
+class State:
   HOLD       = "hold"
   HOLDED     = "holded"
   BROKEN     = "broken"
@@ -29,7 +30,7 @@ class Status ( EnumStringification ):
 #
 # signal sent to the user
 #
-class Signal ( EnumStringification ):
+class Signal:
   RETRY      = "retry"
   KILL       = "kill"
   WAITING    = "waiting"
