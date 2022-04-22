@@ -101,7 +101,6 @@ class Devices:
 
   def sync(self):
 
-    print(self.__devices)
     before = self.size()
     total = 0
     for device in self.__db.session().query(Device).filter(Device.nodename==self.nodename).all():
