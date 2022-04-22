@@ -72,6 +72,7 @@ class PilotParser:
         pilot = Pilot(nodename, self.__db, schedule, postman, master=master )
         pilot.init()
         pilot.run()
+        
       except Exception as e:
         traceback.print_exc()
         subject = "[Cluster LPS] (ALARM) Orchestra stop"

@@ -65,10 +65,7 @@ class Pilot:
           self.__schedule.run()
         if self.__devices.available():
           njobs = self.__devices.size() - self.__devices.allocated()
-          print('NJOBS is')
-          print(njobs)
           jobs = self.__schedule.get_jobs(njobs)
-          print(jobs)
           while (self.__devices.available() and len(jobs)>0):
             self.__devices.push_back(jobs.pop())
 
