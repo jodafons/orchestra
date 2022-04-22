@@ -30,22 +30,15 @@ def MSG_FATAL(message):
 
 def get_config():
   # default
-  #fname = os.environ['HOME']+'/.orchestra.json'
-  config = {
-    "postgres"    : "postgresql://postgres:postgres@localhost:5432/postgres",
-    "from_email"  : "cluster@lps.ufrj.br",
-    "password"    : "@LPS_Cluster#2020",
-    "to_email"    : "jodafons@lps.ufrj.br",
-  }
-  return config
+  fname = os.environ['HOME']+'/.orchestra.json'
 
-  #try:
-  #  with open(fname,'r') as f:
-  #    data = json.load(f)
-  #    return data
-  #except OSError as e:
-  #  print(e)
-  #  MSG_ERROR("Could not open/read file: %s" % fname)
+  try:
+    with open(fname,'r') as f:
+      data = json.load(f)
+      return data
+  except OSError as e:
+    print(e)
+    MSG_ERROR("Could not open/read file: %s" % fname)
 
 
 

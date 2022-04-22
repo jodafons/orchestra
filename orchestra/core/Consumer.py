@@ -62,6 +62,7 @@ class Consumer:
     self.env["VOLUME"] = self.volume
     self.env["CUDA_DEVICE_ORDER"]= "PCI_BUS_ID"
     self.env["CUDA_VISIBLE_DEVICES"]=str(slot.device)
+    self.env["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
    
     for key, value in extra_envs.items():
       self.env[key]=value

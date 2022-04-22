@@ -105,6 +105,7 @@ class Devices:
     before = self.size()
     total = 0
     for device in self.__db.session().query(Device).filter(Device.nodename==self.nodename).all():
+      device.ping()
       for idx, slot in enumerate(self.__devices[device.gpu]):
         if idx < device.enabled:
           slot.enable()
