@@ -113,9 +113,18 @@ maestro.py task retry --id 0
 
 
 ```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
+  stateDiagram-v2
+      REGISTERED-->TESTING;
+      TESTING-->RUNNING;
+      RUNNING-->FINALIZED;
+      RUNNING-->DONE;
+      DONE-->REGISTERED;
+      RUNNING-->KILL;
+      KILL-->KILLED;
+      KILLED-->REGISTERED;
+      TESTING-->BROKE;
+      BROKEN-->REGISTERED;
+      TESTING-->TESTING;
+      RUNNING-->RUNNING;
+
 ```
