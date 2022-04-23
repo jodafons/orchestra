@@ -122,9 +122,6 @@ maestro.py task retry --id 0
       RUNNING-->KILL
       KILL-->KILLED
       KILLED-->REGISTERED
-      TESTING-->BROKE
+      TESTING-->BROKEN
       BROKEN-->REGISTERED
-      TESTING-->TESTING
-      RUNNING-->RUNNING
-
 ```
