@@ -1,6 +1,23 @@
 # Orchestra  
 
 
+## Task state machine:
+
+```mermaid
+  stateDiagram-v2
+      REGISTERED-->TESTING
+      TESTING-->RUNNING
+      RUNNING-->FINALIZED
+      RUNNING-->DONE
+      DONE-->REGISTERED
+      RUNNING-->KILL
+      KILL-->KILLED
+      KILLED-->REGISTERED
+      TESTING-->BROKEN
+      BROKEN-->REGISTERED
+```
+
+
 ## Setup your own cluster:
 
 If you do not run these steps below before, please follow this section. Before we starts you must set your email to send automatic messanges using external APIs. This messages will be very important to monitoring your job status.
@@ -12,9 +29,9 @@ After that, let's create your orchestra configuration file. First, go to your ho
 ```
 {
  "postgres":""postgres://db_username:db_password@db.lps.ufrj.br:5432/your_db_name"
- "email":"your_email@lps.ufrj.br"
+ "from_email":"your_email@lps.ufrj.br"
  "password":"your_email_password"
- "job_complete_file_name":".complete"
+ "to_email":"your_email@lps.ufrj.br"
 }
 ```
 and save it.
@@ -112,10 +129,4 @@ maestro.py task retry --id 0
 ```
 
 
-```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
-```
+
