@@ -2,7 +2,7 @@
 __all__ = ["Consumer"]
 
 
-
+from orchestra.utils import *
 import os, subprocess, traceback, psutil
 from colorama import Back, Fore
 from orchestra import State
@@ -79,6 +79,13 @@ class Consumer:
 
     try:
       os.makedirs(self.volume, exist_ok=True)
+    except:
+      traceback.print_exc()
+      MSG_ERROR(e)
+      self.broken=True
+      return False
+
+    try:
       self.pending=False
       self.killed=False
       self.broken=False
