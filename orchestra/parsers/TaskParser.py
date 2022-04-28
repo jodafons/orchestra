@@ -22,7 +22,7 @@ config = get_config()
 def remove_extension(f, extensions="json|h5|pic|gz|tgz|csv"):
       for ext in extensions.split("|"):
         if f.endswith('.'+ext):
-          return f.replace('.'+ext)
+          return f.replace('.'+ext, '')
       return f
 
 #

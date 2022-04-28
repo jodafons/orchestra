@@ -46,7 +46,7 @@ class Pilot:
     self.__postman = postman
     self.__schedule = schedule
     self.__master = master
-    self.__clock = Clock( 1 )
+    self.__clock = Clock( 10 )
     self.__devices = Devices(nodename, db)
 
 

@@ -369,6 +369,7 @@ class Schedule:
       for job in task.jobs:
         if job.state==State.REGISTERED or job.state==State.PENDING: 
           job.state = State.ASSIGNED
+          print('deu ruim aqui hem...')
           exist_registered_jobs=True
 
       return exist_registered_jobs
@@ -481,8 +482,7 @@ class Schedule:
 
 
 
-
-
+ 
 #
 # Compile the state machine
 #
