@@ -66,6 +66,7 @@ class Schedule:
     # Run all state triggers to find the correct transiction
     for source, triggers, destination in self.__states:
       # Check if the current state is equal than this state
+      print( '%s -> %s'%(source,destination))
       if source == current_state:
         passed = True
         # Execute all triggers into this state
