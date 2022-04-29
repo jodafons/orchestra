@@ -106,8 +106,10 @@ class Schedule:
 
 
   def treat_running_jobs_not_alive(self):
+    print('treat running jobs...')
     jobs = self.get_all_running_jobs()
     for job in jobs:
+      print(job.is_alive())
       if not job.is_alive():
         job.state = State.ASSIGNED
 
