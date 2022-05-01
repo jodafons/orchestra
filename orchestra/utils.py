@@ -47,7 +47,7 @@ def get_config():
 def test_job_locally( job ):
   from orchestra.core import Slot, Consumer
   from orchestra.enums import State
-  slot = Slot('test')
+  slot = Slot('test',device=1)
   slot.enable()
   consumer = Consumer( job, slot, extra_envs={'LOCAL_TEST':'1'})
   job.state = State.PENDING

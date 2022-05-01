@@ -27,3 +27,6 @@ class Slot:
 
   def disable(self):
     self.__enable=False
+
+  def is_enable(self):
+    return self.__enable

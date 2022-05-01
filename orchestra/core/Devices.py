@@ -116,7 +116,7 @@ class Devices:
 
     if total!= before:
       for device in self.__devices.values():
-        enabled = sum([slot.is_enabled() for slot in device])
+        enabled = sum([slot.enabled() for slot in device])
         total = len(device)
         if device.gpu >= 0:
           MSG_INFO('Updating GPU slots(device=%d) with %d/%d'%(device.gpu, enabled, total))

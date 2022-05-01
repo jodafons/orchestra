@@ -62,14 +62,12 @@ class Pilot:
     while True:
       if self.__clock():
         if self.__master:
-          print('run schedule...')
           self.__schedule.run()
         if self.__devices.available():
           njobs = self.__devices.size() - self.__devices.allocated()
           jobs = self.__schedule.get_jobs(njobs)
           while (self.__devices.available() and len(jobs)>0):
             self.__devices.push_back(jobs.pop())
-        print('run...')
         self.__devices.run()
         self.__clock.reset()
 

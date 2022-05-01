@@ -66,7 +66,6 @@ class Schedule:
     # Run all state triggers to find the correct transiction
     for source, triggers, destination in self.__states:
       # Check if the current state is equal than this state
-      print( '%s -> %s'%(source,destination))
       if source == current_state:
         passed = True
         # Execute all triggers into this state
@@ -372,7 +371,6 @@ class Schedule:
       for job in task.jobs:
         if job.state==State.REGISTERED or job.state==State.PENDING: 
           job.state = State.ASSIGNED
-          print('deu ruim aqui hem...')
           exist_registered_jobs=True
 
       return exist_registered_jobs
