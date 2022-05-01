@@ -119,7 +119,7 @@ class Devices:
         enabled = sum([slot.is_enable() for slot in device])
         total = len(device)
         #if device.gpu >= 0:
-        MSG_INFO('Updating GPU slots(device=%d) with %d/%d'%(device.gpu, enabled, total))
+        MSG_INFO('Updating %s slots with %d/%d'%(self.nodename,enabled, total))
         #else:
         #MSG_INFO('Update CPU slots with %d/%d'%(enabled,total))
 
