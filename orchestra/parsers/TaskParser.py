@@ -52,7 +52,10 @@ class TaskParser:
                           help = "The exec command")
       create_parser.add_argument('--dry_run', action='store_true', dest='dry_run', required=False, default=False,
                           help = "Use this as debugger.")
+      create_parser.add_argument('--skip_test', action='store_true', dest='skip_test', required=False, default=False,
+                          help = "Skip local test.")
       
+
 
       delete_parser = argparse.ArgumentParser(description = '', add_help = False)
       delete_parser.add_argument('--id', action='store', nargs='+', dest='id_list', required=False, default=None,
@@ -128,8 +131,8 @@ class TaskParser:
                                   args.taskname,
                                   args.inputfile,
                                   args.execCommand,
-                                  True,
-                                  args.dry_run)
+                                  args.dry_run,
+                                  args.skip_test)
 
         if not ok:
           MSG_FATAL(answer)
@@ -184,8 +187,8 @@ class TaskParser:
                     taskname,
                     inputfile,
                     execCommand,
-                    bypass=False,
                     dry_run=False,
+                    skip_test=False,
                     ):
 
     if self.__db.task(taskname) is not None:
@@ -226,11 +229,17 @@ class TaskParser:
 
       task.state = 'registered'
 
-      if test_job_locally( task.jobs[0] ):
+
+      if skip_test:
         self.__db.session().add(task)
         self.__db.commit()
         return (True, "Succefully created.")
 
+
+      if test_job_locally( task.jobs[0] ):
+        self.__db.session().add(task)
+        self.__db.commit()
+        return (True, "Succefully created.")
       else:
         return (False, "Local test failed.")
      
